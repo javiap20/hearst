@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Anunciantes por Sectores</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --navy:#0d2340;--navy-light:#16345f;--accent:#00a3e0;
+    --green:#1f9d55;--red:#d64545;--bg:#f4f6f9;
+    --border:#e2e6ec;--text:#1f2937;--muted:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--text);}
+  header{background:linear-gradient(90deg,var(--navy),var(--navy-light));color:#fff;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  header h1{margin:0;font-size:20px;font-weight:600;letter-spacing:.3px;}
+  header .subtitle{font-size:13px;color:#c9d6e8;margin-top:4px;}
+  .fechas-wrap{display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;}
+  .fecha-canal{font-size:11px;color:#c9d6e8;}
+  .fecha-canal span{color:#fff;font-weight:600;}
+  .upload-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+  .up-multi-sub{font-size:12px;color:#c9d6e8;}
+  .up-cards{display:flex;gap:12px;flex-wrap:wrap;}
+  .up-card{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:8px;min-width:160px;}
+  .up-card:hover{background:rgba(255,255,255,0.15);}
+  .up-card.loaded{background:rgba(31,157,85,0.25);border-color:#1f9d55;}
+  .up-icon{font-size:16px;}
+  .up-canal-name{font-size:13px;font-weight:700;color:#fff;}
+  .up-mini-status{font-size:11px;color:#c9d6e8;margin-left:auto;}
+  .up-card.loaded .up-mini-status{color:#2ecc71;font-weight:600;}
+  main{padding:24px 32px 60px;max-width:1400px;margin:0 auto;}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:16px;}
+  .sort-select{padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;}
+  .mf-label{font-size:12.5px;font-weight:600;color:var(--muted);margin-right:2px;white-space:nowrap;}
+  .month-filter{display:none;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;}
+  .mf-chips{display:flex;gap:4px;flex-wrap:wrap;}
+  .mf-chip{padding:5px 10px;border-radius:14px;border:1px solid var(--border);background:#f4f6f9;font-size:12px;cursor:pointer;color:var(--text);user-select:none;transition:.15s;}
+  .mf-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .mf-chip:hover{border-color:var(--accent);}
+  .mf-actions{display:flex;gap:6px;margin-left:auto;}
+  .mf-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:12px;cursor:pointer;color:var(--navy);font-weight:600;white-space:nowrap;}
+  .mf-btn:hover{background:#eef2f7;}
+  .mf-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .empty-state{background:#fff;border:1px dashed var(--border);border-radius:10px;padding:60px 20px;text-align:center;color:var(--muted);}
+  .empty-state b{color:var(--text);}
+
+  .year-filter{display:flex;align-items:center;gap:8px;}
+
+  /* ── Bloques de contenido ── */
+  .block-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px 24px;}
+  .block-card-title{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:6px;}
+  table.mini-canal-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:20px;}
+  table.mini-canal-table thead th{background:var(--navy);color:#fff;text-align:center;padding:9px 8px;font-weight:600;}
+  table.mini-canal-table thead th:first-child{text-align:left;}
+  table.mini-canal-table tbody td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--border);}
+  table.mini-canal-table tbody td:first-child{text-align:left;font-weight:600;color:var(--navy);}
+  table.mini-canal-table tbody tr:last-child td{border-bottom:none;}
+  table.mini-canal-table tbody tr:hover{background:#f8fafc;}
+  td.pct{font-weight:700;}
+  td.up{color:var(--green);}td.down{color:var(--red);}td.flat{color:var(--muted);}
+  .canal-weight{font-size:11px;font-weight:600;color:var(--muted);}
+
+  /* ── Bloque Anunciantes por Sectores ── */
+  .sector-block{margin-top:24px;}
+  .sector-btns{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px;}
+  .sector-btn{padding:7px 14px;border-radius:16px;border:1px solid var(--border);background:#f4f6f9;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--navy);user-select:none;transition:.15s;}
+  .sector-btn:hover{border-color:var(--accent);}
+  .sector-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .sector-empty-hint{color:var(--muted);font-size:12.5px;font-style:italic;padding:16px 2px;}
+  table.sector-table{table-layout:fixed;}
+  table.sector-table thead th:first-child{text-align:left;}
+  table.sector-table th:nth-child(1),table.sector-table td:nth-child(1){width:42%;}
+  table.sector-table th:nth-child(2),table.sector-table td:nth-child(2){width:19%;}
+  table.sector-table th:nth-child(3),table.sector-table td:nth-child(3){width:19%;}
+  table.sector-table th:nth-child(4),table.sector-table td:nth-child(4){width:20%;}
+  table.sector-table td{word-break:break-word;}
+  table.sector-table tbody tr.sector-anun-row{cursor:pointer;}
+  table.sector-table tbody tr.sector-anun-row.dimmed td{color:var(--muted) !important;opacity:.5;}
+  table.sector-table tbody tr.sector-anun-row.dimmed:hover td{opacity:.75;}
+  .sector-toggle{display:inline-block;width:10px;font-size:9px;margin-right:7px;color:var(--muted);transition:transform .15s;}
+  .sector-toggle.open{transform:rotate(90deg);}
+  tr.sector-pub-row td{background:#fff4dd;font-size:11.5px;}
+  table.sector-table tbody tr.sector-pub-row:hover td{background:#ffecc2;}
+  tr.sector-pub-row td:first-child{padding-left:33px !important;font-weight:400;color:var(--text);}
+  .sector-prog-badge{display:inline-block;font-size:9.5px;font-weight:700;color:#fff;background:#7c3aed;padding:1.5px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;letter-spacing:.01em;}
+
+  /* ── Resumen del sector seleccionado ── */
+  .sector-resumen{display:flex;align-items:center;gap:28px;flex-wrap:wrap;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 20px;margin:14px 0 18px;}
+  .sr-item{display:flex;flex-direction:column;gap:2px;}
+  .sr-label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+  .sr-value{font-size:16px;font-weight:700;color:var(--navy);}
+  .sr-pct{font-size:19px;font-weight:800;}
+  .sr-pct.up{color:var(--green);}.sr-pct.down{color:var(--red);}.sr-pct.flat{color:var(--muted);}
+  .sr-delta{font-size:11.5px;font-weight:600;color:var(--muted);}
+  .sr-badge{margin-left:auto;padding:6px 14px;border-radius:16px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;}
+  .sr-badge.up-strong{background:var(--green);}
+  .sr-badge.flat{background:#8a94a6;}
+  .sr-badge.down-mild{background:#e08e0b;}
+  .sr-badge.down-strong{background:var(--red);}
+
+  /* ── Fila de total visible al final del listado de anunciantes ── */
+  tr.sector-total-row td{background:#eef2f7;font-weight:700;color:var(--navy);border-top:2px solid var(--navy);border-bottom:none !important;}
+  tr.sector-total-row td:first-child{font-weight:700;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Anunciantes por Sectores</h1>
+    <div class="subtitle">Carga el Excel para ver el desglose por sector</div>
+    <div class="fechas-wrap" id="fechasWrap" style="display:none"></div>
+  </div>
+  <div class="upload-wrap">
+    <div class="up-multi-sub">Cargando automáticamente los Excel desde SharePoint…</div>
+    <div class="up-cards">
+      <div class="up-card" id="up-card-Digital" onclick="document.getElementById('fileDigital').click()">
+        <span class="up-icon">💻</span><span class="up-canal-name">Digital</span>
+        <div class="up-mini-status" id="up-status-Digital">Buscando en SharePoint…</div>
+        <input type="file" id="fileDigital" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Digital')">
+      </div>
+      <div class="up-card" id="up-card-Print" onclick="document.getElementById('filePrint').click()">
+        <span class="up-icon">📰</span><span class="up-canal-name">Print</span>
+        <div class="up-mini-status" id="up-status-Print">Buscando en SharePoint…</div>
+        <input type="file" id="filePrint" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Print')">
+      </div>
+      <div class="up-card" id="up-card-Eventos" onclick="document.getElementById('fileEventos').click()">
+        <span class="up-icon">🎤</span><span class="up-canal-name">Eventos</span>
+        <div class="up-mini-status" id="up-status-Eventos">Buscando en SharePoint…</div>
+        <input type="file" id="fileEventos" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Eventos')">
+      </div>
+      <div class="up-card" id="up-card-Programatica" onclick="document.getElementById('fileProgramatica').click()">
+        <span class="up-icon">📡</span><span class="up-canal-name">Programática</span>
+        <div class="up-mini-status" id="up-status-Programatica">Buscando en SharePoint…</div>
+        <input type="file" id="fileProgramatica" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Programatica')">
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar" id="toolbar" style="display:none">
+    <div></div>
+    <div class="year-filter" id="yearFilter" style="display:none;align-items:center;gap:8px;">
+      <span class="mf-label">Año:</span>
+      <select class="sort-select" id="yearSelect" onchange="onYearChange()"></select>
+    </div>
+  </div>
+
+  <div id="emptyState" class="empty-state"><p>📊 <b>Sin datos</b></p><p>Esperando la carga automática de los Excel…</p></div>
+
+  <div id="sectorBlock" class="block-card sector-block" style="display:none">
+    <div class="block-card-title">🏷️ Anunciantes por Sectores</div>
+    <div id="sectorMonthFilter" class="month-filter" style="display:none">
+      <span class="mf-label">Meses:</span>
+      <div class="mf-chips" id="sectorMfChips"></div>
+      <div class="mf-actions">
+        <button class="mf-btn" id="sectorMfNone" onclick="setSectorMonthMode('none')">Ninguno</button>
+        <button class="mf-btn active" id="sectorMfClosed" onclick="setSectorMonthMode('closed')">Cerrados</button>
+        <button class="mf-btn" id="sectorMfAll" onclick="setSectorMonthMode('all')">Todos</button>
+      </div>
+    </div>
+    <div class="mf-label" style="display:block;margin-top:2px;margin-bottom:2px;">Sector:</div>
+    <div class="sector-btns" id="sectorBtns"></div>
+    <div class="mf-label" style="display:block;margin-top:10px;margin-bottom:2px;">Zona:</div>
+    <div class="sector-btns" id="zonaBtns">
+      <div class="sector-btn" data-zona="Madrid" onclick="selectZona('Madrid',this)">Madrid</div>
+      <div class="sector-btn" data-zona="Barcelona" onclick="selectZona('Barcelona',this)">Barcelona</div>
+      <div class="sector-btn" data-zona="Internacional" onclick="selectZona('Internacional',this)">Internacional</div>
+    </div>
+    <div class="mf-label" style="display:block;margin-top:10px;margin-bottom:2px;">Programática:</div>
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div class="sector-btns" id="progBtns">
+        <div class="sector-btn active" data-prog="sin" onclick="setProgMode('sin',this)">Sin Programática</div>
+        <div class="sector-btn" data-prog="con" onclick="setProgMode('con',this)">Con Programática</div>
+      </div>
+      <div id="sectorExportWrap" style="display:none;gap:8px;margin-left:auto;">
+        <button class="mf-btn" onclick="exportSectorXLSX()">📊 Exportar a Excel</button>
+        <button class="mf-btn" onclick="exportSectorPDF()">📄 Exportar a PDF</button>
+      </div>
+    </div>
+    <div id="sectorResumen" class="sector-resumen" style="display:none"></div>
+    <div id="sectorAdvertisersContainer">
+      <div class="sector-empty-hint">Selecciona un sector para ver sus anunciantes.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+let DATA = [];
+let PROG_DATA = [];
+let ALL_YEARS = [];
+let selectedYear = new Date().getFullYear();
+let hasMesColumn = false;
+let sectorSelectedMonths = new Set();
+let selectedSector = '';
+let selectedZona = '';
+let progMode = 'sin'; // 'sin' | 'con'
+let expandedAnunciantesSector = new Set();
+const CANAL_FECHAS = {};
+
+const EXCEL_URLS = {
+  Digital:      'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y',
+  Print:        'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU',
+  Eventos:      'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU',
+  Programatica: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBRiKDRGWyhSLPu93vPFOLmAWX_tVsvzvinkrrg8Iym2qE'
+};
+
+const MES_ABBR    = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MES_NOMBRES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+const HEADER_ALIASES = {
+  area:        ['áreas','areas','área','area','equipo','team'],
+  claseOrden:  ['clase de orden','clase orden','claseorden','clase_orden','order class','order type'],
+  anio:        ['año inserción','ano insercion','año insercion','ano inserción','año'],
+  mes:         ['mes inserción','mes insercion','mes'],
+  importe:     ['imp.neto a comisionar','imp neto a comisionar','importe neto a comisionar','imp.neto comisionar'],
+  importeAnt:  ['imp.neto ant.','imp neto ant','imp.neto ant','importe neto ant'],
+  sector:      ['sector'],
+  anunciante:  ['anunciante'],
+  marca:       ['marca'],
+  comercial:   ['comercial'],
+  publicacion: ['publicación','publicacion','publicaciones','cabecera','revista','site','medio'],
+  producto:    ['producto','productos'],
+  familia:     ['familia','familias']
+};
+
+function normalize(str){
+  return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+function findColIndex(headerRow, aliases){
+  const nh=headerRow.map(normalize);
+  for(const a of aliases){ const i=nh.indexOf(normalize(a)); if(i!==-1) return i; }
+  return -1;
+}
+function parseMonth(val){
+  if(!val) return null;
+  const n=parseInt(val,10);
+  if(!isNaN(n)&&n>=1&&n<=12) return n;
+  const norm=normalize(String(val));
+  const idx=MES_NOMBRES.findIndex(m=>norm.startsWith(normalize(m)));
+  return idx!==-1?idx+1:null;
+}
+function formatEUR(val){
+  if(val===null||val===undefined||isNaN(val)) return '-';
+  const sign=val<0?'-':'';
+  const str=Math.abs(Math.round(val)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return sign+str+'\u00A0\u20AC';
+}
+function formatPct(val){
+  if(val===null||val===undefined||!isFinite(val)) return '-';
+  return (val>=0?'+':'')+val.toFixed(1)+'%';
+}
+function formatDeltaEUR(val){
+  if(val===null||val===undefined||isNaN(val)) return '';
+  const sign=val<0?'-':'+';
+  const str=Math.abs(Math.round(val)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return sign+str+'\u00A0\u20AC';
+}
+function formatProductosComparativa(prodPrev,prodLast){
+  const hasPrev=prodPrev&&prodPrev.length>0;
+  const hasLast=prodLast&&prodLast.length>0;
+  if(!hasPrev&&!hasLast) return '';
+  if(!hasLast){
+    // Sin ingreso en el año actual: no tiene sentido el "vs", mostramos solo
+    // el desglose de producto(s) del año anterior, uno por línea (como antes).
+    return prodPrev.map(p=>`${p.name} (${formatEUR(p.amount)})`).join('\n');
+  }
+  const prevStr=hasPrev?prodPrev.map(p=>`${p.name} (${formatEUR(p.amount)})`).join(', '):'—';
+  const lastStr=prodLast.map(p=>`${p.name} (${formatEUR(p.amount)})`).join(', ');
+  return `${prevStr}  vs  ${lastStr}`;
+}
+function monthsRangeLabel(monthsSet){
+  if(!monthsSet||monthsSet.size===0) return '';
+  const sorted=[...monthsSet].sort((a,b)=>a-b);
+  if(sorted.length===1) return MES_ABBR[sorted[0]-1];
+  return MES_ABBR[sorted[0]-1]+'-'+MES_ABBR[sorted[sorted.length-1]-1];
+}
+function getClosedMonths(){
+  const currentMonth = new Date().getMonth() + 1;
+  const closed = new Set();
+  for(let m = 1; m < currentMonth; m++) closed.add(m);
+  return closed;
+}
+function calcPct(val,prevVal){
+  if(prevVal>0) return ((val-prevVal)/prevVal)*100;
+  if(val>0) return 100;
+  return null;
+}
+
+async function autoLoadFromServer(){
+  const canales=['Digital','Print','Eventos','Programatica'];
+  await Promise.all(canales.map(async canal=>{
+    try{
+      const res=await fetch(EXCEL_URLS[canal],{cache:'no-cache'});
+      if(!res.ok) throw new Error('No encontrado');
+      const buffer=await res.arrayBuffer();
+      if(canal==='Programatica') processProgramaticaWorkbook(new Uint8Array(buffer),canal.toUpperCase()+'.xlsx');
+      else processWorkbook(new Uint8Array(buffer),canal,canal.toUpperCase()+'.xlsx');
+    }catch(e){ markCanalPending(canal); }
+  }));
+}
+function markCanalLoaded(canal,filename,fecha){
+  const card=document.getElementById('up-card-'+canal);
+  const status=document.getElementById('up-status-'+canal);
+  if(card) card.classList.add('loaded');
+  if(status) status.textContent='✓ '+filename+(fecha?' · '+fecha:'');
+  updateFechasHeader();
+}
+function updateFechasHeader(){
+  const wrap=document.getElementById('fechasWrap');
+  if(!wrap) return;
+  const icons={Digital:'💻',Print:'📰',Eventos:'🎤',Programatica:'📡'};
+  const parts=['Digital','Print','Eventos','Programatica']
+    .filter(c=>CANAL_FECHAS[c])
+    .map(c=>`<div class="fecha-canal">${icons[c]} ${c}: <span>${CANAL_FECHAS[c]}</span></div>`);
+  if(parts.length>0){wrap.innerHTML=parts.join('');wrap.style.display='flex';}
+}
+function markCanalPending(canal){
+  const card=document.getElementById('up-card-'+canal);
+  const status=document.getElementById('up-status-'+canal);
+  if(card) card.classList.remove('loaded');
+  if(status) status.textContent='No disponible · pulsa para subirlo manualmente';
+}
+function onFileInputCanal(input,canal){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    if(canal==='Programatica') processProgramaticaWorkbook(new Uint8Array(e.target.result),file.name);
+    else processWorkbook(new Uint8Array(e.target.result),canal,file.name);
+  };
+  reader.readAsArrayBuffer(file);
+}
+function processWorkbook(data,canal,filename){
+  const wb=XLSX.read(data,{type:'array'});
+  const metaSheet=wb.Sheets['META']||wb.Sheets['Meta']||wb.Sheets['meta'];
+  let fecha=null;
+  if(metaSheet&&metaSheet['B1']){
+    const raw=metaSheet['B1'].v;
+    if(typeof raw==='number'){
+      const date=new Date(Math.round((raw-25569)*86400*1000));
+      fecha=`${date.getUTCDate().toString().padStart(2,'0')}/${(date.getUTCMonth()+1).toString().padStart(2,'0')}/${date.getUTCFullYear()}`;
+    } else fecha=String(raw);
+  }
+  CANAL_FECHAS[canal]=fecha;
+  const dataSheetName=wb.SheetNames.find(n=>n.toUpperCase()!=='META')||wb.SheetNames[0];
+  const sheet=wb.Sheets[dataSheetName];
+  const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
+  if(rows.length<2){markCanalPending(canal);return;}
+
+  const hr=rows[0];
+  const colArea=findColIndex(hr,HEADER_ALIASES.area);
+  const colClase=findColIndex(hr,HEADER_ALIASES.claseOrden);
+  const colAnio=findColIndex(hr,HEADER_ALIASES.anio);
+  const colMes=findColIndex(hr,HEADER_ALIASES.mes);
+  const colImporte=findColIndex(hr,HEADER_ALIASES.importe);
+  const colSector=findColIndex(hr,HEADER_ALIASES.sector);
+  const colAnunciante=findColIndex(hr,HEADER_ALIASES.anunciante);
+  const colMarca=findColIndex(hr,HEADER_ALIASES.marca);
+  const colComercial=findColIndex(hr,HEADER_ALIASES.comercial);
+  const colPublicacion=findColIndex(hr,HEADER_ALIASES.publicacion);
+  const colProducto=findColIndex(hr,HEADER_ALIASES.producto);
+  const colFamilia=findColIndex(hr,HEADER_ALIASES.familia);
+  if(colAnio===-1||colImporte===-1){markCanalPending(canal);return;}
+
+  DATA=DATA.filter(d=>d.canal!==canal);
+  for(let i=1;i<rows.length;i++){
+    const row=rows[i];
+    const rawArea=colArea!==-1?String(row[colArea]||'').trim():'';
+    const rawClase=colClase!==-1?String(row[colClase]||'').trim():'';
+    const anio=parseInt(row[colAnio],10);
+    const mes=colMes!==-1?parseMonth(row[colMes]):null;
+    const importe=parseFloat(String(row[colImporte]).replace(',','.'))||0;
+    const rawSec=colSector!==-1?String(row[colSector]||'').trim():'';
+    const sector=rawSec.replace(/^[\d\s*]+\*?\s*/,'').trim().toUpperCase()||'SIN SECTOR';
+    const anunciante=colAnunciante!==-1?String(row[colAnunciante]||'').trim():'';
+    const marca=colMarca!==-1?String(row[colMarca]||'').trim():'';
+    const comercial=colComercial!==-1?String(row[colComercial]||'').trim():'';
+    const publicacion=colPublicacion!==-1?String(row[colPublicacion]||'').trim():'';
+    const producto=colProducto!==-1?String(row[colProducto]||'').trim():'';
+    const familia=colFamilia!==-1?String(row[colFamilia]||'').trim():'';
+    if(isNaN(anio)||anio<2000||anio>2100) continue;
+    const claseLetra=normalize(rawClase).charAt(0);
+    let team;
+    if(claseLetra==='j') team='Internacional';
+    else if(claseLetra==='p'||claseLetra==='q') team='Programática';
+    else{
+      const areaNorm=normalize(rawArea);
+      if(areaNorm.includes('programat')) team='Programática';
+      else if(areaNorm.includes('barcelona')) team='Barcelona';
+      else if(areaNorm.includes('internacional')) team='Internacional';
+      else team='Madrid';
+    }
+    if(mes!==null) hasMesColumn=true;
+    DATA.push({sector,team,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,producto,familia,claseOrden:rawClase||'(vacío)'});
+  }
+  rebuildYears();
+  markCanalLoaded(canal,filename,fecha);
+  initSectorMonthFilter();
+  populateSectorButtons();
+  showUI();
+  renderSectorAdvertisers();
+}
+// ---- Excel independiente: ANUNCIANTES PROGRAMATICA.xlsx ----
+// Estructura especial: cada fila solo tiene UNA de las dos columnas de importe
+// rellena, según su propio "Año inserción":
+//   - fila del año en curso  -> el importe real está en "Imp.Neto a Comisionar" (ingActual)
+//   - fila del año anterior  -> el importe real está en "Imp.Neto Ant." (ingAnt)
+// Por eso guardamos ambas columnas por fila y decidimos cuál sumar en el momento
+// del cálculo (ver calcLastPrev), nunca al cargar los datos.
+function processProgramaticaWorkbook(data,filename){
+  const wb=XLSX.read(data,{type:'array'});
+  const metaSheet=wb.Sheets['META']||wb.Sheets['Meta']||wb.Sheets['meta'];
+  let fecha=null;
+  if(metaSheet&&metaSheet['B1']){
+    const raw=metaSheet['B1'].v;
+    if(typeof raw==='number'){
+      const date=new Date(Math.round((raw-25569)*86400*1000));
+      fecha=`${date.getUTCDate().toString().padStart(2,'0')}/${(date.getUTCMonth()+1).toString().padStart(2,'0')}/${date.getUTCFullYear()}`;
+    } else fecha=String(raw);
+  }
+  CANAL_FECHAS['Programatica']=fecha;
+  const dataSheetName=wb.SheetNames.find(n=>n.toUpperCase()!=='META')||wb.SheetNames[0];
+  const sheet=wb.Sheets[dataSheetName];
+  const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
+  if(rows.length<2){markCanalPending('Programatica');return;}
+
+  const hr=rows[0];
+  const colArea=findColIndex(hr,['area','equipo','team','áreas','areas']);
+  const colAnio=findColIndex(hr,HEADER_ALIASES.anio);
+  const colMes=findColIndex(hr,HEADER_ALIASES.mes);
+  const colImporte=findColIndex(hr,HEADER_ALIASES.importe);
+  const colImporteAnt=findColIndex(hr,HEADER_ALIASES.importeAnt);
+  const colSector=findColIndex(hr,HEADER_ALIASES.sector);
+  const colAnunciante=findColIndex(hr,['anunciante','progr']);
+  const colMarca=findColIndex(hr,HEADER_ALIASES.marca);
+  const colPublicacion=findColIndex(hr,HEADER_ALIASES.publicacion);
+  if(colAnio===-1||colImporte===-1){markCanalPending('Programatica');return;}
+
+  PROG_DATA=[];
+  for(let i=1;i<rows.length;i++){
+    const row=rows[i];
+    const rawArea=colArea!==-1?String(row[colArea]||'').trim():'';
+    const anio=parseInt(row[colAnio],10);
+    const mes=colMes!==-1?parseMonth(row[colMes]):null;
+    const ingActual=parseFloat(String(row[colImporte]).replace(',','.'))||0;
+    const ingAnt=colImporteAnt!==-1?(parseFloat(String(row[colImporteAnt]).replace(',','.'))||0):0;
+    const rawSec=colSector!==-1?String(row[colSector]||'').trim():'';
+    const sector=rawSec.replace(/^[\d\s*]+\*?\s*/,'').trim().toUpperCase()||'SIN SECTOR';
+    const anunciante=colAnunciante!==-1?String(row[colAnunciante]||'').trim():'';
+    const marca=colMarca!==-1?String(row[colMarca]||'').trim():'';
+    const publicacion=colPublicacion!==-1?String(row[colPublicacion]||'').trim():'';
+    if(isNaN(anio)||anio<2000||anio>2100) continue;
+    const areaNorm=normalize(rawArea);
+    let team='Madrid';
+    if(areaNorm.includes('barcelona')) team='Barcelona';
+    else if(areaNorm.includes('internacional')) team='Internacional';
+    else if(areaNorm.includes('madrid')) team='Madrid';
+    if(mes!==null) hasMesColumn=true;
+    PROG_DATA.push({sector,team,anio,mes,anunciante,marca,publicacion,ingActual,ingAnt});
+  }
+  rebuildYears();
+  markCanalLoaded('Programatica',filename,fecha);
+  initSectorMonthFilter();
+  populateSectorButtons();
+  showUI();
+  renderSectorAdvertisers();
+}
+function rebuildYears(){
+  const aniosSet=new Set([...DATA.map(d=>d.anio), ...PROG_DATA.map(d=>d.anio)]);
+  ALL_YEARS=Array.from(aniosSet).sort((a,b)=>a-b);
+  populateYearSelect();
+}
+function populateYearSelect(){
+  const sel=document.getElementById('yearSelect');
+  if(!sel||ALL_YEARS.length===0) return;
+  const sortedDesc=[...ALL_YEARS].sort((a,b)=>b-a);
+  if(!ALL_YEARS.includes(selectedYear)){
+    const thisYear=new Date().getFullYear();
+    selectedYear=ALL_YEARS.includes(thisYear)?thisYear:sortedDesc[0];
+  }
+  sel.innerHTML=sortedDesc.map(y=>`<option value="${y}" ${y===selectedYear?'selected':''}>${y}</option>`).join('');
+  document.getElementById('yearFilter').style.display='flex';
+}
+function onYearChange(){
+  const sel=document.getElementById('yearSelect');
+  selectedYear=parseInt(sel.value,10);
+  renderSectorAdvertisers();
+}
+function showUI(){
+  document.getElementById('toolbar').style.display='flex';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('sectorBlock').style.display='block';
+  if(hasMesColumn) document.getElementById('sectorMonthFilter').style.display='flex';
+}
+
+// ---- BLOQUE: ANUNCIANTES POR SECTORES ----
+function updateSectorMonthBtns(mode){
+  document.getElementById('sectorMfNone').classList.toggle('active', mode==='none');
+  document.getElementById('sectorMfClosed').classList.toggle('active', mode==='closed');
+  document.getElementById('sectorMfAll').classList.toggle('active', mode==='all');
+}
+function initSectorMonthFilter(){
+  if(!hasMesColumn) return;
+  const allMonths=new Set(DATA.map(d=>d.mes).filter(m=>m!==null));
+  const sorted=Array.from(allMonths).sort((a,b)=>a-b);
+
+  if(sectorSelectedMonths.size===0){
+    sectorSelectedMonths=getClosedMonths();
+  }
+
+  const chips=document.getElementById('sectorMfChips');
+  chips.innerHTML='';
+  sorted.forEach(m=>{
+    const chip=document.createElement('div');
+    chip.className='mf-chip'+(sectorSelectedMonths.has(m)?' active':'');
+    chip.textContent=MES_ABBR[m-1];
+    chip.onclick=()=>{
+      if(sectorSelectedMonths.has(m)) sectorSelectedMonths.delete(m); else sectorSelectedMonths.add(m);
+      chip.classList.toggle('active',sectorSelectedMonths.has(m));
+      updateSectorMonthBtns('');
+      renderSectorAdvertisers();
+    };
+    chips.appendChild(chip);
+  });
+}
+function setSectorMonthMode(mode){
+  const allMonths=new Set(DATA.map(d=>d.mes).filter(m=>m!==null));
+  const sorted=Array.from(allMonths).sort((a,b)=>a-b);
+  const chips=document.getElementById('sectorMfChips');
+
+  if(mode==='none'){
+    sectorSelectedMonths=new Set();
+  } else if(mode==='closed'){
+    sectorSelectedMonths=getClosedMonths();
+  } else if(mode==='all'){
+    sectorSelectedMonths=new Set(sorted);
+  }
+
+  chips.querySelectorAll('.mf-chip').forEach((c,i)=>{
+    c.classList.toggle('active', sectorSelectedMonths.has(sorted[i]));
+  });
+  updateSectorMonthBtns(mode);
+  renderSectorAdvertisers();
+}
+function populateSectorButtons(){
+  const set=new Set([...DATA.map(d=>d.sector), ...PROG_DATA.map(d=>d.sector)].filter(Boolean));
+  const sectors=Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
+  const wrap=document.getElementById('sectorBtns');
+  wrap.innerHTML=sectors.map(s=>`<div class="sector-btn">${s}</div>`).join('');
+  wrap.querySelectorAll('.sector-btn').forEach((btn,i)=>{
+    const s=sectors[i];
+    btn.classList.toggle('active', normalize(s)===normalize(selectedSector));
+    btn.addEventListener('click',()=>{
+      selectedSector=(normalize(selectedSector)===normalize(s))?'':s;
+      wrap.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('active'));
+      if(selectedSector) btn.classList.add('active');
+      expandedAnunciantesSector=new Set();
+      renderSectorAdvertisers();
+    });
+  });
+}
+function selectZona(zona,el){
+  selectedZona=(selectedZona===zona)?'':zona;
+  document.querySelectorAll('#zonaBtns .sector-btn').forEach(b=>b.classList.remove('active'));
+  if(selectedZona) el.classList.add('active');
+  expandedAnunciantesSector=new Set();
+  renderSectorAdvertisers();
+}
+function setProgMode(mode,el){
+  progMode=mode;
+  document.querySelectorAll('#progBtns .sector-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderSectorAdvertisers();
+}
+// Agrupa filas "normales" (Digital/Print/Eventos) y filas de Programática bajo la
+// misma clave (p.ej. anunciante o publicación), manteniéndolas en listas separadas
+// porque cada tipo de fila se suma con una lógica distinta (ver calcLastPrev).
+function groupRows(rowsNormal, rowsProg, keyFn){
+  const map={};
+  rowsNormal.forEach(d=>{
+    const k=keyFn(d);
+    if(!map[k]) map[k]={normal:[],prog:[]};
+    map[k].normal.push(d);
+  });
+  rowsProg.forEach(d=>{
+    const k=keyFn(d);
+    if(!map[k]) map[k]={normal:[],prog:[]};
+    map[k].prog.push(d);
+  });
+  return map;
+}
+// Calcula año en curso (last) y año anterior (prev) para un grupo, combinando:
+//  - filas normales: cada fila ya trae su año e importe propios (como siempre).
+//  - filas de Programática (solo si progOn): año en curso = suma de "ingActual"
+//    de las filas cuyo Año inserción = lastYear; año anterior = suma de "ingAnt"
+//    de las filas cuyo Año inserción = prevYear. Nunca se cruzan columna/año.
+function calcLastPrev(group,lastYear,prevYear,monthsFilter,progOn){
+  const passMonth=d=>!monthsFilter||(d.mes!==null&&monthsFilter.has(d.mes));
+  const sumNormal=(rs,anio)=>rs.reduce((s,d)=>(d.anio===anio&&passMonth(d))?s+d.importe:s,0);
+  const sumProgLast=(rs,anio)=>rs.reduce((s,d)=>(d.anio===anio&&passMonth(d))?s+d.ingActual:s,0);
+  const sumProgPrev=(rs,anio)=>rs.reduce((s,d)=>(d.anio===anio&&passMonth(d))?s+d.ingAnt:s,0);
+  const last=sumNormal(group.normal,lastYear)+(progOn?sumProgLast(group.prog,lastYear):0);
+  const prev=sumNormal(group.normal,prevYear)+(progOn?sumProgPrev(group.prog,prevYear):0);
+  return {last,prev};
+}
+// Calcula los datos del sector/zona/programática actualmente seleccionados.
+// Se usa tanto para pintar la tabla en pantalla como para la exportación a ODS,
+// así ambas vías comparten exactamente la misma lógica de cálculo.
+function computeSectorItems(){
+  if(!selectedSector) return {reason:'no-sector'};
+  const secNorm=normalize(selectedSector);
+  const progOn=progMode==='con';
+  // Cajón genérico de Programática a nivel Anunciante: en los Excel de producción, todo
+  // el ingreso de Programática cae, sin desglosar, bajo el anunciante "Google" dentro del
+  // sector VENDORS. El Excel de Programática sí trae el desglose real (Sector y Anunciante
+  // vía columna PROGR). Ver estructura-excel-programatica.txt.
+  const GENERIC_ANUNCIANTE='Google';
+  const secIsVendors=secNorm===normalize('VENDORS');
+  let rows=DATA.filter(d=>d.canal!=='__antivendors'&&normalize(d.sector)===secNorm);
+  if(selectedZona) rows=rows.filter(d=>d.team===selectedZona);
+
+  let progRows=[];
+  if(progOn){
+    // Filas cuyo Sector real coincide con el sector seleccionado: se muestran bajo su
+    // Anunciante real, salvo que ese Anunciante venga en blanco o ya sea el cajón genérico
+    // (Google) — esas ya están bien puestas en VENDORS y no se mueven.
+    progRows=PROG_DATA.filter(d=>{
+      if(normalize(d.sector)!==secNorm) return false;
+      const anun=(d.anunciante||'').trim();
+      if(!anun||normalize(anun)===normalize(GENERIC_ANUNCIANTE)) return false;
+      return true;
+    });
+    // Si el sector seleccionado ES VENDORS, hay que restar de "Google" todo lo que sí se
+    // ha movido a otros sectores/anunciantes reales (en cualquier sector), para que el
+    // total global no cambie al activar Con Programática (REPARTO, no suma directa).
+    if(secIsVendors){
+      const antiRows=PROG_DATA.filter(d=>{
+        const anun=(d.anunciante||'').trim();
+        if(!anun||normalize(anun)===normalize(GENERIC_ANUNCIANTE)) return false;
+        return true;
+      }).map(d=>({...d,sector:'VENDORS',anunciante:GENERIC_ANUNCIANTE,ingActual:-d.ingActual,ingAnt:-d.ingAnt}));
+      progRows=progRows.concat(antiRows);
+    }
+    if(selectedZona) progRows=progRows.filter(d=>d.team===selectedZona);
+  }
+
+  if(rows.length===0&&progRows.length===0) return {reason:'no-data'};
+
+  const lastYear=selectedYear;
+  const prevYear=selectedYear-1;
+  const monthsFilter=(hasMesColumn&&sectorSelectedMonths.size>0)?sectorSelectedMonths:null;
+  const monthsLabel=monthsFilter?monthsRangeLabel(monthsFilter):'';
+  const lastLabel=monthsFilter?`${lastYear} (${monthsLabel})`:`${lastYear}`;
+  const prevLabel=monthsFilter?`${prevYear} (${monthsLabel})`:`${prevYear}`;
+
+  const anunGroups=groupRows(rows, progRows, d=>d.anunciante||'(sin anunciante)');
+
+  // Desglose de producto(s) del año anterior (prevYear) por publicación, para las
+  // exportaciones (Excel/PDF). Usamos prevYear porque es la inversión que se ha perdido
+  // o reducido; en lastYear a menudo esos productos ya no aparecen. No se usa en pantalla.
+  function productBreakdown(group,year){
+    const passMonth=d=>!monthsFilter||(d.mes!==null&&monthsFilter.has(d.mes));
+    const sums={};
+    group.normal.forEach(d=>{
+      if(d.anio===year&&passMonth(d)){
+        const p=d.producto||'(sin producto)';
+        sums[p]=(sums[p]||0)+d.importe;
+      }
+    });
+    if(progOn){
+      group.prog.forEach(d=>{
+        if(d.anio===year&&passMonth(d)) sums['Programática']=(sums['Programática']||0)+(year===lastYear?d.ingActual:d.ingAnt);
+      });
+    }
+    return Object.entries(sums).filter(([,v])=>v!==0).sort((a,b)=>b[1]-a[1]).map(([name,amount])=>({name,amount}));
+  }
+
+  const items=Object.keys(anunGroups).map(anun=>{
+    const group=anunGroups[anun];
+    const {last,prev}=calcLastPrev(group,lastYear,prevYear,monthsFilter,progOn);
+    const pubGroups=groupRows(group.normal, group.prog, d=>d.publicacion||'(sin publicación)');
+    const pubItems=Object.keys(pubGroups).map(pub=>{
+      const {last:pLast,prev:pPrev}=calcLastPrev(pubGroups[pub],lastYear,prevYear,monthsFilter,progOn);
+      // Solo mostramos la comparativa de producto(s) cuando el ingreso de esta publicación
+      // ha bajado respecto al año anterior (pLast<pPrev). Si el ingreso es igual o mayor,
+      // dejamos la celda vacía (ya lo tenemos, no interesa el detalle de producto).
+      let prodPrev=[],prodLast=[];
+      if(pLast<pPrev){
+        prodPrev=productBreakdown(pubGroups[pub],prevYear);
+        prodLast=productBreakdown(pubGroups[pub],lastYear);
+      }
+      return {pub,pLast,pPrev,hasProg:progOn&&pubGroups[pub].prog.length>0,prodPrev,prodLast};
+    }).filter(p=>p.pLast!==0||p.pPrev!==0)
+      .sort((a,b)=>(a.pLast-a.pPrev)-(b.pLast-b.pPrev));
+    return {anunciante:anun, group, last, prev, hasProg:progOn&&group.prog.length>0, pubItems};
+  }).filter(it=>it.last!==0||it.prev!==0)
+    .sort((a,b)=>(a.last-a.prev)-(b.last-b.prev));
+
+  if(items.length===0) return {reason:'no-items'};
+
+  const totalPrev=items.reduce((s,it)=>s+it.prev,0);
+  const totalLast=items.reduce((s,it)=>s+it.last,0);
+
+  return {reason:'ok', items, lastYear, prevYear, lastLabel, prevLabel, monthsFilter, progOn, totalPrev, totalLast};
+}
+// Resumen del sector seleccionado (con los filtros de Zona/Programática/Meses ya
+// aplicados): total año anterior vs total año en curso, y un badge de Estado con los
+// mismos umbrales que ya usamos en analisis-sectores.html (>+2.5% En alza,
+// -2.5%/-10% Leve caída, <-10% Caída fuerte, resto Estable).
+function renderSectorResumen(totalPrev,totalLast,prevLabel,lastLabel){
+  const el=document.getElementById('sectorResumen');
+  if(!el) return;
+  const pct=calcPct(totalLast,totalPrev);
+  const delta=totalLast-totalPrev;
+  let badgeCls='flat',badgeTxt='Sin datos previos';
+  if(pct!==null){
+    if(pct>2.5){badgeCls='up-strong';badgeTxt='En alza';}
+    else if(pct>=-2.5){badgeCls='flat';badgeTxt='Estable';}
+    else if(pct>=-10){badgeCls='down-mild';badgeTxt='Leve caída';}
+    else{badgeCls='down-strong';badgeTxt='Caída fuerte';}
+  }
+  const pctColorCls=pct===null?'flat':(pct>0.5?'up':(pct<-0.5?'down':'flat'));
+  el.innerHTML=`
+    <div class="sr-item"><span class="sr-label">${prevLabel}</span><span class="sr-value">${formatEUR(totalPrev)}</span></div>
+    <div class="sr-item"><span class="sr-label">${lastLabel}</span><span class="sr-value">${formatEUR(totalLast)}</span></div>
+    <div class="sr-item"><span class="sr-label">Variación</span><span class="sr-pct ${pctColorCls}">${formatPct(pct)}</span><span class="sr-delta">${formatDeltaEUR(delta)}</span></div>
+    <div class="sr-badge ${badgeCls}">${badgeTxt}</div>`;
+  el.style.display='flex';
+}
+function renderSectorAdvertisers(){
+  const container=document.getElementById('sectorAdvertisersContainer');
+  const exportWrap=document.getElementById('sectorExportWrap');
+  const resumen=document.getElementById('sectorResumen');
+  if(!container) return;
+  const data=computeSectorItems();
+
+  if(data.reason==='no-sector'){
+    container.innerHTML='<div class="sector-empty-hint">Selecciona un sector para ver sus anunciantes.</div>';
+    if(exportWrap) exportWrap.style.display='none';
+    if(resumen) resumen.style.display='none';
+    return;
+  }
+  if(data.reason==='no-data'){
+    container.innerHTML='<div class="sector-empty-hint">Sin datos para este sector.</div>';
+    if(exportWrap) exportWrap.style.display='none';
+    if(resumen) resumen.style.display='none';
+    return;
+  }
+  if(data.reason==='no-items'){
+    container.innerHTML='<div class="sector-empty-hint">Sin anunciantes con ingreso en el periodo seleccionado.</div>';
+    if(exportWrap) exportWrap.style.display='none';
+    if(resumen) resumen.style.display='none';
+    return;
+  }
+
+  const {items,prevLabel,lastLabel,totalPrev,totalLast}=data;
+  renderSectorResumen(totalPrev,totalLast,prevLabel,lastLabel);
+
+  let html=`<table class="mini-canal-table sector-table">
+    <thead><tr><th>Anunciante</th><th>${lastLabel}</th><th>${prevLabel}</th><th>%</th></tr></thead>
+    <tbody>`;
+
+  items.forEach((it,idx)=>{
+    const pct=calcPct(it.last,it.prev);
+    const cls=pct===null?'flat':(pct>0.5?'up':(pct<-0.5?'down':'flat'));
+    const isOpen=expandedAnunciantesSector.has(it.anunciante);
+    const dimCls=(expandedAnunciantesSector.size>0&&!isOpen)?' dimmed':'';
+    const anunProgBadge=it.hasProg?' <span class="sector-prog-badge">Con Programática</span>':'';
+    html+=`<tr class="sector-anun-row${dimCls}" data-idx="${idx}">
+      <td><span class="sector-toggle${isOpen?' open':''}">▶</span>${it.anunciante}${anunProgBadge}</td>
+      <td>${formatEUR(it.last)}</td>
+      <td>${formatEUR(it.prev)}</td>
+      <td class="pct ${cls}">${formatPct(pct)} <span class="canal-weight">(${formatDeltaEUR(it.last-it.prev)})</span></td>
+    </tr>`;
+
+    it.pubItems.forEach(p=>{
+      const pPct=calcPct(p.pLast,p.pPrev);
+      const pCls=pPct===null?'flat':(pPct>0.5?'up':(pPct<-0.5?'down':'flat'));
+      const pubProgBadge=p.hasProg?' <span class="sector-prog-badge">Con Programática</span>':'';
+      html+=`<tr class="sector-pub-row" data-parent-idx="${idx}" style="display:${isOpen?'table-row':'none'}">
+        <td>${p.pub}${pubProgBadge}</td>
+        <td>${formatEUR(p.pLast)}</td>
+        <td>${formatEUR(p.pPrev)}</td>
+        <td class="pct ${pCls}">${formatPct(pPct)} <span class="canal-weight">(${formatDeltaEUR(p.pLast-p.pPrev)})</span></td>
+      </tr>`;
+    });
+  });
+
+  const totalPct=calcPct(totalLast,totalPrev);
+  const totalCls=totalPct===null?'flat':(totalPct>0.5?'up':(totalPct<-0.5?'down':'flat'));
+  html+=`</tbody>
+    <tfoot><tr class="sector-total-row">
+      <td>Total (visible)</td>
+      <td>${formatEUR(totalLast)}</td>
+      <td>${formatEUR(totalPrev)}</td>
+      <td class="pct ${totalCls}">${formatPct(totalPct)} <span class="canal-weight">(${formatDeltaEUR(totalLast-totalPrev)})</span></td>
+    </tr></tfoot>
+  </table>`;
+  container.innerHTML=html;
+  if(exportWrap) exportWrap.style.display='flex';
+
+  container.querySelectorAll('.sector-anun-row').forEach(row=>{
+    row.addEventListener('click',()=>{
+      const idx=row.getAttribute('data-idx');
+      const anun=items[idx].anunciante;
+      if(expandedAnunciantesSector.has(anun)) expandedAnunciantesSector.delete(anun);
+      else expandedAnunciantesSector.add(anun);
+      renderSectorAdvertisers();
+    });
+  });
+}
+function sanitizeFilename(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'Sector';
+}
+async function exportSectorXLSX(){
+  const data=computeSectorItems();
+  if(data.reason!=='ok') return;
+  const {items,lastYear,prevYear,lastLabel,prevLabel,progOn}=data;
+  const zonaTxt=selectedZona||'Todas';
+  const progTxt=progOn?'Con Programática':'Sin Programática';
+
+  // Columna A vacía y estrecha (solo para dar aire visual a la izquierda); los datos
+  // empiezan en la columna B.
+  const aoa=[];
+  aoa.push(['',`Anunciantes por Sector: ${selectedSector}`]);
+  aoa.push(['',`Zona: ${zonaTxt}  ·  ${progTxt}`]);
+  aoa.push([]);
+  aoa.push(['','Anunciante','Publicación',`Producto(s) ${prevYear} vs ${lastYear}`,prevLabel,lastLabel,'% Var.','Var. €','Con Programática']);
+
+  const rowMeta=[];
+  const thinRowIdxs=[];
+  const sectionRowIdxs=[];
+
+  // Fila 5: separador muy fino justo debajo de la cabecera
+  aoa.push([]);
+  thinRowIdxs.push(aoa.length-1);
+
+  function addSection(label,list){
+    aoa.push(['',label]);
+    sectionRowIdxs.push(aoa.length-1);
+    aoa.push([]);
+    thinRowIdxs.push(aoa.length-1);
+    list.forEach(it=>{
+      const pct=calcPct(it.last,it.prev);
+      rowMeta.push({rowIdx:aoa.length,isTotal:true,lines:1});
+      aoa.push(['',it.anunciante,'(Total anunciante)','',Math.round(it.prev),Math.round(it.last),pct===null?null:pct/100,Math.round(it.last-it.prev),it.hasProg?'Sí':'No']);
+      it.pubItems.forEach(p=>{
+        const pPct=calcPct(p.pLast,p.pPrev);
+        const noVsLines=(p.prodLast&&p.prodLast.length>0)?1:Math.max(1,p.prodPrev.length);
+        rowMeta.push({rowIdx:aoa.length,isTotal:false,lines:noVsLines});
+        aoa.push(['',it.anunciante,p.pub,formatProductosComparativa(p.prodPrev,p.prodLast),Math.round(p.pPrev),Math.round(p.pLast),pPct===null?null:pPct/100,Math.round(p.pLast-p.pPrev),p.hasProg?'Sí':'No']);
+      });
+    });
+  }
+
+  const negItems=items.filter(it=>(it.last-it.prev)<0);
+  const posItems=items.filter(it=>(it.last-it.prev)>=0);
+  addSection('Anunciantes en Negativo',negItems);
+
+  // Fila grande en blanco para separar visualmente el bloque de negativos del de positivos
+  const bigGapIdx=aoa.length;
+  aoa.push([]);
+
+  addSection('Anunciantes en Positivo',posItems);
+
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:2},{wch:36},{wch:34},{wch:45},{wch:16},{wch:16},{wch:11},{wch:16},{wch:18}];
+
+  const COLS=['B','C','D','E','F','G','H','I'];
+  const NAVY='FF0D2340', WHITE='FFFFFFFF', GREEN='FF1F9D55', RED='FFD64545', YELLOW='FFFFD400', TOTALBG='FFFFE669', LIGHTNAVY='FF1F4E79';
+
+  // Cabecera de la tabla: fila más alta, fondo navy, texto blanco y negrita, centrado
+  const headerRow=3; // índice 0-based dentro del aoa
+  const rows=ws['!rows']||[];
+  rows[headerRow]={hpt:26};
+  ws['!rows']=rows;
+  COLS.forEach(col=>{
+    const addr=col+(headerRow+1);
+    if(ws[addr]) ws[addr].s={
+      font:{bold:true,color:{rgb:WHITE}},
+      fill:{fgColor:{rgb:NAVY}},
+      alignment:{horizontal:'center',vertical:'center'}
+    };
+  });
+
+  // Filas separadoras muy finas (entre cabecera y secciones, y entre cabecera de sección y listado)
+  thinRowIdxs.forEach(idx=>{ rows[idx]={hpt:4}; });
+  // Fila grande en blanco entre el bloque de negativos y el de positivos
+  rows[bigGapIdx]={hpt:30};
+  ws['!rows']=rows;
+
+  // Cabeceras de sección "Anunciantes en Negativo" / "Anunciantes en Positivo": fondo azul
+  // más claro que el navy, texto blanco negrita, celdas B:H fusionadas
+  if(!ws['!merges']) ws['!merges']=[];
+  sectionRowIdxs.forEach(idx=>{
+    ws['!merges'].push({s:{r:idx,c:1},e:{r:idx,c:8}});
+    rows[idx]={hpt:22};
+    COLS.forEach(col=>{
+      const addr=col+(idx+1);
+      if(ws[addr]) ws[addr].s={
+        font:{bold:true,color:{rgb:WHITE},sz:11},
+        fill:{fgColor:{rgb:LIGHTNAVY}},
+        alignment:{horizontal:'left',vertical:'center'}
+      };
+    });
+    // Aunque solo la celda B tiene texto, coloreamos toda la fila fusionada para que el
+    // fondo se vea uniforme incluso si algún visor no respeta la fusión
+    const bAddr='B'+(idx+1);
+    if(!ws[bAddr]) ws[bAddr]={t:'s',v:''};
+  });
+  ws['!rows']=rows;
+
+  // Filas de datos: todo centrado, sin bordes. Blanco en el detalle de publicaciones, y
+  // amarillo con texto navy en la fila de total de cada anunciante. En todas las filas
+  // (total o detalle), % y Var. € van en rojo si son negativos y verde si son positivos.
+  rowMeta.forEach(({rowIdx,isTotal,lines})=>{
+    const rowNum=rowIdx+1;
+    COLS.forEach(col=>{
+      const addr=col+rowNum;
+      if(!ws[addr]) return;
+      ws[addr].s={
+        alignment:{horizontal:'center',vertical:'center'},
+        fill:{fgColor:{rgb:isTotal?TOTALBG:WHITE}},
+        font:isTotal?{bold:true,color:{rgb:NAVY}}:{},
+        border:{bottom:{style:'thin',color:{rgb:'FFE2E6EC'}}}
+      };
+    });
+    ['E','F'].forEach(col=>{ const addr=col+rowNum; if(ws[addr]) ws[addr].z='#,##0" €"'; });
+    const dAddr='D'+rowNum;
+    if(ws[dAddr]){
+      const baseFont=(ws[dAddr].s&&ws[dAddr].s.font)?ws[dAddr].s.font:{};
+      ws[dAddr].s=Object.assign({},ws[dAddr].s,{
+        alignment:{horizontal:'center',vertical:'center',wrapText:true},
+        font:Object.assign({},baseFont,{sz:10})
+      });
+    }
+    if(lines>1) rows[rowIdx]={hpt:lines*14+4};
+    const fAddr='H'+rowNum;
+    if(ws[fAddr]){
+      ws[fAddr].z='+#,##0" €";-#,##0" €"';
+      if(typeof ws[fAddr].v==='number'&&ws[fAddr].v!==0){
+        const color=ws[fAddr].v<0?RED:GREEN;
+        ws[fAddr].s.font=Object.assign({},ws[fAddr].s.font,{color:{rgb:color}});
+      }
+    }
+    const eAddr='G'+rowNum;
+    if(ws[eAddr]&&ws[eAddr].v!==null&&ws[eAddr].v!==undefined){
+      ws[eAddr].z='0.0%';
+      if(ws[eAddr].v!==0){
+        const color=ws[eAddr].v<0?RED:GREEN;
+        ws[eAddr].s.font=Object.assign({},ws[eAddr].s.font,{color:{rgb:color}});
+      }
+    }
+  });
+  ws['!rows']=rows;
+
+  // Título y subtítulo por encima de la tabla
+  if(ws['B1']) ws['B1'].s={font:{bold:true,sz:14,color:{rgb:NAVY}}};
+  if(ws['B2']) ws['B2'].s={font:{sz:10,color:{rgb:'FF6B7280'}}};
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Anunciantes');
+  const fname=`Anunciantes_${sanitizeFilename(selectedSector)}${selectedZona?'_'+sanitizeFilename(selectedZona):''}_${lastYear}${progOn?'_ConProgramatica':''}.xlsx`;
+
+  // La librería de Excel no expone una opción directa para quitar las líneas de cuadrícula
+  // de la hoja, así que generamos el .xlsx normal y luego editamos el XML interno del zip
+  // para desactivarlas antes de descargar.
+  try{
+    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    const zip=await JSZip.loadAsync(wbout);
+    const sheetFiles=Object.keys(zip.files).filter(f=>/^xl\/worksheets\/sheet\d+\.xml$/.test(f));
+    for(const f of sheetFiles){
+      let xmlStr=await zip.file(f).async('string');
+      xmlStr=xmlStr.replace(/<sheetView\b/,'<sheetView showGridLines="0"');
+      zip.file(f,xmlStr);
+    }
+    const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(e){
+    // Si algo falla en el post-proceso, exportamos igualmente con el método normal
+    XLSX.writeFile(wb,fname,{bookType:'xlsx'});
+  }
+}
+function exportSectorPDF(){
+  const data=computeSectorItems();
+  if(data.reason!=='ok') return;
+  const {items,lastYear,prevYear,lastLabel,prevLabel,progOn}=data;
+  const zonaTxt=selectedZona||'Todas';
+  const progTxt=progOn?'Con Programática':'Sin Programática';
+
+  const { jsPDF }=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+
+  doc.setFontSize(15);
+  doc.setTextColor(13,35,64);
+  doc.text(`Anunciantes por Sector: ${selectedSector}`,40,42);
+  doc.setFontSize(10.5);
+  doc.setTextColor(90,90,90);
+  doc.text(`Zona: ${zonaTxt}   ·   ${progTxt}   ·   ${prevLabel} vs ${lastLabel}`,40,60);
+
+  const LIGHTNAVY=[31,78,121];
+
+  function sectionHeaderRow(label){
+    return [{content:label,colSpan:7,styles:{fillColor:LIGHTNAVY,textColor:[255,255,255],fontStyle:'bold',fontSize:9.5,halign:'left',cellPadding:{top:5,bottom:5,left:6,right:6},lineWidth:0}}];
+  }
+  function spacerRow(){
+    return [{content:'',colSpan:7,styles:{minCellHeight:3,cellPadding:0,fontSize:1,lineWidth:0}}];
+  }
+  function pushAdvertiserRows(list){
+    list.forEach(it=>{
+      const pct=calcPct(it.last,it.prev);
+      body.push([
+        it.anunciante+(it.hasProg?'  🛰':''),
+        '(Total anunciante)',
+        '',
+        formatEUR(it.prev),
+        formatEUR(it.last),
+        formatPct(pct),
+        formatDeltaEUR(it.last-it.prev)
+      ]);
+      it.pubItems.forEach(p=>{
+        const pPct=calcPct(p.pLast,p.pPrev);
+        body.push([
+          '',
+          p.pub+(p.hasProg?'  🛰':''),
+          formatProductosComparativa(p.prodPrev,p.prodLast),
+          formatEUR(p.pPrev),
+          formatEUR(p.pLast),
+          formatPct(pPct),
+          formatDeltaEUR(p.pLast-p.pPrev)
+        ]);
+      });
+    });
+  }
+
+  function bigGapRow(){
+    return [{content:'',colSpan:7,styles:{minCellHeight:24,cellPadding:0,fontSize:1,lineWidth:0}}];
+  }
+
+  const body=[];
+  const negItems=items.filter(it=>(it.last-it.prev)<0);
+  const posItems=items.filter(it=>(it.last-it.prev)>=0);
+
+  body.push(spacerRow());
+  body.push(sectionHeaderRow('Anunciantes en Negativo'));
+  body.push(spacerRow());
+  pushAdvertiserRows(negItems);
+  body.push(bigGapRow());
+  body.push(sectionHeaderRow('Anunciantes en Positivo'));
+  body.push(spacerRow());
+  pushAdvertiserRows(posItems);
+
+  doc.autoTable({
+    startY:74,
+    head:[['Anunciante','Publicación',`Producto(s) ${prevYear} vs ${lastYear}`,prevLabel,lastLabel,'% Var.','Var. €']],
+    body,
+    styles:{fontSize:8.5,cellPadding:5,lineColor:[226,230,236],lineWidth:.5},
+    headStyles:{fillColor:[13,35,64],textColor:255,fontStyle:'bold',fontSize:9,halign:'center'},
+    alternateRowStyles:{fillColor:[247,249,251]},
+    columnStyles:{
+      0:{cellWidth:130,fontStyle:'bold'},
+      1:{cellWidth:110},
+      2:{cellWidth:170,halign:'center',fontSize:7.5},
+      3:{cellWidth:70,halign:'right'},
+      4:{cellWidth:70,halign:'right'},
+      5:{cellWidth:55,halign:'right'},
+      6:{cellWidth:70,halign:'right'}
+    },
+    didParseCell:(hd)=>{
+      if(hd.section==='body'){
+        if(hd.row.raw.length<7) return; // fila especial (separador o cabecera de sección)
+        const isTotalRow=hd.row.raw[1]==='(Total anunciante)';
+        if(isTotalRow){
+          hd.cell.styles.fillColor=[255,230,105];
+          hd.cell.styles.fontStyle='bold';
+          if(hd.column.index!==5&&hd.column.index!==6){
+            hd.cell.styles.textColor=[13,35,64];
+          }
+        }
+        if(hd.column.index===5||hd.column.index===6){
+          const raw=String(hd.cell.raw||'');
+          if(raw.trim().startsWith('+')) hd.cell.styles.textColor=[31,157,85];
+          else if(raw.trim().startsWith('-')) hd.cell.styles.textColor=[214,69,69];
+        }
+      }
+    }
+  });
+
+  const fname=`Anunciantes_${sanitizeFilename(selectedSector)}${selectedZona?'_'+sanitizeFilename(selectedZona):''}_${lastYear}${progOn?'_ConProgramatica':''}.pdf`;
+  doc.save(fname);
+}
+
+document.addEventListener('DOMContentLoaded',autoLoadFromServer);
+</script>
+</body>
+</html>

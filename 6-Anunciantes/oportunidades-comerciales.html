@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radar de Oportunidades Comerciales v0.6.3</title>
+<style>
+:root{
+  --blue:#1769e0;--blue2:#0f54ba;--navy:#13213b;--bg:#f4f7fb;--card:#fff;
+  --text:#19253a;--muted:#66758c;--line:#dfe6ef;--purple:#7754d8;--green:#178b62;
+  --orange:#d97706;--red:#c23b4a;--softblue:#eaf2ff;--softpurple:#f0ebff;
+  --softgreen:#e9f8f1;--softorange:#fff4df;--softred:#fff0f1;--shadow:0 8px 28px rgba(25,45,80,.08);
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+button,input,select{font:inherit}.app{max-width:1580px;margin:auto;padding:24px 28px 56px}
+.hero{display:flex;gap:24px;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);font-weight:800;margin-bottom:7px}
+h1{margin:0;font-size:31px;line-height:1.12;color:var(--navy)}.subtitle{margin:8px 0 0;color:var(--muted);font-size:14px;max-width:850px}
+.snapshot{min-width:285px;background:linear-gradient(135deg,#162a4b,#214b87);color:white;border-radius:16px;padding:15px 18px;box-shadow:var(--shadow)}
+.snapshot strong{display:block;font-size:14px}.snapshot span{display:block;font-size:12px;opacity:.82;margin-top:5px;line-height:1.45}
+.notice{display:flex;align-items:center;gap:10px;background:#fff8e8;border:1px solid #f4d99a;color:#795519;border-radius:12px;padding:11px 14px;margin-bottom:16px;font-size:13px}
+.notice b{color:#5d420f}.tabs{display:flex;gap:8px;margin-bottom:16px}.tab-btn{border:1px solid var(--line);background:white;color:var(--muted);border-radius:10px;padding:9px 15px;font-weight:700;cursor:pointer}.tab-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}.tab-panel{display:none}.tab-panel.active{display:block}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:12px;margin-bottom:14px}.kpi{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px 16px;box-shadow:0 5px 18px rgba(25,45,80,.045)}.kpi-label-row{display:flex;align-items:center;gap:6px;min-height:18px}.kpi .label{font-size:12px;color:var(--muted);font-weight:700}.info-btn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:18px;height:18px;border:1px solid #aebed2;border-radius:50%;background:#fff;color:#5e718b;font-size:11px;font-weight:900;line-height:1;cursor:pointer;padding:0}.info-btn:hover,.info-btn:focus{background:var(--blue);border-color:var(--blue);color:#fff;outline:none}.kpi .value{font-size:25px;font-weight:850;color:var(--navy);margin-top:6px}.kpi .hint{font-size:11px;color:var(--muted);margin-top:4px}.kpi.alert .value{color:var(--red)}.kpi.purple .value{color:var(--purple)}.kpi.green .value{color:var(--green)}
+.summary-panel .panel-head{align-items:center;justify-content:center;text-align:center}.summary-grid.compact{grid-template-columns:repeat(2,minmax(0,1fr));max-width:980px;margin:0 auto}.summary-panel .panel-head>div{width:100%}.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:15px 17px 17px;text-align:center}.summary-card{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:205px;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}.summary-card:hover{border-color:#b8c9df;box-shadow:0 8px 22px rgba(25,45,80,.08);transform:translateY(-1px)}.summary-card.active{border-color:var(--blue);box-shadow:0 0 0 3px #e7f0ff}.summary-card.recovery,.summary-card.drop{background:linear-gradient(180deg,#fff 0%,#fff8f8 100%)}.summary-card.bc,.summary-card.direct,.summary-card.prog{background:linear-gradient(180deg,#fff 0%,#faf8ff 100%)}.summary-card.print{background:linear-gradient(180deg,#fff 0%,#f7fcfa 100%)}.summary-card-head{display:flex;align-items:flex-start;justify-content:center;gap:10px;width:100%}.summary-title-row{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;width:100%}.summary-title{font-size:13px;font-weight:850;color:var(--navy);line-height:1.25}.summary-count{font-size:29px;line-height:1;font-weight:900;color:var(--navy);margin-top:12px}.summary-count-label{font-size:11px;color:var(--muted);margin-top:4px}.summary-amount{font-size:16px;font-weight:850;color:var(--purple);margin-top:11px}.summary-card.recovery .summary-amount,.summary-card.drop .summary-amount{color:var(--red)}.summary-card.print .summary-amount{color:var(--green)}.summary-amount-label{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-top:2px}.summary-top{display:grid;gap:4px;margin-top:11px;min-height:40px;width:100%}.summary-top-item{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:5px 9px;font-size:10px;color:#536278;text-align:center}.summary-top-item span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.summary-top-item b{flex:0 0 auto;color:var(--navy);font-weight:750}.summary-empty{font-size:11px;color:var(--muted);margin-top:11px}.summary-action{align-self:center;margin-top:auto;border:0;background:transparent;color:var(--blue);padding:9px 0 0;font-size:11px;font-weight:850;cursor:pointer}.summary-action:hover{text-decoration:underline}.summary-card.active .summary-action{color:var(--blue2)}
+#tab-radar .analysis-block{margin-bottom:0}
+.analysis-divider{display:flex;align-items:center;gap:18px;height:150px;padding:34px 20px;user-select:none}
+.analysis-divider::before,.analysis-divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#c6d5e7 22%,#c6d5e7 78%,transparent)}
+.analysis-divider-mark{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;border:1px solid #c3d4e8;background:#edf4fc;color:#6883a5;font-size:20px;font-weight:800;line-height:1;box-shadow:0 5px 16px rgba(25,45,80,.08)}
+#priorityActionsPanel{scroll-margin-top:24px}.priority-panel .panel-head{flex-wrap:wrap}.priority-title-row{display:flex;align-items:center;gap:7px}.limit-switch{display:flex;align-items:center;gap:4px;padding:3px;background:#f1f4f8;border:1px solid #e1e7ef;border-radius:10px}.limit-btn{border:0;background:transparent;color:var(--muted);border-radius:7px;padding:7px 10px;font-size:11px;font-weight:850;cursor:pointer}.limit-btn:hover{color:var(--blue2);background:#fff}.limit-btn.active{background:#fff;color:var(--blue);box-shadow:0 2px 7px rgba(25,45,80,.10)}.priority-table{min-width:1220px}.priority-table th:first-child,.priority-table td:first-child{text-align:center;width:82px}.priority-table th:nth-child(2),.priority-table td:nth-child(2){width:230px}.priority-table th:nth-child(3),.priority-table td:nth-child(3){width:540px}.priority-table th:nth-child(4),.priority-table td:nth-child(4){width:160px}.priority-table th:nth-child(5),.priority-table td:nth-child(5){width:190px}.priority-table th:last-child,.priority-table td:last-child{width:100px}.diagnosis-plan{display:grid;gap:8px;text-align:left}.diagnosis-row,.plan-row{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:start;gap:9px}.diagnosis-label,.plan-label{font-size:9px;text-transform:uppercase;letter-spacing:.055em;font-weight:900;padding-top:2px}.diagnosis-label{color:#7d899a}.plan-label{color:var(--blue2)}.diagnosis-text{font-size:12px;line-height:1.4;color:#4b5b71;font-weight:700}.plan-text{font-size:13px;line-height:1.38;color:var(--navy);font-weight:850}.plan-tag{display:inline-flex;align-items:center;justify-content:center;margin-top:6px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:850;background:var(--softblue);color:var(--blue2)}.plan-tag.recovery,.plan-tag.drop{background:var(--softred);color:var(--red)}.plan-tag.bc,.plan-tag.direct,.plan-tag.prog{background:var(--softpurple);color:var(--purple)}.plan-tag.print{background:var(--softgreen);color:var(--green)}
+.economic-base{text-align:right}.economic-base .money{display:block;color:var(--navy)}.economic-base .base-label{display:block;margin-top:3px;font-size:10px;line-height:1.25;color:var(--muted)}
+/* El bloque de acciones se centra por completo para distinguirlo visualmente del resumen global. */
+.priority-panel .panel-head{flex-direction:column;justify-content:center;text-align:center}
+.priority-panel .panel-head>div{width:100%;text-align:center}
+.priority-panel .priority-title-row{justify-content:center}
+.priority-panel .limit-switch{align-self:center}
+.priority-panel .priority-table th,
+.priority-panel .priority-table td{text-align:center!important;vertical-align:middle}
+.priority-panel .diagnosis-plan,
+.priority-panel .economic-base{text-align:center!important}
+.priority-panel .diagnosis-row,.priority-panel .plan-row{text-align:left}
+.priority-panel .plan-tag{justify-content:center}
+
+
+.sales-window-panel .panel-head{flex-wrap:wrap}
+.sales-window-title-row{display:flex;align-items:center;gap:7px}
+.sales-window-actions{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap}
+.window-switch{display:flex;align-items:center;gap:4px;padding:3px;background:#f1f4f8;border:1px solid #e1e7ef;border-radius:10px}
+.window-btn{border:0;background:transparent;color:var(--muted);border-radius:7px;padding:7px 10px;font-size:11px;font-weight:850;cursor:pointer}
+.window-btn:hover{color:var(--blue2);background:#fff}.window-btn.active{background:#fff;color:var(--blue);box-shadow:0 2px 7px rgba(25,45,80,.10)}
+.export-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #b8c9df;background:#fff;color:var(--blue2);border-radius:9px;padding:8px 12px;font-size:11px;font-weight:850;cursor:pointer}
+.export-btn:hover{border-color:var(--blue);background:var(--softblue)}
+.sales-window-table{min-width:1460px}.sales-window-table th,.sales-window-table td{text-align:center;vertical-align:middle}
+.sales-window-table th:nth-child(1),.sales-window-table td:nth-child(1){width:145px}.sales-window-table th:nth-child(2),.sales-window-table td:nth-child(2){width:225px}.sales-window-table th:nth-child(3),.sales-window-table td:nth-child(3),.sales-window-table th:nth-child(4),.sales-window-table td:nth-child(4),.sales-window-table th:nth-child(5),.sales-window-table td:nth-child(5){width:145px}.sales-window-table th:nth-child(6),.sales-window-table td:nth-child(6){width:300px}.sales-window-table th:nth-child(7),.sales-window-table td:nth-child(7){width:330px}.sales-window-table th:nth-child(8),.sales-window-table td:nth-child(8){width:190px}.sales-window-table th:last-child,.sales-window-table td:last-child{width:100px}
+.window-month{font-weight:900;color:var(--navy);text-transform:capitalize}.window-days{font-size:10px;color:var(--muted);margin-top:4px}.window-gap{color:var(--red);font-weight:850}.window-detail{font-size:11px;line-height:1.42;color:#4e5f75}.window-detail b{color:var(--navy)}.window-action{font-size:12px;line-height:1.42;color:var(--navy);font-weight:750}.window-action strong{display:block;color:var(--blue2);margin-bottom:4px}.window-current.zero{color:var(--red)}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:15px}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 17px;border-bottom:1px solid var(--line)}.panel-title{font-weight:850;color:var(--navy)}.panel-note{font-size:12px;color:var(--muted)}
+.controls{display:grid;grid-template-columns:2.1fr repeat(4,1fr);gap:10px;padding:14px 17px}.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800;color:var(--muted);margin-bottom:5px}.field input,.field select{width:100%;height:39px;border:1px solid var(--line);border-radius:9px;padding:0 10px;background:#fff;color:var(--text);outline:none}.field input:focus,.field select:focus{border-color:#76a9ef;box-shadow:0 0 0 3px #e9f2ff}
+.scope-filter{padding:15px 17px 3px;border-bottom:1px solid #edf1f6;background:linear-gradient(180deg,#fbfdff 0%,#fff 100%);text-align:center}.scope-filter-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:850;margin-bottom:10px}.scope-buttons{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap}.scope-btn{min-width:142px;border:1px solid #c9d6e7;background:#fff;color:#40546f;border-radius:999px;padding:10px 16px;font-size:12px;font-weight:900;letter-spacing:.025em;cursor:pointer;transition:all .16s ease}.scope-btn:hover{border-color:#8eb4e9;color:var(--blue2);background:#f6f9ff;transform:translateY(-1px)}.scope-btn.active{border-color:var(--blue);background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(23,105,224,.22)}.scope-btn[data-scope="programatica"].active{border-color:var(--purple);background:var(--purple);box-shadow:0 6px 16px rgba(119,84,216,.22)}.scope-note{min-height:32px;margin-top:9px;font-size:11px;line-height:1.45;color:var(--muted)}.scope-note b{color:var(--navy)}.field select:disabled{background:#f3f5f8;color:#8a97a8;cursor:not-allowed}.media-filter{margin-top:14px;padding:14px 0 3px;border-top:1px dashed #dce5f1}.media-buttons{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}.media-btn{min-width:132px;border:1px solid #cbd7e7;background:#f9fbfe;color:#435873;border-radius:10px;padding:10px 18px;font-size:12px;font-weight:900;letter-spacing:.04em;cursor:pointer;transition:all .16s ease}.media-btn:hover{transform:translateY(-1px);border-color:#8eb4e9;background:#fff;color:var(--blue2)}.media-btn.active{color:#fff;border-color:var(--blue);background:var(--blue);box-shadow:0 6px 16px rgba(23,105,224,.20)}.media-btn[data-media="print"].active{background:#1d805c;border-color:#1d805c;box-shadow:0 6px 16px rgba(29,128,92,.20)}.media-btn[data-media="eventos"].active{background:#bd7020;border-color:#bd7020;box-shadow:0 6px 16px rgba(189,112,32,.20)}.media-note{min-height:31px;margin-top:9px;font-size:11px;line-height:1.45;color:var(--muted)}.media-note b{color:var(--navy)}
+.panel-actions{display:flex;align-items:center;gap:8px}.criteria-btn[aria-expanded="true"]{background:var(--softpurple);border-color:#cfc2f6;color:var(--purple)}.criteria-wrap{display:none;border-top:1px solid #edf1f6;background:#fbfcfe}.criteria-wrap.open{display:block}.criteria-note{padding:12px 17px 0;color:var(--muted);font-size:11px;line-height:1.45}.rulebar{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:10px 17px 15px}.rule{background:#f8fafc;border:1px solid #e6ebf2;border-radius:10px;padding:9px}.rule label{font-size:10px;display:block;color:var(--muted);font-weight:750;margin-bottom:4px}.rule input{width:100%;border:0;background:transparent;color:var(--purple);font-weight:850;outline:none;font-variant-numeric:tabular-nums}
+.table-wrap{overflow:auto;border-radius:0 0 16px 16px}.data-table{width:100%;border-collapse:separate;border-spacing:0;min-width:1080px}.data-table th{position:sticky;top:0;background:#f6f8fb;color:#5d6c82;text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.035em;border-bottom:1px solid var(--line);z-index:1}.data-table td{padding:11px 12px;border-bottom:1px solid #edf1f6;font-size:13px;vertical-align:middle}.data-table tr:hover td{background:#fbfdff}.data-table tr:last-child td{border-bottom:0}.right{text-align:right!important}.center{text-align:center!important}.name{font-weight:800;color:var(--navy)}.subtext{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;max-width:270px;overflow:hidden;text-overflow:ellipsis}.money{font-variant-numeric:tabular-nums;font-weight:750}.negative{color:var(--red)}.positive{color:var(--green)}
+.score{display:inline-flex;width:46px;height:29px;align-items:center;justify-content:center;border-radius:8px;font-weight:900}.score.high{background:var(--softred);color:var(--red)}.score.medium{background:var(--softorange);color:var(--orange)}.score.low{background:var(--softblue);color:var(--blue)}
+.badges{display:flex;gap:5px;flex-wrap:wrap}#tab-radar .data-table th:nth-child(6),#tab-radar .data-table td:nth-child(6){text-align:center!important}#tab-radar .data-table td:nth-child(6) .badges{justify-content:center}.badge{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:750;background:var(--softblue);color:var(--blue2);white-space:nowrap}.badge.recovery,.badge.drop{background:var(--softred);color:var(--red)}.badge.bc,.badge.direct,.badge.prog{background:var(--softpurple);color:var(--purple)}.badge.print{background:var(--softgreen);color:var(--green)}
+.detail-btn{border:1px solid #bcd2ef;background:#f4f8ff;color:var(--blue2);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer}.detail-btn:hover{background:var(--blue);color:white;border-color:var(--blue)}
+.empty{padding:34px;text-align:center;color:var(--muted)}.footer-count{padding:10px 16px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
+.matrix-table{table-layout:fixed;min-width:1320px}.matrix-table th:nth-child(1),.matrix-table td:nth-child(1){width:270px}.matrix-table th:nth-child(2),.matrix-table td:nth-child(2){width:190px}.matrix-table th:nth-child(n+3),.matrix-table td:nth-child(n+3){width:122px;text-align:center!important}.matrix-table tbody td:nth-child(3){background:#eef4fb}.matrix-table tbody tr:hover td:nth-child(3){background:#e7f0fa}.matrix-cell{min-width:0}.matrix-table .channel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}.channel .amt{font-weight:800}.matrix-table tbody td:nth-child(6) .amt,.matrix-table tbody td:nth-child(7) .amt{font-weight:400;font-style:italic;font-size:12px;color:#536278}.matrix-total-current{font-weight:850;color:var(--navy)}.matrix-loss{margin-top:4px;color:var(--red);font-size:12px;font-weight:400;line-height:1.15;white-space:nowrap}.channel .state{font-size:10px;color:var(--muted)}.channel.opportunity{background:var(--softpurple);border-radius:8px;padding:7px}.channel.opportunity .state{color:var(--purple);font-weight:800}
+.method-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:15px}.method-body{padding:17px}.method-body h3{margin:0 0 10px;color:var(--navy)}.method-body p,.method-body li{font-size:13px;color:#536278;line-height:1.6}.method-body ul{padding-left:20px}.source-list{display:grid;gap:9px}.source{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.source b{font-size:13px}.source span{display:block;font-size:11px;color:var(--muted);margin-top:4px}.quality{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.quality div{background:#f7f9fc;border-radius:10px;padding:11px}.quality strong{display:block;font-size:20px;color:var(--navy)}.quality span{font-size:11px;color:var(--muted)}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(14,25,43,.56);z-index:50;padding:24px;overflow:auto}.modal-backdrop.open{display:block}.modal{max-width:1040px;margin:24px auto;background:white;border-radius:18px;box-shadow:0 22px 70px rgba(0,0,0,.22);overflow:hidden}.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:20px 22px;background:linear-gradient(135deg,#13213b,#225698);color:#fff}.modal-head h2{margin:0;font-size:24px}.modal-head p{margin:7px 0 0;font-size:12px;opacity:.8}.close{border:0;background:rgba(255,255,255,.14);color:white;width:34px;height:34px;border-radius:9px;font-size:19px;cursor:pointer}.modal-body{padding:18px 22px 24px}.info-modal{max-width:680px}.info-modal .modal-head{background:linear-gradient(135deg,#263a5d,#1769e0)}.info-explanation{font-size:14px;line-height:1.65;color:#4f5f75}.info-explanation p{margin:0 0 13px}.info-formula,.info-example{border-radius:11px;padding:12px 14px;margin-top:12px}.info-formula{background:#f2f6fc;border:1px solid #dbe5f1}.info-example{background:var(--softpurple);border:1px solid #ddd2ff}.info-formula strong,.info-example strong{display:block;color:var(--navy);font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}.info-current{display:inline-block;background:var(--softblue);color:var(--blue2);border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800;margin-bottom:13px}.modal-kpis{grid-template-columns:repeat(4,1fr)}.two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.mini-table{width:100%;border-collapse:collapse}.mini-table th,.mini-table td{padding:9px 8px;border-bottom:1px solid var(--line);font-size:12px}.mini-table th{text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase}.opp-card{border:1px solid var(--line);border-left:4px solid var(--purple);border-radius:10px;padding:11px 12px;margin-bottom:9px}.opp-card.high{border-left-color:var(--red)}.opp-card h4{margin:0;color:var(--navy);font-size:14px}.opp-card p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.45}.opp-card .opp-meta{font-size:11px;color:var(--purple);font-weight:800;margin-top:7px}.list-chips{display:flex;gap:6px;flex-wrap:wrap}.list-chip{border:1px solid var(--line);background:#f7f9fc;border-radius:8px;padding:6px 8px;font-size:11px}.list-chip b{color:var(--navy)}
+
+
+/* Separación entre filtros y análisis + recordatorio semanal persistente. */
+.filters-analysis-divider{display:flex;align-items:center;gap:20px;height:130px;padding:38px 20px;user-select:none}
+.filters-analysis-divider::before,.filters-analysis-divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#bfd0e4 20%,#bfd0e4 80%,transparent)}
+.filters-analysis-divider-mark{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;border:1px solid #bdd0e6;background:#edf4fc;color:#6682a4;font-size:21px;font-weight:850;line-height:1;box-shadow:0 6px 18px rgba(25,45,80,.09)}
+.weekly-reminder{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;padding:13px 15px;border:1px solid #efd39b;border-radius:13px;background:#fff8e8;box-shadow:0 5px 18px rgba(25,45,80,.045)}
+.weekly-reminder-main{display:flex;align-items:center;gap:11px;min-width:0}.weekly-reminder-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:#fff0c9;color:#9a6507;font-size:17px;font-weight:900}.weekly-reminder-copy{display:grid;gap:3px}.weekly-reminder-copy strong{font-size:12px;color:#60420e}.weekly-reminder-copy span{font-size:11px;line-height:1.4;color:#7b5d25}.weekly-reminder-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.weekly-reminder .weekly-btn{background:#fff}.weekly-reminder.pending,.weekly-reminder.changed{border-color:#efd39b;background:#fff8e8}.weekly-reminder.saved{border-color:#b9dfcf;background:#eef9f4}.weekly-reminder.saved .weekly-reminder-icon{background:#dff3ea;color:var(--green)}.weekly-reminder.saved .weekly-reminder-copy strong{color:#126b4d}.weekly-reminder.saved .weekly-reminder-copy span{color:#487262}.weekly-reminder.loading{border-color:#cbd8e8;background:#f5f8fc}.weekly-reminder.loading .weekly-reminder-icon{background:#e7eef7;color:#6682a4}.weekly-reminder.loading .weekly-reminder-copy strong{color:var(--navy)}.weekly-reminder.loading .weekly-reminder-copy span{color:var(--muted)}
+.tabs{align-items:center;margin-bottom:24px}.tab-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px}.tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 6px;border-radius:999px;background:#fff0c9;color:#956000;font-size:9px;font-weight:900;line-height:1;white-space:nowrap}.tab-btn.active .tab-badge{background:rgba(255,255,255,.2);color:#fff}.tab-badge.saved{background:#dff3ea;color:var(--green)}.tab-badge.changed,.tab-badge.pending{background:#fff0c9;color:#956000}.tab-badge.loading{background:#e7eef7;color:#66758c}
+#tab-weekly .weekly-panel{margin-bottom:0}
+
+/* Comparación semanal y fotografías guardadas en el navegador. */
+.weekly-panel{scroll-margin-top:24px}.weekly-panel .panel-head{align-items:flex-start;flex-wrap:wrap}.weekly-title-row{display:flex;align-items:center;gap:7px}.weekly-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.weekly-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #b8c9df;background:#fff;color:var(--blue2);border-radius:9px;padding:8px 11px;font-size:11px;font-weight:850;cursor:pointer;white-space:nowrap}.weekly-btn:hover{border-color:var(--blue);background:var(--softblue)}.weekly-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.weekly-btn.primary:hover{background:var(--blue2)}.weekly-btn.danger{color:var(--red);border-color:#e8bcc2}.weekly-btn.danger:hover{background:var(--softred);border-color:#dc8f99}.weekly-btn:disabled{opacity:.45;cursor:not-allowed}.weekly-file-input{display:none}.weekly-reference{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:12px 17px;background:#f8fafc;border-bottom:1px solid var(--line)}.weekly-reference-copy{font-size:11px;color:var(--muted);line-height:1.45}.weekly-reference-copy b{color:var(--navy)}.weekly-reference-select{display:flex;align-items:center;gap:8px}.weekly-reference-select label{font-size:10px;text-transform:uppercase;letter-spacing:.045em;color:var(--muted);font-weight:850}.weekly-reference-select select{min-width:245px;border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 10px;color:var(--text);font-size:11px}.weekly-kpis{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:11px;padding:15px 17px 6px}.weekly-kpi{border:1px solid var(--line);border-radius:13px;padding:13px 14px;background:#fff;cursor:pointer;text-align:center;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}.weekly-kpi:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(25,45,80,.07)}.weekly-kpi.active{box-shadow:0 0 0 3px #e7f0ff;border-color:var(--blue)}.weekly-kpi.improved{background:linear-gradient(180deg,#fff 0%,#f1fbf6 100%)}.weekly-kpi.worsened,.weekly-kpi.new{background:linear-gradient(180deg,#fff 0%,#fff5f5 100%)}.weekly-kpi.resolved{background:linear-gradient(180deg,#fff 0%,#f4f0ff 100%)}.weekly-kpi-label{font-size:11px;font-weight:850;color:var(--muted)}.weekly-kpi-value{font-size:25px;line-height:1;font-weight:900;color:var(--navy);margin-top:8px}.weekly-kpi.improved .weekly-kpi-value{color:var(--green)}.weekly-kpi.worsened .weekly-kpi-value,.weekly-kpi.new .weekly-kpi-value{color:var(--red)}.weekly-kpi.resolved .weekly-kpi-value{color:var(--purple)}.weekly-kpi-amount{font-size:11px;color:var(--muted);margin-top:6px}.weekly-filterbar{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;padding:10px 17px 13px}.weekly-category-btn{border:0;background:#f1f4f8;color:var(--muted);border-radius:8px;padding:7px 10px;font-size:10px;font-weight:850;cursor:pointer}.weekly-category-btn:hover{background:#e7eef7;color:var(--blue2)}.weekly-category-btn.active{background:var(--blue);color:#fff}.weekly-table{min-width:1320px}.weekly-table th,.weekly-table td{text-align:center!important}.weekly-table th:first-child,.weekly-table td:first-child{width:155px}.weekly-table th:nth-child(2),.weekly-table td:nth-child(2){width:220px}.weekly-table th:nth-child(3),.weekly-table td:nth-child(3),.weekly-table th:nth-child(4),.weekly-table td:nth-child(4),.weekly-table th:nth-child(5),.weekly-table td:nth-child(5){width:145px}.weekly-table th:nth-child(6),.weekly-table td:nth-child(6){width:460px}.weekly-table th:nth-child(7),.weekly-table td:nth-child(7){width:185px}.weekly-change-tags{display:flex;justify-content:center;gap:5px;flex-wrap:wrap}.weekly-change-tag{display:inline-flex;align-items:center;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:850;white-space:nowrap}.weekly-change-tag.improved{background:var(--softgreen);color:var(--green)}.weekly-change-tag.worsened,.weekly-change-tag.new{background:var(--softred);color:var(--red)}.weekly-change-tag.resolved{background:var(--softpurple);color:var(--purple)}.weekly-change-tag.adjustment{background:var(--softorange);color:var(--orange)}.weekly-reasons{display:grid;gap:4px;text-align:left}.weekly-reason{font-size:11px;line-height:1.4;color:#526177}.weekly-reason b{color:var(--navy)}.weekly-empty{padding:28px 18px;text-align:center;color:var(--muted);font-size:12px}.weekly-empty strong{display:block;color:var(--navy);font-size:14px;margin-bottom:6px}.weekly-adjustment-note{margin:7px 17px 0;padding:9px 11px;border:1px solid #f0d39c;background:#fff8e8;border-radius:9px;color:#76541a;font-size:11px;line-height:1.4}.weekly-adjustment-note button{border:0;background:transparent;color:#9c6405;font-weight:850;cursor:pointer;padding:0;text-decoration:underline}.weekly-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.weekly-history-count{font-size:10px;color:var(--muted)}
+
+@media(max-width:1100px){.weekly-kpis{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(3,1fr)}.summary-grid{grid-template-columns:repeat(2,1fr)}.controls{grid-template-columns:repeat(2,1fr)}.rulebar{grid-template-columns:repeat(3,1fr)}.method-grid,.two-col{grid-template-columns:1fr}.snapshot{display:none}}@media(max-width:650px){.filters-analysis-divider{height:92px;padding:24px 8px}.weekly-reminder{justify-content:center;text-align:center}.weekly-reminder-main{width:100%;justify-content:center}.weekly-reminder-actions{width:100%;justify-content:center}.tabs{justify-content:center;flex-wrap:wrap}.weekly-kpis{grid-template-columns:1fr}.weekly-actions,.weekly-reference{justify-content:center}.weekly-reference-select{width:100%;flex-direction:column}.weekly-reference-select select{width:100%;min-width:0}.app{padding:17px 12px 40px}.summary-grid{grid-template-columns:1fr}.hero h1{font-size:25px}.kpis{grid-template-columns:repeat(2,1fr)}.controls,.rulebar{grid-template-columns:1fr}.scope-buttons{display:grid;grid-template-columns:1fr 1fr}.scope-btn{min-width:0}.modal-kpis{grid-template-columns:repeat(2,1fr)}}
+
+.livebar{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:11px 14px;margin-bottom:16px;box-shadow:0 4px 16px rgba(25,45,80,.04)}
+.live-info{display:flex;align-items:center;gap:10px;min-width:0}.live-dot{width:10px;height:10px;border-radius:50%;background:#9aa7b8;box-shadow:0 0 0 4px #edf1f6}.live-dot.ok{background:var(--green);box-shadow:0 0 0 4px var(--softgreen)}.live-dot.loading{background:var(--orange);box-shadow:0 0 0 4px var(--softorange)}.live-dot.error{background:var(--red);box-shadow:0 0 0 4px var(--softred)}
+.live-copy strong{font-size:13px;color:var(--navy)}.live-copy span{display:block;margin-top:3px;font-size:11px;color:var(--muted)}
+.refresh-btn{border:0;background:var(--blue);color:white;border-radius:9px;padding:9px 13px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}.refresh-btn:hover{background:var(--blue2)}.refresh-btn:disabled{opacity:.55;cursor:wait}
+.loading-backdrop{display:flex;position:fixed;inset:0;background:rgba(244,247,251,.96);z-index:100;align-items:center;justify-content:center;padding:22px}.loading-backdrop.hidden{display:none}.loader-card{width:min(560px,100%);background:white;border:1px solid var(--line);border-radius:18px;padding:25px;box-shadow:0 18px 55px rgba(25,45,80,.15)}.loader-mark{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:22px;margin-bottom:15px}.loader-card h2{margin:0;color:var(--navy);font-size:22px}.loader-card p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.progress-track{height:8px;background:#edf1f6;border-radius:99px;overflow:hidden;margin:18px 0 13px}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .25s ease}.load-steps{display:grid;gap:7px}.load-step{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted);padding:7px 9px;border-radius:8px;background:#f8fafc}.load-step b{color:var(--navy)}.load-step.done{background:var(--softgreen);color:var(--green)}.load-step.error{background:var(--softred);color:var(--red)}.loader-actions{display:none;margin-top:15px}.loader-actions.show{display:flex}.loader-actions button{border:0;background:var(--blue);color:#fff;border-radius:9px;padding:9px 14px;font-weight:800;cursor:pointer}
+.reconcile{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:800}.reconcile.ok{background:var(--softgreen);color:var(--green)}.reconcile.warn{background:var(--softred);color:var(--red)}
+@media(max-width:650px){.livebar{align-items:flex-start;flex-direction:column}.refresh-btn{width:100%}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hero">
+    <div><div class="eyebrow">Política Comercial · Hearst</div><h1>Radar de Oportunidades Comerciales</h1><p class="subtitle">Cruza Producción Digital, Print, Eventos, Cartera de Anunciantes y Programática para priorizar clientes perdidos y oportunidades de venta cruzada.</p></div>
+    <div class="snapshot"><strong id="snapshotTitle">Datos en vivo desde SharePoint</strong><span id="snapshotText">Se analizará toda la información disponible de cada año en los Excel.<br>Solo se reasigna desde Google la parte correspondiente a otros anunciantes.</span></div>
+  </div>
+  <div class="notice"><span>🔄</span><div><b>Datos conectados a SharePoint.</b> Cada vez que se abre o se pulsa Actualizar, el Radar vuelve a descargar los cinco Excel y recalcula las oportunidades.</div></div>
+<div class="livebar"><div class="live-info"><span class="live-dot loading" id="liveDot"></span><div class="live-copy"><strong id="liveTitle">Preparando conexión…</strong><span id="liveDetail">Todavía no se han analizado los archivos.</span></div></div><button class="refresh-btn" id="refreshBtn">Actualizar datos</button></div>
+
+  <div class="panel" id="filtersPanel">
+    <div class="panel-head"><div><div class="panel-title">Filtros generales</div><div class="panel-note">Estos filtros, el ámbito comercial y la fuente analizada afectan a todo el dashboard: cambios semanales, resumen, acciones prioritarias, próximas ventanas de venta y Matriz 360º.</div></div><div class="panel-actions"><button class="detail-btn criteria-btn" id="criteriaBtn" aria-expanded="false">Ajustar criterios</button><button class="detail-btn" id="resetBtn">Restablecer</button></div></div>
+    <div class="scope-filter">
+      <div class="scope-filter-title">Ámbito comercial</div>
+      <div class="scope-buttons" role="group" aria-label="Ámbito comercial">
+        <button type="button" class="scope-btn" data-scope="lujo" aria-pressed="false">LUJO</button>
+        <button type="button" class="scope-btn" data-scope="lifestyle" aria-pressed="false">LIFESTYLE</button>
+        <button type="button" class="scope-btn" data-scope="barcelona" aria-pressed="false">BARCELONA</button>
+        <button type="button" class="scope-btn" data-scope="internacional" aria-pressed="false">INTERNACIONAL</button>
+        <button type="button" class="scope-btn" data-scope="programatica" aria-pressed="false">PROGRAMÁTICA</button>
+      </div>
+      <div class="scope-note" id="scopeNote"><b>Total Hearst.</b> No hay ningún ámbito específico seleccionado. Pulsa un botón para aplicar su perímetro a todo el dashboard.</div>
+      <div class="media-filter">
+        <div class="scope-filter-title">Fuente analizada</div>
+        <div class="media-buttons" role="group" aria-label="Fuente analizada">
+          <button type="button" class="media-btn" data-media="digital" aria-pressed="false">DIGITAL</button>
+          <button type="button" class="media-btn" data-media="print" aria-pressed="false">PRINT</button>
+          <button type="button" class="media-btn" data-media="eventos" aria-pressed="false">EVENTOS</button>
+        </div>
+        <div class="media-note" id="mediaNote"><b>Visión conjunta.</b> Se analizan Producción Digital, Print y Eventos. La Cartera de Anunciantes se utiliza siempre.</div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="field"><label>Buscar anunciante</label><input id="search" placeholder="Nombre del anunciante…" /></div>
+      <div class="field"><label>Comercial</label><select id="commercial"><option value="">Todos</option></select></div>
+      <div class="field"><label>Sector</label><select id="sector"><option value="">Todos</option></select></div>
+      <div class="field"><label>Tipo de oportunidad</label><select id="oppType"><option value="">Todas</option></select></div>
+      <div class="field"><label>Prioridad</label><select id="priority"><option value="">Todas</option><option>Alta</option><option>Media</option><option>Baja</option></select></div>
+    </div>
+    <div class="criteria-wrap" id="criteriaWrap">
+      <div class="criteria-note">Estos valores determinan cuándo un caso se considera una oportunidad. No necesitas tocarlos en el uso habitual; sirven para hacer el Radar más o menos exigente.</div>
+      <div class="rulebar">
+        <div class="rule"><label>Perdido: histórico mínimo (€)</label><input id="tRecovery" type="text" inputmode="numeric" data-threshold-kind="currency" value="5.000 €"></div>
+        <div class="rule"><label>Caída mínima (%)</label><input id="tDropPct" type="text" inputmode="numeric" data-threshold-kind="percent" value="30 %"></div>
+        <div class="rule"><label>Pérdida mínima (€)</label><input id="tDropLoss" type="text" inputmode="numeric" data-threshold-kind="currency" value="5.000 €"></div>
+        <div class="rule"><label>Print mínimo sin Digital (€)</label><input id="tPrint" type="text" inputmode="numeric" data-threshold-kind="currency" value="5.000 €"></div>
+        <div class="rule"><label>BC mínimo sin Social (€)</label><input id="tBC" type="text" inputmode="numeric" data-threshold-kind="currency" value="3.000 €"></div>
+        <div class="rule"><label>Directo mínimo sin Programática (€)</label><input id="tDirect" type="text" inputmode="numeric" data-threshold-kind="currency" value="10.000 €"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters-analysis-divider" aria-hidden="true"><span class="filters-analysis-divider-mark">⌄</span></div>
+
+  <div class="weekly-reminder loading" id="weeklyReminder">
+    <div class="weekly-reminder-main"><span class="weekly-reminder-icon" id="weeklyReminderIcon">↻</span><div class="weekly-reminder-copy"><strong id="weeklyReminderTitle">Comprobando la referencia semanal…</strong><span id="weeklyReminderText">El aviso se actualizará cuando terminen de cargarse los Excel.</span></div></div>
+    <div class="weekly-reminder-actions"><button type="button" class="weekly-btn" id="weeklyQuickOpenBtn">Ver cambios semanales</button><button type="button" class="weekly-btn primary" id="weeklyQuickSaveBtn" disabled>Guardar fotografía semanal</button></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="radar">Radar</button>
+    <button class="tab-btn" data-tab="weekly">Cambios semanales <span class="tab-badge loading" id="weeklyTabBadge">…</span></button>
+    <button class="tab-btn" data-tab="matrix">Matriz 360º</button>
+    <button class="tab-btn" data-tab="method">Datos y metodología</button>
+  </div>
+
+  <section class="tab-panel active" id="tab-radar">
+
+    <div class="panel summary-panel analysis-block">
+      <div class="panel-head"><div><div class="panel-title">Resumen de oportunidades</div><div class="panel-note">Foto global de las seis reglas que ya utiliza el Radar. Pulsa “Ver anunciantes” para filtrar y bajar directamente a Acciones comerciales prioritarias.</div></div></div>
+      <div class="summary-grid" id="opportunitySummary"></div>
+    </div>
+    <div class="analysis-divider" aria-hidden="true"><span class="analysis-divider-mark">⌄</span></div>
+    <div class="panel priority-panel analysis-block" id="priorityActionsPanel">
+      <div class="panel-head">
+        <div><div class="priority-title-row"><div class="panel-title">Acciones comerciales prioritarias</div><button type="button" class="info-btn" onclick="openPriorityInfo()" aria-label="Explicar acciones comerciales prioritarias" title="Ver cómo se seleccionan">i</button></div><div class="panel-note" id="priorityActionsNote">Una acción principal por anunciante, ordenada por score y volumen económico.</div></div>
+        <div class="limit-switch" aria-label="Número de acciones mostradas"><button type="button" class="limit-btn active" data-action-limit="10">Top 10</button><button type="button" class="limit-btn" data-action-limit="25">Top 25</button><button type="button" class="limit-btn" data-action-limit="all">Todas</button></div>
+      </div>
+      <div class="table-wrap"><table class="data-table priority-table"><thead><tr><th>Prioridad</th><th>Anunciante</th><th>Diagnóstico y plan de acción</th><th class="right">Base económica</th><th>Comercial</th><th>Ficha</th></tr></thead><tbody id="priorityActionsBody"></tbody></table></div>
+      <div class="footer-count" id="priorityActionsCount"></div>
+    </div>
+    <div class="analysis-divider" aria-hidden="true"><span class="analysis-divider-mark">⌄</span></div>
+    <div class="panel sales-window-panel analysis-block" id="salesWindowsPanel">
+      <div class="panel-head">
+        <div><div class="sales-window-title-row"><div class="panel-title">Próximas ventanas de venta</div><button type="button" class="info-btn" onclick="openSalesWindowInfo()" aria-label="Explicar próximas ventanas de venta" title="Ver cómo se calculan">i</button></div><div class="panel-note" id="salesWindowsNote">Anunciantes que activaron en estas fechas el año anterior y todavía no han renovado el mismo volumen.</div></div>
+        <div class="sales-window-actions">
+          <div class="window-switch" aria-label="Horizonte de próximas ventanas"><button type="button" class="window-btn" data-sales-window="30">30 días</button><button type="button" class="window-btn" data-sales-window="60">60 días</button><button type="button" class="window-btn active" data-sales-window="90">90 días</button><button type="button" class="window-btn" data-sales-window="yearEnd">Hasta final de año</button></div>
+          <div class="window-switch" aria-label="Número de ventanas mostradas"><button type="button" class="window-btn active" data-sales-limit="25">Top 25</button><button type="button" class="window-btn" data-sales-limit="all">Todas</button></div>
+          <button type="button" class="export-btn" id="exportSalesWindowsBtn">Exportar Excel</button>
+        </div>
+      </div>
+      <div class="table-wrap"><table class="data-table sales-window-table"><thead><tr><th>Ventana</th><th>Anunciante</th><th>Histórico <span id="salesWindowPriorYear"></span></th><th>Reservado <span id="salesWindowCurrentYear"></span></th><th>Diferencia pendiente</th><th>Qué contrató</th><th>Acción sugerida</th><th>Comercial</th><th>Ficha</th></tr></thead><tbody id="salesWindowsBody"></tbody></table></div>
+      <div class="footer-count" id="salesWindowsCount"></div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab-weekly">
+    <div class="panel weekly-panel analysis-block" id="weeklyChangesPanel">
+      <div class="panel-head">
+        <div><div class="weekly-title-row"><div class="panel-title">Cambios desde la última actualización</div><button type="button" class="info-btn" onclick="openWeeklyInfo()" aria-label="Explicar comparación semanal" title="Ver cómo funciona">i</button></div><div class="panel-note" id="weeklyChangesNote">Compara los datos vivos con una fotografía semanal guardada en este navegador.</div></div>
+        <div class="weekly-actions">
+          <button type="button" class="weekly-btn primary" id="saveWeeklySnapshotBtn">Guardar fotografía semanal</button>
+          <button type="button" class="weekly-btn" id="exportWeeklyHistoryBtn">Exportar JSON</button>
+          <button type="button" class="weekly-btn" id="importWeeklyHistoryBtn">Importar JSON</button>
+          <button type="button" class="weekly-btn danger" id="deleteWeeklySnapshotBtn">Borrar referencia</button>
+          <input type="file" class="weekly-file-input" id="weeklyHistoryFile" accept=".json,application/json">
+        </div>
+      </div>
+      <div class="weekly-reference">
+        <div class="weekly-reference-copy" id="weeklyReferenceCopy"><b>Primera semana:</b> guarda una fotografía para utilizarla como referencia en la siguiente actualización.</div>
+        <div class="weekly-reference-select"><label for="weeklyBaselineSelect">Comparar con</label><select id="weeklyBaselineSelect"><option value="">Sin fotografías guardadas</option></select></div>
+      </div>
+      <div class="weekly-kpis" id="weeklyKpis"></div>
+      <div class="weekly-filterbar" id="weeklyFilterbar">
+        <button type="button" class="weekly-category-btn active" data-weekly-category="all">Todos los cambios</button>
+        <button type="button" class="weekly-category-btn" data-weekly-category="improved">Mejoran</button>
+        <button type="button" class="weekly-category-btn" data-weekly-category="worsened">Empeoran</button>
+        <button type="button" class="weekly-category-btn" data-weekly-category="new">Nuevos problemas</button>
+        <button type="button" class="weekly-category-btn" data-weekly-category="resolved">Oportunidades resueltas</button>
+        <button type="button" class="weekly-category-btn" data-weekly-category="adjustment">Ajustes históricos</button>
+      </div>
+      <div class="weekly-adjustment-note" id="weeklyAdjustmentNote" hidden></div>
+      <div class="table-wrap"><table class="data-table weekly-table"><thead><tr><th>Cambio</th><th>Anunciante</th><th>Referencia</th><th>Actual</th><th>Variación semanal</th><th>Qué ha cambiado</th><th>Comercial</th><th>Ficha</th></tr></thead><tbody id="weeklyChangesBody"></tbody></table></div>
+      <div class="footer-count weekly-footer"><span id="weeklyChangesCount"></span><span class="weekly-history-count" id="weeklyHistoryCount"></span></div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab-matrix">
+    <div class="panel">
+      <div class="panel-head"><div><div class="panel-title">Matriz 360º por anunciante</div><div class="panel-note">Importes de toda la información disponible de cada año y del ámbito comercial seleccionado. Debajo del Total actual se muestra en rojo, entre paréntesis, la pérdida frente al año anterior. Los fondos morados señalan huecos detectados por las reglas activas.</div></div></div>
+      <div class="table-wrap"><table class="data-table matrix-table"><thead><tr><th>Anunciante</th><th>Comercial</th><th>Total</th><th>Print</th><th>Digital</th><th>BC</th><th>Social</th><th>Eventos</th><th>Programática</th><th>Ficha</th></tr></thead><tbody id="matrixBody"></tbody></table></div>
+      <div class="footer-count" id="matrixCount"></div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab-method">
+    <div class="method-grid">
+      <div class="panel"><div class="panel-head"><div class="panel-title">Cómo se construye el análisis en vivo</div></div><div class="method-body">
+        <h3>Una única visión del anunciante</h3>
+        <p>Se agrupan los datos por un nombre normalizado del anunciante, eliminando diferencias de mayúsculas, acentos, puntuación y formas societarias habituales.</p>
+        <ul>
+          <li><b>Producción Digital:</b> el importe de Google se mantiene como base y solo se le descuenta la parte del Excel de Programática que corresponde a anunciantes distintos de Google. El ingreso total no aumenta.</li>
+          <li><b>Programática:</b> se usa <i>PROGR</i> como anunciante real. Los importes cuyo anunciante no es Google se restan de Google en Digital y se asignan al anunciante correspondiente; la parte cuyo anunciante es Google permanece en Google. Para el año anterior se toma <i>Imp.Neto Ant.</i> y para el año actual <i>Imp.Neto a Comisionar</i>.</li>
+          <li><b>Digital, Print y Eventos:</b> se utilizan todas las líneas disponibles de los dos años detectados, sin aplicar un corte por meses.</li>
+          <li><b>Comercial:</b> Cartera de Anunciantes como fuente principal; si no hay coincidencia, se usa el comercial de producción cuando es identificable.</li>
+        </ul>
+        <p><b>Periodo analizado:</b> se utiliza toda la información disponible de los dos años detectados en cada Excel, sin limitar el análisis al último mes de Programática.</p><p><b>Comparación semanal:</b> las fotografías se guardan en el almacenamiento local de este navegador. El Radar conserva hasta 26 referencias y permite exportarlas o importarlas en formato JSON como copia de seguridad. La comparación semanal recalcula las oportunidades de ambas fechas con los criterios que estén activos en ese momento y separa los cambios del año actual de las correcciones realizadas sobre el histórico.</p><p><b>Próximas ventanas de venta:</b> se revisan los meses que comienzan dentro de los próximos 30, 60 o 90 días, o todos los meses restantes hasta final de año. Se compara el ingreso neto de ese mes del año anterior con lo ya reservado en el mismo mes del año actual. Como los Excel trabajan por mes de inserción, la ventana es orientativa a nivel mensual, no una fecha exacta de campaña.</p><p><b>Otros vendors programáticos:</b> sus importes permanecen incluidos en el total real de Producción Digital, pero no generan oportunidades por anunciante final cuando el Excel no permite identificarlo. Se revisan aparte en el ámbito Programática.</p>
+        <h3>Ámbitos comerciales</h3>
+        <ul>
+          <li><b>Lujo:</b> BRAND EXPERIENCE, CLIENT EXPERIENCE LIFESTYLE y CLIENT EXPERIENCE LUJO; sectores Belleza, Decoración, Finanzas, Joyería/Relojería, Moda y Salud; clases J, K y P.</li>
+          <li><b>Lifestyle:</b> las mismas tres áreas y clases J/K/P, pero con el resto de sectores, excluyendo VENDORS.</li>
+          <li><b>Barcelona:</b> CLIENT EXPERIENCE BARCELONA, todos los sectores excepto VENDORS.</li>
+          <li><b>Internacional:</b> área INTERNACIONAL, todos los sectores excepto VENDORS y clases J/K. En Programática se utiliza INTERNACIONAL DIRECTA.</li>
+          <li><b>Programática:</b> sector VENDORS, todas las clases de orden y desglose por las agencias/plataformas que aparecen como anunciante en Producción Digital.</li>
+        </ul>
+        <p><b>Programática dentro de Lujo, Lifestyle, Barcelona e Internacional:</b> como VENDORS queda fuera de esos ámbitos, el importe del Excel de Programática se incorpora al anunciante y sector reales. No se resta nada dentro de ese ámbito porque la línea VENDORS original no forma parte de su perímetro.</p>
+        <div class="quality" id="quality"></div>
+      </div></div>
+      <div class="panel"><div class="panel-head"><div class="panel-title">Archivos utilizados</div></div><div class="method-body"><div class="source-list" id="sourceList"></div></div></div>
+    </div>
+  </section>
+</div>
+
+
+<div class="loading-backdrop" id="loadingBackdrop"><div class="loader-card">
+  <div class="loader-mark">R</div><h2 id="loaderTitle">Cargando datos desde SharePoint</h2><p id="loaderMessage">Descargando los cinco Excel y preparando el análisis.</p>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><div class="load-steps" id="loadSteps"></div>
+  <div class="loader-actions" id="loaderActions"><button id="retryBtn">Reintentar</button></div>
+</div></div>
+
+<div class="modal-backdrop" id="modalBackdrop"><div class="modal"><div class="modal-head"><div><h2 id="modalTitle"></h2><p id="modalSubtitle"></p></div><button class="close" id="modalClose">×</button></div><div class="modal-body" id="modalBody"></div></div></div>
+<div class="modal-backdrop" id="infoBackdrop"><div class="modal info-modal"><div class="modal-head"><div><h2 id="infoTitle">Cómo se calcula</h2><p id="infoSubtitle">Explicación del indicador</p></div><button class="close" id="infoClose">×</button></div><div class="modal-body" id="infoBody"></div></div></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script>
+'use strict';
+
+const SOURCE_CONFIG = {
+  digital:{file:'PRODUCCION DIGITAL.xlsx',url:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y'},
+  eventos:{file:'PRODUCCION EVENTOS.xlsx',url:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU'},
+  print:{file:'PRODUCCION PRINT.xlsx',url:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU'},
+  cartera:{file:'CARTERA ANUNCIANTES.xlsx',url:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCIBHQxNV8TQZMRLUFWF0VBAerWPCmkXgn0P1b0Qu3Jzxg'},
+  programatica:{file:'ANUNCIANTES PROGRAMATICA.xlsx',url:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBRiKDRGWyhSLPu93vPFOLmAWX_tVsvzvinkrrg8Iym2qE'}
+};
+const SOURCE_ORDER=['digital','eventos','print','cartera','programatica'];
+let DATA={generated:'',period:{priorYear:0,currentYear:0,fromMonth:1,toMonth:12,mode:'all-available'},records:[],views:{},sources:[],quality:{}};
+let evaluated=[];
+let actionLimit=10;
+let salesWindowDays=90;
+let salesWindowLimit=25;
+let lastSalesWindowRows=[];
+let activeSegment='all';
+let activeMedia='all';
+let weeklyHistory=[];
+let weeklyBaselineId='';
+let weeklyCategory='all';
+const SEGMENT_LABELS={all:'Total Hearst',lujo:'Lujo',lifestyle:'Lifestyle',barcelona:'Barcelona',internacional:'Internacional',programatica:'Programática'};
+const MEDIA_LABELS={all:'Digital + Print + Eventos',digital:'Digital + Programática',print:'Print',eventos:'Eventos'};
+const MEDIA_NOTES={all:'Se cruzan Producción Digital, Print y Eventos. La redistribución de Programática se mantiene y la Cartera de Anunciantes se utiliza siempre.',digital:'Se analiza exclusivamente Producción Digital junto con el desglose de Programática. La Cartera de Anunciantes se utiliza siempre.',print:'Se analiza exclusivamente Producción Print. No se añaden datos Digitales, de Programática ni de Eventos. La Cartera de Anunciantes se utiliza siempre.',eventos:'Se analiza exclusivamente Producción Eventos. No se añaden datos Digitales, de Programática ni de Print. La Cartera de Anunciantes se utiliza siempre.'};
+const SEGMENT_NOTES={
+  all:'No hay ningún ámbito específico seleccionado. Se analiza la visión global del anunciante.',
+  lujo:'Áreas Brand Experience, Client Experience Lifestyle y Client Experience Lujo; seis sectores de Lujo; clases J, K y P. Se añade Programática de Madrid de esos mismos sectores.',
+  lifestyle:'Las mismas áreas y clases J/K/P que Lujo, con el resto de sectores excepto VENDORS. Se añade Programática de Madrid de esos sectores.',
+  barcelona:'Área Client Experience Barcelona, todos los sectores excepto VENDORS. Se añade la Programática identificada con AREA Barcelona.',
+  internacional:'Área Internacional, sectores distintos de VENDORS y clases J/K. Se añade la Programática de Internacional Directa.',
+  programatica:'Solo sector VENDORS, con todas las clases de orden. El desglose se realiza por las agencias/plataformas del Excel Digital, sin redistribuirlo por anunciante final. En este ámbito solo se analizan clientes perdidos y caídas interanuales.'
+};
+const LUXURY_SECTORS=new Set(['99001 * BELLEZA E HIGIENE','99002 * DECORACION','99006 * FINANZAS','99008 * JOYERIA/RELOJERIA','99009 * MODA','99013 * SALUD']);
+const SHARED_COMMERCIAL_AREAS=new Set(['BRAND EXPERIENCE','CLIENT EXPERIENCE LIFESTYLE','CLIENT EXPERIENCE LUJO']);
+const ORDER_J='J - PAGO INTERNACIONAL DIRECTO',ORDER_P='P - PAGO LOCAL INDIRECTO',ORDER_K='K - PAGO LOCAL DIRECTO';
+const SHARED_ORDER_CLASSES=new Set([ORDER_J,ORDER_K,ORDER_P]);
+
+function formatThousandsDots(value){
+  const n=Math.round(Number(value)||0);
+  const sign=n<0?'-':'';
+  return sign+String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+}
+function formatEuroForced(value,decimals=0){
+  let n=Number(value);
+  if(!Number.isFinite(n))n=0;
+  const factor=10**decimals;
+  n=Math.round((n+Number.EPSILON)*factor)/factor;
+  if(Object.is(n,-0))n=0;
+  const sign=n<0?'-':'';
+  const fixed=Math.abs(n).toFixed(decimals);
+  const [integer,decimal]=fixed.split('.');
+  const grouped=integer.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return `${sign}${grouped}${decimals?','+decimal:''} €`;
+}
+const fmt={format:value=>formatEuroForced(value,0)};
+const fmt2={format:value=>formatEuroForced(value,2)};
+const pctFmt = new Intl.NumberFormat('es-ES',{style:'percent',maximumFractionDigits:1});
+const nf = new Intl.NumberFormat('es-ES',{maximumFractionDigits:0});
+const thresholdFmt = new Intl.NumberFormat('es-ES',{maximumFractionDigits:0});
+const TYPE_LABELS={recovery:'Cliente perdido',drop:'Caída interanual',print:'Print sin Digital',bc:'BC sin Social',direct:'Directo sin Programática',prog:'Programática sin Directo'};
+const TYPE_SHORT={recovery:'Perdido',drop:'Caída',print:'Print → Digital',bc:'BC → Social',direct:'Directo → Programática',prog:'Programática → Directo'};
+const ACTION_LABELS={recovery:'Plantear plan de recuperación',drop:'Plantear plan de recuperación',print:'Proponer extensión a Digital',bc:'Añadir amplificación Social',direct:'Proponer apoyo Programático',prog:'Proponer activación directa'};
+const ACTION_BASE_LABELS={recovery:'Ingreso del año anterior',drop:'Ingreso perdido frente al año anterior',print:'Ingreso actual en Print',bc:'Ingreso actual en Branded Content',direct:'Contratación directa actual',prog:'Ingreso actual en Programática'};
+const DEFAULTS={tRecovery:5000,tDropPct:30,tDropLoss:5000,tPrint:5000,tBC:3000,tDirect:10000};
+const MONTH_NAMES=['','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MONTH_NAMES_CAP=MONTH_NAMES.map(x=>x?x.charAt(0).toUpperCase()+x.slice(1):'');
+const WEEKLY_STORAGE_KEY='hearst-radar-weekly-history-v1';
+const WEEKLY_MAX_SNAPSHOTS=26;
+const SNAPSHOT_METRIC_KEYS=['total','direct','digital','print','eventos','programatica','bc','social','display'];
+const WEEKLY_CATEGORY_LABELS={improved:'Mejora',worsened:'Empeora',new:'Nuevo problema',resolved:'Oportunidad resuelta',adjustment:'Ajuste histórico'};
+
+function normalText(v){return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();}
+function sectorLabel(v){return String(v??'').replace(/^\s*\d+\s*\*\s*/,'').trim();}
+function sectorListLabel(values){return (values||[]).map(sectorLabel).filter(Boolean).join(' · ');}
+function normalizeAdvertiser(v){
+  let s=normalText(v).replace(/[´’`']/g,' ');
+  s=s.replace(/\bS\.?\s*A\.?\s*U?\.?\b/g,' ').replace(/\bS\.?\s*L\.?\s*U?\.?\b/g,' ');
+  s=s.replace(/\b(SAU|SLU|GMBH|LTD|LIMITED|LLC|PLC)\b/g,' ');
+  return s.replace(/[^A-Z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function monthNumber(v){const m=String(v??'').trim().match(/^(\d{1,2})/);return m?Number(m[1]):0;}
+function num(v){const n=Number(v);return Number.isFinite(n)?n:0;}
+function round2(v){return Math.round((v+Number.EPSILON)*100)/100;}
+function blankMetrics(){return{total:0,direct:0,digital:0,print:0,eventos:0,programatica:0,bc:0,social:0,display:0};}
+function blankDetailMaps(){return{products:new Map(),publications:new Map(),brands:new Map()};}
+function blankSourceDetails(){return{digital:blankDetailMaps(),print:blankDetailMaps(),eventos:blankDetailMaps(),programatica:blankDetailMaps()};}
+function blankMonthlyYear(){const out={};for(let month=1;month<=12;month++)out[month]={...blankMetrics(),products:new Map(),publications:new Map(),brands:new Map(),bySource:blankSourceDetails()};return out;}
+function isProgrammaticFamily(v){return normalText(v).includes('PROGRAMATICA')||normalText(v).includes('PROGRAMMATIC');}
+function isBC(row){const s=normalText([row['Familia'],row['Clase de producto'],row['Producto']].join(' '));return s.includes('BRANDED CONTENT');}
+function isSocial(row){const s=normalText([row['Familia'],row['Clase de producto'],row['Producto']].join(' '));return s.includes('SOCIAL')||/INSTAGRAM|FACEBOOK|TIKTOK|PINTEREST|TWITTER/.test(s);}
+function isDisplay(row){const s=normalText([row['Familia'],row['Clase de producto'],row['Producto']].join(' '));return s.includes('DISPLAY')&&!s.includes('PROGRAMATICA')&&!s.includes('PROGRAMMATIC');}
+function formatDateValue(v){
+  if(v instanceof Date&&!isNaN(v))return v.toLocaleDateString('es-ES');
+  if(typeof v==='number'&&window.XLSX){const d=XLSX.SSF.parse_date_code(v);if(d)return `${String(d.d).padStart(2,'0')}/${String(d.m).padStart(2,'0')}/${d.y}`;}
+  return v?String(v):'No indicada';
+}
+function rowsFrom(wb,sheet){const ws=wb.Sheets[sheet];if(!ws)throw new Error(`No existe la hoja “${sheet}”`);return XLSX.utils.sheet_to_json(ws,{defval:null,raw:true});}
+function metaDate(wb){const ws=wb.Sheets['Meta'];if(!ws)return 'No indicada';const a=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});return formatDateValue(a?.[0]?.[1]);}
+function addMap(map,key,value){if(!key)return;map.set(key,(map.get(key)||0)+value);}
+function topN(map,n=7){return [...map.entries()].filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'es')).slice(0,n).map(([name,value])=>({name,value:round2(value)}));}
+function uniqueSorted(set){return [...set].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));}
+function periodLabel(period){return `Toda la información disponible de ${period.priorYear} frente a ${period.currentYear}`;}
+
+function cacheBusted(url){const u=new URL(url);u.searchParams.set('_radar',Date.now().toString());return u.toString();}
+function setProgress(index,state='loading',detail=''){
+  const total=SOURCE_ORDER.length+2;document.getElementById('progressFill').style.width=`${Math.max(0,Math.min(100,index/total*100))}%`;
+  if(detail)document.getElementById('loaderMessage').textContent=detail;
+  const el=document.querySelector(`[data-step-index="${index}"]`);if(el){el.classList.remove('done','error');if(state==='done')el.classList.add('done');if(state==='error')el.classList.add('error');el.querySelector('span:last-child').textContent=state==='done'?'✓':state==='error'?'Error':'…';}
+}
+function setupLoadingSteps(){
+  const labels=[...SOURCE_ORDER.map(k=>`Descargando ${SOURCE_CONFIG[k].file}`),'Cruzando y normalizando anunciantes','Calculando oportunidades'];
+  document.getElementById('loadSteps').innerHTML=labels.map((x,i)=>`<div class="load-step" data-step-index="${i+1}"><b>${escapeHtml(x)}</b><span>—</span></div>`).join('');
+  document.getElementById('progressFill').style.width='0%';document.getElementById('loaderActions').classList.remove('show');
+}
+function setLiveState(state,title,detail){const dot=document.getElementById('liveDot');dot.className=`live-dot ${state}`;document.getElementById('liveTitle').textContent=title;document.getElementById('liveDetail').textContent=detail;}
+
+async function fetchWorkbook(key,index){
+  const cfg=SOURCE_CONFIG[key];setProgress(index,'loading',`Descargando ${cfg.file}…`);
+  const res=await fetch(cacheBusted(cfg.url),{cache:'no-store',redirect:'follow'});
+  if(!res.ok)throw new Error(`${cfg.file}: respuesta ${res.status}`);
+  const buffer=await res.arrayBuffer();
+  if(buffer.byteLength<1000)throw new Error(`${cfg.file}: la descarga no parece un Excel válido`);
+  const wb=XLSX.read(buffer,{type:'array',cellDates:true});setProgress(index,'done');return{wb,bytes:buffer.byteLength};
+}
+
+function buildCommercialMaps(carteraWb){
+  const aliases=new Map();
+  const diff=carteraWb.Sheets['Comerciales nombres diferentes'];
+  if(diff){const a=XLSX.utils.sheet_to_json(diff,{header:1,defval:null,raw:true});a.forEach(r=>{const cartera=String(r[2]??'').trim(),resto=String(r[3]??'').trim(),exact=String(r[4]??'').trim();const canonical=exact||cartera||resto;if(cartera)aliases.set(normalText(cartera),canonical);if(resto)aliases.set(normalText(resto),canonical);});}
+  const canonical=v=>{const s=String(v??'').trim();return aliases.get(normalText(s))||s;};
+  const portfolio=new Map();
+  ['MADRID','BARCELONA'].forEach(sheet=>rowsFrom(carteraWb,sheet).forEach(row=>{
+    const raw=String(row['Anunciante']??'').trim(),id=normalizeAdvertiser(raw);if(!id)return;
+    if(!portfolio.has(id))portfolio.set(id,{commercials:new Set(),sectors:new Set(),aliases:new Set()});
+    const p=portfolio.get(id),com=canonical(row['COMERCIAL']),sec=String(row['Sector del anunciante']??'').trim();if(com)p.commercials.add(com);if(sec)p.sectors.add(sec);p.aliases.add(raw);
+  }));
+  return{portfolio,canonical};
+}
+
+function buildData(wbs,downloadInfo){
+  const progRows=rowsFrom(wbs.programatica,'Analizador general');
+  const years=progRows.map(r=>Number(r['Año inserción'])).filter(Number.isFinite),currentYear=Math.max(...years),priorYear=currentYear-1;
+  if(!Number.isFinite(currentYear))throw new Error('No se han podido detectar los años del Excel de Programática.');
+  const period={fromMonth:1,toMonth:12,priorYear,currentYear,mode:'all-available'};
+  const programmaticMonths={[priorYear]:new Set(),[currentYear]:new Set()};
+  progRows.forEach(row=>{const year=Number(row['Año inserción']);if(![priorYear,currentYear].includes(year))return;const amount=year===currentYear?num(row['Imp.Neto a Comisionar']):num(row['Imp.Neto Ant.']),month=monthNumber(row['Mes inserción']);if(amount!==0&&month)programmaticMonths[year].add(month);});
+  const {portfolio,canonical}=buildCommercialMaps(wbs.cartera);
+  const viewKeys=['all','lujo','lifestyle','barcelona','internacional','programatica'];
+  const maps=Object.fromEntries(viewKeys.map(k=>[k,new Map()]));
+  const stats={
+    productionRaw:{[priorYear]:0,[currentYear]:0},digitalRaw:{[priorYear]:0,[currentYear]:0},digitalGoogle:{[priorYear]:0,[currentYear]:0},digitalGoogleCovered:{[priorYear]:0,[currentYear]:0},digitalGoogleRows:{[priorYear]:0,[currentYear]:0},
+    progTotal:{[priorYear]:0,[currentYear]:0},progGoogle:{[priorYear]:0,[currentYear]:0},progReassigned:{[priorYear]:0,[currentYear]:0},
+    progGoogleRows:{[priorYear]:0,[currentYear]:0},progReassignedRows:{[priorYear]:0,[currentYear]:0},
+    vendorUnattributed:{[priorYear]:0,[currentYear]:0},vendorRows:{[priorYear]:0,[currentYear]:0},
+    segmentProgrammatic:Object.fromEntries(['lujo','lifestyle','barcelona','internacional'].map(k=>[k,{[priorYear]:0,[currentYear]:0}])),
+    progReassignedByMonth:{[priorYear]:Object.fromEntries(Array.from({length:12},(_,i)=>[i+1,0])),[currentYear]:Object.fromEntries(Array.from({length:12},(_,i)=>[i+1,0]))}
+  };
+  const sourceStats={};
+  function ensure(viewKey,raw){
+    const id=normalizeAdvertiser(raw);if(!id)return null;const recs=maps[viewKey];
+    if(!recs.has(id))recs.set(id,{id,name:String(raw).trim(),aliases:new Set(),productionCommercials:new Set(),sectors:new Set(),areas:new Set(),orderClasses:new Set(),sources:new Set(),m:{[priorYear]:blankMetrics(),[currentYear]:blankMetrics()},monthly:{[priorYear]:blankMonthlyYear(),[currentYear]:blankMonthlyYear()},top:{publications:new Map(),products:new Map(),brands:new Map()},topBySource:blankSourceDetails(),productHistory:{[priorYear]:{bc:new Map(),social:new Map(),display:new Map(),otherDigital:new Map(),print:new Map(),eventos:new Map(),programatica:new Map()},[currentYear]:{bc:new Map(),social:new Map(),display:new Map(),otherDigital:new Map(),print:new Map(),eventos:new Map(),programatica:new Map()}}});
+    const r=recs.get(id);r.aliases.add(String(raw).trim());if(String(raw).trim().length>r.name.length)r.name=String(raw).trim();return r;
+  }
+  function addTop(r,row,amount,year,sourceKey){if(year!==currentYear||amount===0)return;const publication=String(row['Publicación']??row['MEDIO']??'').trim(),product=String(row['Producto']??row['Familia']??'').trim(),brand=String(row['Marca']??'').trim();addMap(r.top.publications,publication,amount);addMap(r.top.products,product,amount);addMap(r.top.brands,brand,amount);const detail=r.topBySource?.[sourceKey];if(detail){addMap(detail.publications,publication,amount);addMap(detail.products,product,amount);addMap(detail.brands,brand,amount);}}
+  function productBucket(row,channel,asProgrammatic=false){if(asProgrammatic)return'programatica';if(channel==='print')return'print';if(channel==='eventos')return'eventos';if(channel==='digital'){if(isBC(row))return'bc';if(isSocial(row))return'social';if(isDisplay(row))return'display';return'otherDigital';}return'otherDigital';}
+  function addProductHistory(r,row,amount,year,bucket){const name=String(row['Producto']??row['Familia']??'Producto sin identificar').trim()||'Producto sin identificar';addMap(r.productHistory[year][bucket],name,amount);}
+  function addMonthly(r,row,amount,year,month,bucket,channel,asProgrammatic=false){
+    if(!month||month<1||month>12)return;const m=r.monthly[year][month];
+    if(asProgrammatic)m.programatica+=amount;else{m[channel]+=amount;if(channel==='digital'){if(bucket==='bc')m.bc+=amount;else if(bucket==='social')m.social+=amount;else if(bucket==='display')m.display+=amount;}}
+    const product=String(row['Producto']??row['Familia']??'Producto sin identificar').trim()||'Producto sin identificar',publication=String(row['Publicación']??row['MEDIO']??'Publicación sin identificar').trim()||'Publicación sin identificar',brand=String(row['Marca']??'').trim();
+    addMap(m.products,product,amount);addMap(m.publications,publication,amount);addMap(m.brands,brand,amount);
+    const sourceKey=asProgrammatic?'programatica':channel,detail=m.bySource?.[sourceKey];if(detail){addMap(detail.products,product,amount);addMap(detail.publications,publication,amount);addMap(detail.brands,brand,amount);}
+  }
+  function addProduction(viewKey,row,amount,year,key,channel,asProgrammatic=false){
+    const raw=String(row['Anunciante']??'').trim(),r=ensure(viewKey,raw);if(!r)return;const m=r.m[year],month=monthNumber(row['Mes inserción']);
+    const bucket=productBucket(row,channel,asProgrammatic);if(asProgrammatic)m.programatica+=amount;else{m[channel]+=amount;if(channel==='digital'){if(bucket==='bc')m.bc+=amount;else if(bucket==='social')m.social+=amount;else if(bucket==='display')m.display+=amount;}}addProductHistory(r,row,amount,year,bucket);addMonthly(r,row,amount,year,month,bucket,channel,asProgrammatic);
+    const com=canonical(row['Comercial']);if(com)r.productionCommercials.add(com);const sec=String(row['Sector']??'').trim();if(sec)r.sectors.add(sec);const area=String(row['ÁREAS']??'').trim();if(area)r.areas.add(area);const order=String(row['Clase de orden']??'').trim();if(order)r.orderClasses.add(order);r.sources.add(asProgrammatic?'vendors':key);addTop(r,row,amount,year,asProgrammatic?'programatica':channel);
+  }
+  function isVendorSector(v){return normalText(v).includes('99018 * VENDORS')||normalText(v)==='VENDORS';}
+  function productionSegment(row){
+    const area=normalText(row['ÁREAS']),sector=normalText(row['Sector']),order=normalText(row['Clase de orden']);
+    if(isVendorSector(sector))return'programatica';
+    if(SHARED_COMMERCIAL_AREAS.has(area)&&LUXURY_SECTORS.has(sector)&&SHARED_ORDER_CLASSES.has(order))return'lujo';
+    if(SHARED_COMMERCIAL_AREAS.has(area)&&sector&&!LUXURY_SECTORS.has(sector)&&SHARED_ORDER_CLASSES.has(order))return'lifestyle';
+    if(area==='CLIENT EXPERIENCE BARCELONA')return'barcelona';
+    if(area==='INTERNACIONAL'&&(order===ORDER_J||order===ORDER_K))return'internacional';
+    return'';
+  }
+  function programmaticSegment(row){
+    const area=normalText(row['AREA']),subarea=normalText(row['ÁREAS']),sector=normalText(row['Sector']);
+    if(!sector||isVendorSector(sector))return'';
+    if(area==='MADRID')return LUXURY_SECTORS.has(sector)?'lujo':'lifestyle';
+    if(area==='BARCELONA')return'barcelona';
+    if(area==='INTERNACIONAL'&&subarea==='INTERNACIONAL DIRECTA')return'internacional';
+    return'';
+  }
+  function production(key,channel){
+    const rows=rowsFrom(wbs[key],'Analizador general');let used=0,vendorExcluded=0,googleRows=0;
+    rows.forEach(row=>{
+      const year=Number(row['Año inserción']),month=monthNumber(row['Mes inserción']);if(![priorYear,currentYear].includes(year))return;
+      const amount=num(row['Imp.Neto a Comisionar']),raw=String(row['Anunciante']??'').trim(),family=row['Familia'];if(!raw)return;
+      stats.productionRaw[year]+=amount;
+      if(key==='digital'){
+        stats.digitalRaw[year]+=amount;const advertiserId=normalizeAdvertiser(raw);
+        if(advertiserId==='GOOGLE'){stats.digitalGoogle[year]+=amount;if(programmaticMonths[year].has(month))stats.digitalGoogleCovered[year]+=amount;stats.digitalGoogleRows[year]++;googleRows++;}
+        else if(isProgrammaticFamily(family)){stats.vendorUnattributed[year]+=amount;stats.vendorRows[year]++;vendorExcluded++;}
+      }
+      addProduction('all',row,amount,year,key,channel,false);used++;
+      const segment=productionSegment(row);if(segment)addProduction(segment,row,amount,year,key,channel,segment==='programatica');
+    });
+    sourceStats[key]={source:key,file:SOURCE_CONFIG[key].file,rows_total:rows.length,rows_used:used,google_rows_source:googleRows,vendor_rows_unattributed:vendorExcluded,updated:metaDate(wbs[key]),bytes:downloadInfo[key].bytes};
+  }
+  production('digital','digital');production('print','print');production('eventos','eventos');
+
+  let progUsed=0,progGoogleKept=0;
+  progRows.forEach(row=>{
+    const year=Number(row['Año inserción']);if(![priorYear,currentYear].includes(year))return;
+    const amount=year===currentYear?num(row['Imp.Neto a Comisionar']):num(row['Imp.Neto Ant.']),raw=String(row['PROGR']??'').trim(),month=monthNumber(row['Mes inserción']);if(!raw)return;
+    stats.progTotal[year]+=amount;
+    if(normalizeAdvertiser(raw)==='GOOGLE'){stats.progGoogle[year]+=amount;stats.progGoogleRows[year]++;progGoogleKept++;}
+    else{
+      stats.progReassigned[year]+=amount;stats.progReassignedByMonth[year][month]=(stats.progReassignedByMonth[year][month]||0)+amount;stats.progReassignedRows[year]++;const r=ensure('all',raw);if(r){r.m[year].programatica+=amount;addMonthly(r,row,amount,year,month,'programatica','digital',true);const sec=String(row['Sector']??'').trim();if(sec)r.sectors.add(sec);const area=String(row['ÁREAS']??row['AREA']??'').trim();if(area)r.areas.add(area);const order=String(row['Clase de orden']??'').trim();if(order)r.orderClasses.add(order);r.sources.add('programatica');addTop(r,row,amount,year,'programatica');addProductHistory(r,row,amount,year,'programatica');progUsed++;}
+    }
+    const segment=programmaticSegment(row);
+    if(segment){const r=ensure(segment,raw);if(r){r.m[year].programatica+=amount;addMonthly(r,row,amount,year,month,'programatica','digital',true);const sec=String(row['Sector']??'').trim();if(sec)r.sectors.add(sec);const area=String(row['ÁREAS']??row['AREA']??'').trim();if(area)r.areas.add(area);const order=String(row['Clase de orden']??'').trim();if(order)r.orderClasses.add(order);r.sources.add('programatica');addTop(r,row,amount,year,'programatica');addProductHistory(r,row,amount,year,'programatica');stats.segmentProgrammatic[segment][year]+=amount;}}
+  });
+
+  const googleRecord=maps.all.get('GOOGLE');
+  [priorYear,currentYear].forEach(year=>{if(googleRecord){googleRecord.m[year].digital-=stats.progReassigned[year];for(let month=1;month<=12;month++)googleRecord.monthly[year][month].digital-=stats.progReassignedByMonth[year][month]||0;}});
+
+  sourceStats.programatica={source:'programatica',file:SOURCE_CONFIG.programatica.file,rows_total:progRows.length,rows_used:progUsed,google_rows_kept:progGoogleKept,updated:metaDate(wbs.programatica),bytes:downloadInfo.programatica.bytes,note:`${priorYear}: Imp.Neto Ant. · ${currentYear}: Imp.Neto a Comisionar`};
+  const carteraRows=['MADRID','BARCELONA'].reduce((s,n)=>s+rowsFrom(wbs.cartera,n).length,0);
+  sourceStats.cartera={source:'cartera',file:SOURCE_CONFIG.cartera.file,rows_total:carteraRows,rows_used:carteraRows,updated:'Documento vivo',bytes:downloadInfo.cartera.bytes,note:'Asignación comercial actual por anunciante'};
+
+  function finalizeView(viewKey){
+    const records=[];maps[viewKey].forEach(r=>{
+      const p=portfolio.get(r.id),commercials=p?uniqueSorted(p.commercials):uniqueSorted(r.productionCommercials),sectors=uniqueSorted(new Set([...(p&&viewKey==='all'?p.sectors:[]),...r.sectors])),aliases=uniqueSorted(new Set([...(p&&viewKey!=='programatica'?p.aliases:[]),...r.aliases]));
+      [priorYear,currentYear].forEach(y=>{const m=r.m[y];m.digital=round2(m.digital);m.print=round2(m.print);m.eventos=round2(m.eventos);m.programatica=round2(m.programatica);m.bc=round2(m.bc);m.social=round2(m.social);m.display=round2(m.display);m.direct=viewKey==='programatica'?0:round2(m.digital+m.print+m.eventos);m.total=round2(m.direct+m.programatica);for(let month=1;month<=12;month++){const mm=r.monthly[y][month];mm.digital=round2(mm.digital);mm.print=round2(mm.print);mm.eventos=round2(mm.eventos);mm.programatica=round2(mm.programatica);mm.bc=round2(mm.bc);mm.social=round2(mm.social);mm.display=round2(mm.display);mm.direct=viewKey==='programatica'?0:round2(mm.digital+mm.print+mm.eventos);mm.total=round2(mm.direct+mm.programatica);mm.products=topN(mm.products,4);mm.publications=topN(mm.publications,4);mm.brands=topN(mm.brands,4);mm.bySource=Object.fromEntries(Object.entries(mm.bySource||{}).map(([source,detail])=>[source,{products:topN(detail.products,4),publications:topN(detail.publications,4),brands:topN(detail.brands,4)}]));}});
+      const onlyVendor=sectors.length>0&&sectors.every(s=>normalText(s).includes('VENDORS'));
+      const eligible=viewKey==='programatica'?true:!(r.id==='GOOGLE'||(viewKey==='all'&&onlyVendor));
+      records.push({id:r.id,name:r.name,aliases,commercials,portfolioMapped:!!p&&viewKey!=='programatica',sectors,areas:uniqueSorted(r.areas),orderClasses:uniqueSorted(r.orderClasses),sources:uniqueSorted(r.sources),eligible,m:r.m,monthly:r.monthly,productHistory:r.productHistory,top:{publications:topN(r.top.publications),products:topN(r.top.products),brands:topN(r.top.brands)},topBySource:Object.fromEntries(Object.entries(r.topBySource||{}).map(([source,detail])=>[source,{publications:topN(detail.publications),products:topN(detail.products),brands:topN(detail.brands)}]))});
+    });
+    records.sort((a,b)=>b.m[currentYear].total-a.m[currentYear].total||a.name.localeCompare(b.name,'es'));
+    const analyzable=records.filter(r=>r.eligible!==false),active=analyzable.filter(r=>r.m[currentYear].total>0),mapped=active.filter(r=>r.portfolioMapped).length;
+    const totals=viewKey==='all'?{[priorYear]:round2(stats.productionRaw[priorYear]),[currentYear]:round2(stats.productionRaw[currentYear])}:{[priorYear]:round2(records.reduce((s,r)=>s+r.m[priorYear].total,0)),[currentYear]:round2(records.reduce((s,r)=>s+r.m[currentYear].total,0))};
+    return{records,quality:{advertisers_total:analyzable.length,advertisers_active_current:active.length,portfolio_mapped_active_current:mapped,portfolio_mapping_pct:active.length?round2(mapped/active.length*100):0,totals,programmatic_added:stats.segmentProgrammatic[viewKey]||{[priorYear]:0,[currentYear]:0}}};
+  }
+  const views=Object.fromEntries(viewKeys.map(k=>[k,finalizeView(k)]));
+  const records=views.all.records,active=records.filter(r=>r.eligible&&r.m[currentYear].total>0),mapped=active.filter(r=>r.portfolioMapped).length;
+  const reconciliation={};
+  [priorYear,currentYear].forEach(y=>reconciliation[y]={googleDigital:round2(stats.digitalGoogle[y]),googleDigitalCovered:round2(stats.digitalGoogleCovered[y]),programmaticTotal:round2(stats.progTotal[y]),googleRetained:round2(stats.digitalGoogle[y]-stats.progReassigned[y]),googleRetainedWithinBreakdown:round2(stats.progGoogle[y]),googleOutsideBreakdown:round2(stats.digitalGoogle[y]-stats.digitalGoogleCovered[y]),googleRemoved:round2(stats.progReassigned[y]),difference:round2(stats.digitalGoogleCovered[y]-stats.progTotal[y]),coveredMonths:[...programmaticMonths[y]].sort((a,b)=>a-b)});
+  return{
+    generated:new Date().toLocaleString('es-ES'),period,records,views,sources:SOURCE_ORDER.map(k=>sourceStats[k]),
+    quality:{advertisers_total:records.filter(r=>r.eligible).length,advertisers_active_current:active.length,portfolio_mapped_active_current:mapped,portfolio_mapping_pct:active.length?round2(mapped/active.length*100):0,period:periodLabel(period),reconciliation,vendor_unattributed:{[priorYear]:round2(stats.vendorUnattributed[priorYear]),[currentYear]:round2(stats.vendorUnattributed[currentYear])},method:'Toda la producción disponible permanece en el total. El desglose de Programática solo redistribuye desde Google hacia los anunciantes reales y no añade ni elimina ingreso.'}
+  };
+}
+
+async function loadLiveData(){
+  if(!window.XLSX){showLoadError(new Error('No se ha podido cargar la librería necesaria para leer Excel. Comprueba la conexión a Internet.'));return;}
+  const backdrop=document.getElementById('loadingBackdrop');backdrop.classList.remove('hidden');setupLoadingSteps();document.getElementById('loaderTitle').textContent='Cargando datos desde SharePoint';document.getElementById('loaderMessage').textContent='Descargando los cinco Excel y preparando el análisis.';document.getElementById('refreshBtn').disabled=true;setLiveState('loading','Actualizando desde SharePoint…','Descargando los archivos más recientes.');
+  try{
+    const wbs={},info={};
+    for(let i=0;i<SOURCE_ORDER.length;i++){const key=SOURCE_ORDER[i],result=await fetchWorkbook(key,i+1);wbs[key]=result.wb;info[key]=result;}
+    setProgress(6,'loading','Cruzando y normalizando anunciantes…');DATA=buildData(wbs,info);setProgress(6,'done');
+    setProgress(7,'loading','Calculando oportunidades, ventanas de venta y preparando la interfaz…');fillFilters();updateScopeUI();render();updateHeader();setProgress(7,'done');
+    await new Promise(r=>setTimeout(r,250));backdrop.classList.add('hidden');setLiveState('ok','Conectado a SharePoint',`Último análisis: ${DATA.generated} · ${DATA.quality.period}.`);
+  }catch(err){showLoadError(err);}finally{document.getElementById('refreshBtn').disabled=false;}
+}
+function showLoadError(err){console.error(err);document.getElementById('loaderTitle').textContent='No se han podido cargar los datos';document.getElementById('loaderMessage').textContent=`${err.message||err}. Comprueba que los enlaces de SharePoint siguen accesibles y vuelve a intentarlo.`;document.getElementById('loaderActions').classList.add('show');setLiveState('error','Error al actualizar desde SharePoint',err.message||String(err));document.getElementById('refreshBtn').disabled=false;}
+function updateHeader(){const p=DATA.period;document.getElementById('snapshotTitle').textContent=`Años analizados: ${p.priorYear}/${p.currentYear} · toda la información disponible`;const rec=DATA.quality.reconciliation[p.currentYear],ok=Math.abs(rec.difference)<1;document.getElementById('snapshotText').innerHTML=`Importe total de Programática: ${fmt.format(rec.programmaticTotal)}.<br>Retirado de Google y asignado a otros anunciantes: ${fmt.format(rec.googleRemoved)}.<br>Importe final que permanece en Google: ${fmt.format(rec.googleRetained)}${ok?' · Conciliación correcta ✓':' · Revisar conciliación'}.`;document.querySelector('.panel-note')?.setAttribute('data-live','1');}
+
+function parseThresholdValue(value){
+  const digits=String(value??'').replace(/[^0-9-]/g,'');
+  const n=Number(digits);return Number.isFinite(n)?Math.max(0,n):0;
+}
+function formatThresholdInput(el){
+  const value=parseThresholdValue(el.value);
+  el.value=el.dataset.thresholdKind==='percent'?`${formatThousandsDots(value)} %`:`${formatThousandsDots(value)} €`;
+}
+function formatAllThresholdInputs(){Object.keys(DEFAULTS).forEach(id=>formatThresholdInput(document.getElementById(id)));}
+function thresholds(){return Object.fromEntries(Object.keys(DEFAULTS).map(k=>[k,parseThresholdValue(document.getElementById(k).value)]));}
+function cap(n,a,b){return Math.max(a,Math.min(b,n));}
+function amountBoost(v,base=5000,max=24){return cap(Math.log10(1+Math.max(0,v)/base)*13,0,max);}
+function priority(score){return score>=75?'Alta':score>=55?'Media':'Baja';}
+function opportunity(type,score,reason,value=0){score=Math.round(cap(score,1,99));return{type,score,priority:priority(score),label:TYPE_LABELS[type],short:TYPE_SHORT[type],reason,value};}
+function combineRankedLists(...lists){const map=new Map();lists.flat().filter(Boolean).forEach(item=>{if(!item?.name)return;map.set(item.name,(map.get(item.name)||0)+num(item.value));});return[...map.entries()].filter(([,value])=>Math.abs(value)>.005).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'es')).slice(0,7).map(([name,value])=>({name, value:round2(value)}));}
+function sourceDetailFor(record,source){return record?.topBySource?.[source]||{products:[],publications:[],brands:[]};}
+function selectedTop(record,media=activeMedia){if(media==='all')return record.top||{products:[],publications:[],brands:[]};const sources=media==='digital'?['digital','programatica']:[media];return{products:combineRankedLists(...sources.map(source=>sourceDetailFor(record,source).products)),publications:combineRankedLists(...sources.map(source=>sourceDetailFor(record,source).publications)),brands:combineRankedLists(...sources.map(source=>sourceDetailFor(record,source).brands))};}
+function selectedMonthlyDetails(month,media=activeMedia){if(media==='all')return{products:month?.products||[],publications:month?.publications||[],brands:month?.brands||[]};const sources=media==='digital'?['digital','programatica']:[media],details=sources.map(source=>month?.bySource?.[source]||{});return{products:combineRankedLists(...details.map(x=>x.products||[])),publications:combineRankedLists(...details.map(x=>x.publications||[])),brands:combineRankedLists(...details.map(x=>x.brands||[]))};}
+function mediaMetrics(metrics,media=activeMedia){if(media==='all')return metrics||blankMetrics();const m=metrics||blankMetrics(),out=blankMetrics();if(media==='digital'){out.digital=round2(num(m.digital));out.programatica=round2(num(m.programatica));out.bc=round2(num(m.bc));out.social=round2(num(m.social));out.display=round2(num(m.display));out.direct=out.digital;out.total=round2(out.digital+out.programatica);}else if(media==='print'){out.print=round2(num(m.print));out.direct=out.print;out.total=out.print;}else if(media==='eventos'){out.eventos=round2(num(m.eventos));out.direct=out.eventos;out.total=out.eventos;}return out;}
+function selectedProductHistory(history,media=activeMedia){if(media==='all')return history;const empty=()=>new Map(),out={bc:empty(),social:empty(),display:empty(),otherDigital:empty(),print:empty(),eventos:empty(),programatica:empty()};if(!history)return out;if(media==='digital'){['bc','social','display','otherDigital','programatica'].forEach(key=>out[key]=history[key]||empty());}else out[media]=history[media]||empty();return out;}
+function mediaFilteredRecord(record,media=activeMedia){if(media==='all')return record;const py=DATA.period.priorYear,cy=DATA.period.currentYear,m={},monthly={},productHistory={};[py,cy].forEach(year=>{m[year]=mediaMetrics(record.m?.[year],media);productHistory[year]=selectedProductHistory(record.productHistory?.[year],media);if(record.monthly?.[year]){monthly[year]={};for(let month=1;month<=12;month++){const raw=record.monthly[year][month]||blankMetrics(),detail=selectedMonthlyDetails(raw,media);monthly[year][month]={...mediaMetrics(raw,media),...detail,bySource:raw.bySource||{}};}}});const sourceNames=media==='digital'?['digital','programatica','vendors']:[media];return{...record,m,monthly:Object.keys(monthly).length?monthly:record.monthly,productHistory,top:selectedTop(record,media),sources:(record.sources||[]).filter(source=>sourceNames.includes(source))};}
+function currentBaseView(){return DATA.views?.[activeSegment]||{records:DATA.records||[],quality:DATA.quality||{}};}
+function currentView(){const base=currentBaseView();if(activeMedia==='all')return base;const py=DATA.period.priorYear,cy=DATA.period.currentYear,records=(base.records||[]).map(record=>mediaFilteredRecord(record,activeMedia)).filter(r=>Math.abs(num(r.m?.[py]?.total))>.005||Math.abs(num(r.m?.[cy]?.total))>.005),analyzable=records.filter(r=>r.eligible!==false),active=analyzable.filter(r=>r.m?.[cy]?.total>0),mapped=active.filter(r=>r.portfolioMapped).length,totals={[py]:round2(records.reduce((sum,r)=>sum+num(r.m?.[py]?.total),0)),[cy]:round2(records.reduce((sum,r)=>sum+num(r.m?.[cy]?.total),0))};return{records,quality:{...(base.quality||{}),advertisers_total:analyzable.length,advertisers_active_current:active.length,portfolio_mapped_active_current:mapped,portfolio_mapping_pct:active.length?round2(mapped/active.length*100):0,totals,programmatic_added:activeMedia==='digital'?(base.quality?.programmatic_added||{[py]:0,[cy]:0}):{[py]:0,[cy]:0}}};}
+function currentRecords(){return currentView().records||[];}
+function activeContextLabel(){return activeMedia==='all'?SEGMENT_LABELS[activeSegment]:`${SEGMENT_LABELS[activeSegment]} · ${MEDIA_LABELS[activeMedia]}`;}
+function availableOpportunityTypes(){if(activeSegment==='programatica'||activeMedia==='print'||activeMedia==='eventos')return['recovery','drop'];if(activeMedia==='digital')return['recovery','drop','bc','direct','prog'];return Object.keys(TYPE_LABELS);}
+function updateScopeUI(){
+  document.querySelectorAll('[data-scope]').forEach(btn=>{const on=btn.dataset.scope===activeSegment;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',String(on));});
+  document.querySelectorAll('[data-media]').forEach(btn=>{const on=btn.dataset.media===activeMedia;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',String(on));});
+  const label=SEGMENT_LABELS[activeSegment],note=SEGMENT_NOTES[activeSegment],q=currentView().quality||{},cy=DATA.period.currentYear;
+  document.getElementById('scopeNote').innerHTML=`<b>${escapeHtml(label)}.</b> ${escapeHtml(note)}${q.totals?` Base analizada ${cy}: <b>${fmt.format(q.totals[cy])}</b>.`:''}${activeSegment==='all'&&activeMedia!=='print'&&activeMedia!=='eventos'?` La redistribución de Google no modifica el total.`:''}${q.programmatic_added&&activeSegment!=='all'&&activeSegment!=='programatica'&&(activeMedia==='all'||activeMedia==='digital')?` Programática incorporada: <b>${fmt.format(q.programmatic_added[cy])}</b>.`:''}`;
+  const mediaLabel=MEDIA_LABELS[activeMedia],mediaNote=MEDIA_NOTES[activeMedia];document.getElementById('mediaNote').innerHTML=`<b>${escapeHtml(mediaLabel)}.</b> ${escapeHtml(mediaNote)}${q.totals?` Importe ${cy}: <b>${fmt.format(q.totals[cy])}</b>.`:''}`;
+  document.getElementById('sector').disabled=activeSegment==='programatica';
+}
+function clearAnalysisSelects(){document.getElementById('commercial').value='';document.getElementById('sector').value='';document.getElementById('oppType').value='';document.getElementById('priority').value='';}
+function setSegment(segment){activeSegment=activeSegment===segment?'all':segment;clearAnalysisSelects();fillFilters();updateScopeUI();render();}
+function setMedia(media){activeMedia=activeMedia===media?'all':media;clearAnalysisSelects();fillFilters();updateScopeUI();render();}
+
+function evaluate(r,segment=activeSegment){
+  const allowed=new Set(availableOpportunityTypes()),t=thresholds(),y25=r.m[DATA.period.priorYear],y26=r.m[DATA.period.currentYear],ops=[],loss=y25.total-y26.total,dropPct=y25.total>0?loss/y25.total:0;
+  if(allowed.has('recovery')&&y25.total>=t.tRecovery&&y26.total<=0)ops.push(opportunity('recovery',70+amountBoost(y25.total,5000,27),`Invirtió ${fmt.format(y25.total)} en ${DATA.period.priorYear} y no presenta ingreso positivo en ${DATA.period.currentYear}.`,y25.total));
+  if(allowed.has('drop')&&y25.total>=t.tRecovery&&y26.total>0&&loss>=t.tDropLoss&&dropPct>=t.tDropPct/100)ops.push(opportunity('drop',53+dropPct*24+amountBoost(loss,5000,20),`Cae ${pctFmt.format(dropPct)}: pasa de ${fmt.format(y25.total)} a ${fmt.format(y26.total)}, una pérdida de ${fmt.format(loss)}.`,loss));
+  if(allowed.has('print')&&y26.print>=t.tPrint&&y26.digital<=0)ops.push(opportunity('print',45+amountBoost(y26.print,5000,30),`Tiene ${fmt.format(y26.print)} en Print y no registra inversión Digital directa en ${DATA.period.currentYear}.`,y26.print));
+  if(allowed.has('bc')&&y26.bc>=t.tBC&&y26.social<=0)ops.push(opportunity('bc',50+amountBoost(y26.bc,3000,30),`Tiene ${fmt.format(y26.bc)} en Branded Content y no registra inversión Social asociada.`,y26.bc));
+  if(allowed.has('direct')&&y26.direct>=t.tDirect&&y26.programatica<=0)ops.push(opportunity('direct',40+amountBoost(y26.direct,10000,34),`Mantiene ${fmt.format(y26.direct)} de contratación directa y no aparece en Programática atribuida.`,y26.direct));
+  const progMin=Math.max(1000,t.tDirect*.1);if(allowed.has('prog')&&y26.programatica>=progMin&&y26.direct<=0)ops.push(opportunity('prog',48+amountBoost(y26.programatica,1000,30),`Tiene ${fmt.format(y26.programatica)} en Programática y no registra contratación directa Digital.`,y26.programatica));
+  ops.sort((a,b)=>b.score-a.score);return{...r,opportunities:ops,maxScore:ops[0]?.score||0,priority:ops[0]?.priority||'Baja',delta:round2(y26.total-y25.total)};
+}
+function evaluateAll(){evaluated=currentRecords().filter(r=>r.eligible!==false).map(evaluate).filter(r=>r.opportunities.length);}
+function filtered(options={}){const q=normalText(document.getElementById('search').value),com=document.getElementById('commercial').value,sec=document.getElementById('sector').value,typ=options.ignoreType?'':document.getElementById('oppType').value,pri=document.getElementById('priority').value;return evaluated.filter(r=>{if(q&&!normalText([r.name,...r.aliases].join(' ')).includes(q))return false;if(com&&!r.commercials.includes(com))return false;if(sec&&!r.sectors.includes(sec))return false;if(typ&&!r.opportunities.some(o=>o.type===typ))return false;if(pri&&r.priority!==pri)return false;return true;}).sort((a,b)=>b.maxScore-a.maxScore||b.m[DATA.period.currentYear].total-a.m[DATA.period.currentYear].total||a.name.localeCompare(b.name,'es'));}
+function fillFilters(){
+  const records=currentRecords().filter(r=>r.eligible!==false),previous={commercial:document.getElementById('commercial').value,sector:document.getElementById('sector').value,oppType:document.getElementById('oppType').value};
+  const configure=(id,label,vals)=>{const s=document.getElementById(id);s.innerHTML=`<option value="">${label}</option>`;vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=id==='oppType'?TYPE_LABELS[v]:id==='sector'?sectorLabel(v):v;s.appendChild(o);});if(vals.includes(previous[id]))s.value=previous[id];};
+  const coms=[...new Set(records.flatMap(r=>r.commercials))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es')),secs=[...new Set(records.flatMap(r=>r.sectors))].filter(Boolean).sort((a,b)=>sectorLabel(a).localeCompare(sectorLabel(b),'es'));
+  configure('commercial','Todos',coms);configure('sector',activeSegment==='programatica'?'No aplica (VENDORS)':'Todos',activeSegment==='programatica'?[]:secs);configure('oppType','Todas',availableOpportunityTypes().sort((a,b)=>TYPE_LABELS[a].localeCompare(TYPE_LABELS[b],'es')));
+  updateScopeUI();
+}
+function scoreClass(p){return p==='Alta'?'high':p==='Media'?'medium':'low';}
+function deltaHtml(r){const d=r.delta,base=r.m[DATA.period.priorYear].total,pct=base!==0?d/base:null;return`<span class="money ${d<0?'negative':d>0?'positive':''}">${d>=0?'+':''}${fmt.format(d)}</span><div class="subtext">${pct===null?'Sin base anterior':(pct>=0?'+':'')+pctFmt.format(pct)}</div>`;}
+function oppBadges(r){return`<div class="badges">${r.opportunities.map(o=>`<span class="badge ${o.type}">${o.short}</span>`).join('')}</div>`;}
+
+function weeklyDateLabel(value){const d=new Date(value);return Number.isNaN(d.getTime())?String(value||'Fecha desconocida'):d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function weeklyWeekKey(value){const d=new Date(value);if(Number.isNaN(d.getTime()))return'';const utc=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())),day=utc.getUTCDay()||7;utc.setUTCDate(utc.getUTCDate()+4-day);const yearStart=new Date(Date.UTC(utc.getUTCFullYear(),0,1)),week=Math.ceil((((utc-yearStart)/86400000)+1)/7);return`${utc.getUTCFullYear()}-W${String(week).padStart(2,'0')}`;}
+function weeklySourceSignature(period=DATA?.period,sources=DATA?.sources||[]){const sourceUpdates=(sources||[]).map(s=>({source:String(s.source||''),file:String(s.file||''),updated:String(s.updated||'')})).sort((a,b)=>`${a.source}|${a.file}`.localeCompare(`${b.source}|${b.file}`,'es'));return weeklyHashString(JSON.stringify({period:{priorYear:period?.priorYear||0,currentYear:period?.currentYear||0},sourceUpdates}));}
+function snapshotSourceSignature(snapshot){return snapshot?.sourceSignature||weeklySourceSignature(snapshot?.period,snapshot?.sourceUpdates||[]);}
+function activateTab(tabName){const button=document.querySelector(`.tab-btn[data-tab="${tabName}"]`),panel=document.getElementById(`tab-${tabName}`);if(!button||!panel)return;document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));button.classList.add('active');panel.classList.add('active');window.scrollTo({top:Math.max(0,document.querySelector('.tabs').getBoundingClientRect().top+window.scrollY-20),behavior:'smooth'});}
+function updateWeeklyReminder(){const reminder=document.getElementById('weeklyReminder'),title=document.getElementById('weeklyReminderTitle'),copy=document.getElementById('weeklyReminderText'),icon=document.getElementById('weeklyReminderIcon'),badge=document.getElementById('weeklyTabBadge'),saveBtn=document.getElementById('weeklyQuickSaveBtn');if(!reminder||!title||!copy||!icon||!badge||!saveBtn)return;const setState=(state,badgeText,heading,message,symbol,disabled=false)=>{reminder.className=`weekly-reminder ${state}`;badge.className=`tab-badge ${state}`;badge.textContent=badgeText;title.textContent=heading;copy.textContent=message;icon.textContent=symbol;saveBtn.disabled=disabled;saveBtn.textContent=disabled?'Fotografía guardada':'Guardar fotografía semanal';};if(!DATA?.period?.currentYear){setState('loading','…','Comprobando la referencia semanal…','El aviso se actualizará cuando terminen de cargarse los Excel.','↻',true);return;}const currentWeek=weeklyWeekKey(new Date()),thisWeek=weeklyHistory.filter(s=>weeklyWeekKey(s.savedAt)===currentWeek).sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt)),currentSignature=weeklySourceSignature(),matching=thisWeek.find(s=>snapshotSourceSignature(s)===currentSignature),latest=weeklyHistory[0]||null;if(matching){setState('saved','Guardado','Fotografía semanal guardada',`Referencia de esta semana: ${weeklyDateLabel(matching.savedAt)}. Si cambia algún Excel, el aviso volverá a pedirte que la guardes.`, '✓',true);return;}if(thisWeek.length){setState('changed','Datos nuevos','Los Excel han cambiado desde la fotografía de esta semana',`La última referencia semanal es del ${weeklyDateLabel(thisWeek[0].savedAt)}. Guarda de nuevo para sustituirla por los datos actuales.`, '!',false);return;}if(latest){setState('pending','Pendiente','Falta guardar la fotografía de esta semana',`Última referencia guardada: ${weeklyDateLabel(latest.savedAt)}. El aviso seguirá visible hasta que guardes la de esta semana.`, '!',false);return;}setState('pending','Pendiente','Todavía no existe una referencia semanal','Cuando termines de revisar los datos, guarda la primera fotografía para poder comparar la próxima actualización.', '!',false);}
+
+function weeklyHashString(value){let h=2166136261;for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36);}
+function packSnapshotMetrics(metrics){return SNAPSHOT_METRIC_KEYS.map(key=>round2(num(metrics?.[key])));}
+function unpackSnapshotMetrics(values){const out=blankMetrics();SNAPSHOT_METRIC_KEYS.forEach((key,index)=>out[key]=round2(num(values?.[index])));return out;}
+function compactSnapshotRecord(r,py,cy){return[r.id,r.name,r.commercials||[],r.sectors||[],r.portfolioMapped?1:0,packSnapshotMetrics(r.m?.[py]),packSnapshotMetrics(r.m?.[cy])];}
+function expandSnapshotRecord(row,snapshot){const py=snapshot.period.priorYear,cy=snapshot.period.currentYear;return{id:String(row?.[0]||''),name:String(row?.[1]||row?.[0]||'Anunciante sin nombre'),aliases:[String(row?.[1]||row?.[0]||'')],commercials:Array.isArray(row?.[2])?row[2]:[],sectors:Array.isArray(row?.[3])?row[3]:[],portfolioMapped:!!row?.[4],eligible:true,m:{[py]:unpackSnapshotMetrics(row?.[5]),[cy]:unpackSnapshotMetrics(row?.[6])}};}
+function createWeeklySnapshot(){
+  const py=DATA.period.priorYear,cy=DATA.period.currentYear,segments={};
+  Object.keys(SEGMENT_LABELS).forEach(segment=>{segments[segment]=(DATA.views?.[segment]?.records||[]).filter(r=>r.eligible!==false&&(Math.abs(num(r.m?.[py]?.total))>.005||Math.abs(num(r.m?.[cy]?.total))>.005)).map(r=>compactSnapshotRecord(r,py,cy)).sort((a,b)=>String(a[0]).localeCompare(String(b[0]),'es'));});
+  const sourceUpdates=(DATA.sources||[]).map(s=>({source:s.source,file:s.file,updated:s.updated||''}));
+  const core={period:{priorYear:py,currentYear:cy},thresholds:thresholds(),segments,sourceUpdates};
+  const signature=weeklyHashString(JSON.stringify(core));
+  return{version:1,id:`${Date.now()}-${signature}`,signature,sourceSignature:weeklySourceSignature(core.period,sourceUpdates),savedAt:new Date().toISOString(),generated:DATA.generated,period:core.period,thresholds:core.thresholds,sourceUpdates,segments};
+}
+function validWeeklySnapshot(snapshot){return snapshot&&snapshot.version===1&&snapshot.id&&snapshot.savedAt&&snapshot.period&&snapshot.segments&&typeof snapshot.segments==='object';}
+function loadWeeklyHistory(){
+  try{const raw=localStorage.getItem(WEEKLY_STORAGE_KEY);if(!raw)return;const parsed=JSON.parse(raw),items=Array.isArray(parsed)?parsed:parsed?.snapshots;weeklyHistory=(Array.isArray(items)?items:[]).filter(validWeeklySnapshot).sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt)).slice(0,WEEKLY_MAX_SNAPSHOTS);weeklyBaselineId=weeklyHistory[0]?.id||'';}catch(error){console.warn('No se ha podido leer el histórico semanal',error);weeklyHistory=[];weeklyBaselineId='';}
+}
+function persistWeeklyHistory(){
+  weeklyHistory=weeklyHistory.filter(validWeeklySnapshot).sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt)).slice(0,WEEKLY_MAX_SNAPSHOTS);
+  let removed=0;
+  while(true){try{localStorage.setItem(WEEKLY_STORAGE_KEY,JSON.stringify({version:1,snapshots:weeklyHistory}));break;}catch(error){if(weeklyHistory.length<=2)throw error;weeklyHistory.pop();removed++;}}
+  if(removed)window.alert(`El navegador tenía poco espacio. Se han eliminado ${removed} fotografías antiguas y se conservan las más recientes.`);
+}
+function selectedWeeklySnapshot(){return weeklyHistory.find(x=>x.id===weeklyBaselineId)||weeklyHistory[0]||null;}
+function fillWeeklyBaselineSelect(){
+  const select=document.getElementById('weeklyBaselineSelect');if(!select)return;
+  const previous=weeklyBaselineId;
+  if(!weeklyHistory.length){select.innerHTML='<option value="">Sin fotografías guardadas</option>';select.disabled=true;weeklyBaselineId='';return;}
+  select.disabled=false;select.innerHTML=weeklyHistory.map((snapshot,index)=>`<option value="${escapeHtml(snapshot.id)}">${index===0?'Última · ':''}${escapeHtml(weeklyDateLabel(snapshot.savedAt))}</option>`).join('');
+  weeklyBaselineId=weeklyHistory.some(x=>x.id===previous)?previous:weeklyHistory[0].id;select.value=weeklyBaselineId;
+}
+function emptyWeeklyRecord(id,name,commercials=[],sectors=[]){const py=DATA.period.priorYear,cy=DATA.period.currentYear;return{id,name:name||id,aliases:[name||id],commercials,sectors,portfolioMapped:false,eligible:true,m:{[py]:blankMetrics(),[cy]:blankMetrics()}};}
+function weeklyTargetIncrease(type,before,after){
+  const cy=DATA.period.currentYear,b=before.m[cy],a=after.m[cy];
+  if(type==='recovery'||type==='drop')return a.total>b.total+.5?`El ingreso ${cy} sube de ${fmt.format(b.total)} a ${fmt.format(a.total)}.`:'';
+  if(type==='bc')return a.social>b.social+.5&&a.bc>0?`Social sube de ${fmt.format(b.social)} a ${fmt.format(a.social)} mientras mantiene BC.`:'';
+  if(type==='print')return a.digital>b.digital+.5&&a.print>0?`Digital sube de ${fmt.format(b.digital)} a ${fmt.format(a.digital)} mientras mantiene Print.`:'';
+  if(type==='direct')return a.programatica>b.programatica+.5&&a.direct>0?`Programática sube de ${fmt.format(b.programatica)} a ${fmt.format(a.programatica)}.`:'';
+  if(type==='prog')return a.direct>b.direct+.5&&a.programatica>0?`La contratación directa sube de ${fmt.format(b.direct)} a ${fmt.format(a.direct)}.`:'';
+  return'';
+}
+function weeklyNewProblemText(type,before,after){
+  const py=DATA.period.priorYear,cy=DATA.period.currentYear,b=before.m[cy],a=after.m[cy],prior=after.m[py];
+  if(type==='recovery')return`Pasa a cliente perdido: ${fmt.format(prior.total)} en ${py} y sin ingreso positivo en ${cy}.`;
+  if(type==='drop')return`Entra en caída: ${fmt.format(prior.total)} en ${py} frente a ${fmt.format(a.total)} en ${cy}.`;
+  if(type==='bc')return`Aparece BC sin Social: BC ${fmt.format(a.bc)} y Social ${fmt.format(a.social)}.`;
+  if(type==='print')return`Aparece Print sin Digital: Print ${fmt.format(a.print)} y Digital ${fmt.format(a.digital)}.`;
+  if(type==='direct')return`Aparece Directo sin Programática: Directo ${fmt.format(a.direct)}.`;
+  if(type==='prog')return`Aparece Programática sin Directo: Programática ${fmt.format(a.programatica)}.`;
+  return`Nueva señal: ${TYPE_LABELS[type]||type}.`;
+}
+function weeklyPassesFilters(change){
+  const q=normalText(document.getElementById('search').value),com=document.getElementById('commercial').value,sec=document.getElementById('sector').value,typ=document.getElementById('oppType').value,pri=document.getElementById('priority').value;
+  if(q&&!normalText([change.name,...change.aliases].join(' ')).includes(q))return false;
+  if(com&&!change.commercials.includes(com))return false;if(sec&&!change.sectors.includes(sec))return false;
+  if(typ&&!change.currentTypes.includes(typ)&&!change.baselineTypes.includes(typ)&&!change.newTypes.includes(typ)&&!change.resolvedTypes.includes(typ))return false;
+  if(pri&&change.currentPriority!==pri&&change.baselinePriority!==pri)return false;
+  return true;
+}
+function compareWeeklySnapshot(snapshot){
+  if(!snapshot)return{status:'none',rows:[]};
+  const py=DATA.period.priorYear,cy=DATA.period.currentYear;
+  if(snapshot.period?.priorYear!==py||snapshot.period?.currentYear!==cy)return{status:'incompatible',rows:[],snapshot};
+  const baselineRows=snapshot.segments?.[activeSegment]||[],baselineMap=new Map(baselineRows.map(row=>{const record=mediaFilteredRecord(expandSnapshotRecord(row,snapshot),activeMedia);return[record.id,record];}));
+  const currentMap=new Map(currentRecords().filter(r=>r.eligible!==false).map(r=>[r.id,r])),ids=new Set([...baselineMap.keys(),...currentMap.keys()]),rows=[];
+  ids.forEach(id=>{
+    const currentRaw=currentMap.get(id),baselineRaw=baselineMap.get(id),template=currentRaw||baselineRaw;
+    const before=baselineRaw||emptyWeeklyRecord(id,template?.name,template?.commercials,template?.sectors),after=currentRaw||emptyWeeklyRecord(id,template?.name,template?.commercials,template?.sectors);
+    const beforeEval=evaluate(before,activeSegment),afterEval=evaluate(after,activeSegment),baselineTypes=beforeEval.opportunities.map(o=>o.type),currentTypes=afterEval.opportunities.map(o=>o.type),newTypes=currentTypes.filter(type=>!baselineTypes.includes(type));
+    const resolvedTypes=baselineTypes.filter(type=>!currentTypes.includes(type)&&weeklyTargetIncrease(type,before,after));
+    const baselineCurrent=round2(before.m[cy].total),currentCurrent=round2(after.m[cy].total),deltaCurrent=round2(currentCurrent-baselineCurrent),baselinePrior=round2(before.m[py].total),currentPrior=round2(after.m[py].total),deltaPrior=round2(currentPrior-baselinePrior),categories=[];
+    if(deltaCurrent>.5)categories.push('improved');if(deltaCurrent<-.5)categories.push('worsened');if(newTypes.length)categories.push('new');if(resolvedTypes.length)categories.push('resolved');if(Math.abs(deltaPrior)>.5)categories.push('adjustment');
+    if(!categories.length)return;
+    const reasons=[];
+    if(deltaCurrent>.5)reasons.push(`<b>Mejora semanal:</b> el ingreso ${cy} aumenta ${fmt.format(deltaCurrent)}.`);
+    if(deltaCurrent<-.5)reasons.push(`<b>Empeora:</b> el ingreso ${cy} disminuye ${fmt.format(Math.abs(deltaCurrent))}.`);
+    newTypes.forEach(type=>reasons.push(`<b>Nuevo problema:</b> ${escapeHtml(weeklyNewProblemText(type,before,after))}`));
+    resolvedTypes.forEach(type=>reasons.push(`<b>Oportunidad resuelta:</b> ${escapeHtml(TYPE_LABELS[type])}. ${escapeHtml(weeklyTargetIncrease(type,before,after))}`));
+    if(Math.abs(deltaPrior)>.5)reasons.push(`<b>Ajuste histórico:</b> el ingreso ${py} cambia de ${fmt.format(baselinePrior)} a ${fmt.format(currentPrior)} (${deltaPrior>=0?'+':''}${fmt.format(deltaPrior)}).`);
+    const newValue=afterEval.opportunities.filter(o=>newTypes.includes(o.type)).reduce((sum,o)=>sum+Math.max(0,o.value||0),0),impact=Math.max(Math.abs(deltaCurrent),newValue,Math.abs(deltaPrior));
+    const change={id,name:after.name||before.name||id,aliases:[...(after.aliases||[]),...(before.aliases||[])],commercials:[...new Set([...(after.commercials||[]),...(before.commercials||[])])],sectors:[...new Set([...(after.sectors||[]),...(before.sectors||[])])],baselineCurrent,currentCurrent,deltaCurrent,baselinePrior,currentPrior,deltaPrior,categories,newTypes,resolvedTypes,baselineTypes,currentTypes,currentPriority:afterEval.priority,baselinePriority:beforeEval.priority,reasons,impact,currentRecord:currentRaw||null,portfolioMapped:!!(after.portfolioMapped||before.portfolioMapped)};
+    if(weeklyPassesFilters(change))rows.push(change);
+  });
+  rows.sort((a,b)=>{const rank=x=>(x.categories.includes('new')?500:0)+(x.categories.includes('worsened')?400:0)+(x.categories.includes('resolved')?300:0)+(x.categories.includes('improved')?200:0)+(x.categories.includes('adjustment')?100:0);return rank(b)-rank(a)||b.impact-a.impact||a.name.localeCompare(b.name,'es');});
+  return{status:'ok',rows,snapshot};
+}
+function weeklyMetrics(rows){
+  const unique=category=>rows.filter(r=>r.categories.includes(category));
+  const improved=unique('improved'),worsened=unique('worsened'),newRows=unique('new'),resolved=unique('resolved');
+  return{improved:{count:improved.length,amount:round2(improved.reduce((s,r)=>s+Math.max(0,r.deltaCurrent),0))},worsened:{count:worsened.length,amount:round2(worsened.reduce((s,r)=>s+Math.max(0,-r.deltaCurrent),0))},new:{count:newRows.length,amount:round2(newRows.reduce((s,r)=>s+Math.max(0,r.impact),0))},resolved:{count:resolved.length,amount:round2(resolved.reduce((s,r)=>s+Math.max(0,r.deltaCurrent),0))},adjustment:unique('adjustment').length};
+}
+function setWeeklyCategory(value){weeklyCategory=value||'all';renderWeeklyChanges();}
+function renderWeeklyChanges(){
+  const panel=document.getElementById('weeklyChangesPanel');if(!panel)return;fillWeeklyBaselineSelect();updateWeeklyReminder();
+  const snapshot=selectedWeeklySnapshot(),deleteBtn=document.getElementById('deleteWeeklySnapshotBtn'),exportBtn=document.getElementById('exportWeeklyHistoryBtn');deleteBtn.disabled=!snapshot;exportBtn.disabled=!weeklyHistory.length;
+  document.querySelectorAll('[data-weekly-category]').forEach(btn=>btn.classList.toggle('active',btn.dataset.weeklyCategory===weeklyCategory));
+  const kpis=document.getElementById('weeklyKpis'),body=document.getElementById('weeklyChangesBody'),count=document.getElementById('weeklyChangesCount'),historyCount=document.getElementById('weeklyHistoryCount'),note=document.getElementById('weeklyChangesNote'),copy=document.getElementById('weeklyReferenceCopy'),adjustmentNote=document.getElementById('weeklyAdjustmentNote');
+  historyCount.textContent=weeklyHistory.length?`${weeklyHistory.length} fotografía${weeklyHistory.length===1?'':'s'} guardada${weeklyHistory.length===1?'':'s'} en este navegador · máximo ${WEEKLY_MAX_SNAPSHOTS}`:'Todavía no hay histórico guardado';
+  if(!snapshot){kpis.innerHTML=['improved','worsened','new','resolved'].map(category=>`<div class="weekly-kpi ${category}"><div class="weekly-kpi-label">${escapeHtml(WEEKLY_CATEGORY_LABELS[category])}</div><div class="weekly-kpi-value">—</div><div class="weekly-kpi-amount">Sin referencia semanal</div></div>`).join('');body.innerHTML='<tr><td colspan="8" class="weekly-empty"><strong>Guarda la primera fotografía semanal</strong>La próxima vez que actualices los Excel, el Radar podrá comparar qué ha mejorado, qué ha empeorado y qué oportunidades se han resuelto.</td></tr>';count.textContent='La fotografía se guarda solo en este navegador. Exporta el JSON para conservar una copia en SharePoint.';copy.innerHTML='<b>Primera semana:</b> pulsa “Guardar fotografía semanal” cuando los datos estén revisados.';note.textContent='Todavía no existe una referencia con la que comparar los datos vivos.';adjustmentNote.hidden=true;return;}
+  const comparison=compareWeeklySnapshot(snapshot);
+  copy.innerHTML=`<b>Referencia:</b> ${escapeHtml(weeklyDateLabel(snapshot.savedAt))} · datos analizados entonces: ${escapeHtml(snapshot.generated||'sin hora registrada')}.`;
+  if(comparison.status==='incompatible'){kpis.innerHTML=['improved','worsened','new','resolved'].map(category=>`<div class="weekly-kpi ${category}"><div class="weekly-kpi-label">${escapeHtml(WEEKLY_CATEGORY_LABELS[category])}</div><div class="weekly-kpi-value">—</div><div class="weekly-kpi-amount">Años no comparables</div></div>`).join('');body.innerHTML=`<tr><td colspan="8" class="weekly-empty"><strong>La referencia pertenece a otros años</strong>La fotografía utiliza ${snapshot.period.priorYear}/${snapshot.period.currentYear} y los datos vivos utilizan ${DATA.period.priorYear}/${DATA.period.currentYear}. Guarda una nueva referencia para iniciar el seguimiento del nuevo ejercicio.</td></tr>`;count.textContent='No se mezclan ejercicios diferentes en la comparación semanal.';note.textContent='Selecciona una fotografía compatible o guarda una nueva referencia.';adjustmentNote.hidden=true;return;}
+  const allRows=comparison.rows,metrics=weeklyMetrics(allRows),cards=[['improved','Mejoran',metrics.improved],['worsened','Empeoran',metrics.worsened],['new','Nuevos problemas',metrics.new],['resolved','Oportunidades resueltas',metrics.resolved]];
+  kpis.innerHTML=cards.map(([category,label,m])=>`<button type="button" class="weekly-kpi ${category} ${weeklyCategory===category?'active':''}" onclick="setWeeklyCategory('${category}')"><div class="weekly-kpi-label">${escapeHtml(label)}</div><div class="weekly-kpi-value">${nf.format(m.count)}</div><div class="weekly-kpi-amount">${category==='new'?`Impacto relacionado ${fmt.format(m.amount)}`:category==='resolved'?`Ingreso incorporado ${fmt.format(m.amount)}`:category==='improved'?`Subida ${fmt.format(m.amount)}`:`Bajada ${fmt.format(m.amount)}`}</div></button>`).join('');
+  const rows=weeklyCategory==='all'?allRows:allRows.filter(r=>r.categories.includes(weeklyCategory));
+  adjustmentNote.hidden=metrics.adjustment===0;adjustmentNote.innerHTML=metrics.adjustment?`Se han detectado <b>${nf.format(metrics.adjustment)} ajustes sobre ${DATA.period.priorYear}</b>. Se muestran aparte para no confundir una corrección del histórico con una venta o pérdida nueva. <button type="button" onclick="setWeeklyCategory('adjustment')">Ver ajustes</button>.`:'';
+  if(!rows.length)body.innerHTML='<tr><td colspan="8" class="weekly-empty"><strong>No hay cambios en esta categoría</strong>Los datos vivos coinciden con la fotografía seleccionada para los filtros actuales.</td></tr>';
+  else body.innerHTML=rows.map(r=>`<tr><td><div class="weekly-change-tags">${r.categories.map(category=>`<span class="weekly-change-tag ${category}">${escapeHtml(WEEKLY_CATEGORY_LABELS[category])}</span>`).join('')}</div></td><td><div class="name">${escapeHtml(r.name)}</div><div class="subtext">${escapeHtml(sectorLabel(r.sectors[0])||'Sector sin asignar')}</div></td><td class="money">${fmt.format(r.baselineCurrent)}</td><td class="money">${fmt.format(r.currentCurrent)}</td><td><span class="money ${r.deltaCurrent<0?'negative':r.deltaCurrent>0?'positive':''}">${r.deltaCurrent>=0?'+':''}${fmt.format(r.deltaCurrent)}</span></td><td><div class="weekly-reasons">${r.reasons.map(reason=>`<div class="weekly-reason">${reason}</div>`).join('')}</div></td><td>${escapeHtml(r.commercials.join(' · ')||'Sin asignar')}<div class="subtext">${r.portfolioMapped?'Cartera actual':'Sin coincidencia exacta en Cartera'}</div></td><td>${r.currentRecord?`<button class="detail-btn" onclick="openDetail('${jsq(r.id)}')">Ver ficha</button>`:'<span class="subtext">Sin ficha actual</span>'}</td></tr>`).join('');
+  const categoryLabel=weeklyCategory==='all'?'todos los cambios':WEEKLY_CATEGORY_LABELS[weeklyCategory].toLowerCase();count.textContent=`${nf.format(rows.length)} anunciantes con ${categoryLabel} · ${activeContextLabel()} · comparación con ${weeklyDateLabel(snapshot.savedAt)}.`;note.textContent=`Comparación de los datos vivos con la fotografía de ${weeklyDateLabel(snapshot.savedAt)}. Los filtros generales, el ámbito comercial y la fuente analizada también se aplican aquí.`;
+}
+function saveWeeklySnapshot(){
+  if(!DATA?.period?.currentYear)return;
+  const snapshot=createWeeklySnapshot(),weekKey=weeklyWeekKey(snapshot.savedAt),sameWeek=weeklyHistory.find(x=>weeklyWeekKey(x.savedAt)===weekKey&&x.period?.currentYear===snapshot.period.currentYear);
+  if(sameWeek&&snapshotSourceSignature(sameWeek)===snapshot.sourceSignature){weeklyBaselineId=sameWeek.id;renderWeeklyChanges();window.alert(`La fotografía de esta semana ya está guardada: ${weeklyDateLabel(sameWeek.savedAt)}.`);return;}
+  if(sameWeek&&!window.confirm(`Ya existe una fotografía de esta semana (${weeklyDateLabel(sameWeek.savedAt)}), pero los Excel han cambiado. ¿Quieres sustituirla por los datos actuales?`))return;
+  let previousBaseline=weeklyBaselineId||weeklyHistory[0]?.id||'';
+  if(sameWeek){weeklyHistory=weeklyHistory.filter(x=>x.id!==sameWeek.id);if(previousBaseline===sameWeek.id)previousBaseline=weeklyHistory[0]?.id||'';}
+  weeklyHistory.unshift(snapshot);try{persistWeeklyHistory();}catch(error){weeklyHistory=weeklyHistory.filter(x=>x.id!==snapshot.id);if(sameWeek)weeklyHistory.unshift(sameWeek);window.alert(`No se ha podido guardar la fotografía en este navegador: ${error.message||error}. Exporta el histórico JSON y revisa el espacio disponible.`);return;}
+  weeklyBaselineId=previousBaseline&&weeklyHistory.some(x=>x.id===previousBaseline)?previousBaseline:snapshot.id;renderWeeklyChanges();window.alert(`Fotografía semanal guardada: ${weeklyDateLabel(snapshot.savedAt)}. La comparación visible se mantiene contra la referencia anterior.`);
+}
+function exportWeeklyHistory(){
+  if(!weeklyHistory.length){window.alert('Todavía no hay fotografías semanales para exportar.');return;}
+  const payload={kind:'hearst-radar-weekly-history',version:1,exportedAt:new Date().toISOString(),snapshots:weeklyHistory};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a'),stamp=new Date().toISOString().slice(0,10);link.href=url;link.download=`historico-radar-oportunidades-${stamp}.json`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function importWeeklyHistoryFile(file){
+  if(!file)return;
+  try{const parsed=JSON.parse(await file.text()),items=Array.isArray(parsed)?parsed:parsed?.snapshots;if(!Array.isArray(items))throw new Error('El JSON no contiene una lista de fotografías.');const incoming=items.filter(validWeeklySnapshot),byId=new Map(weeklyHistory.map(x=>[x.id,x]));incoming.forEach(snapshot=>{const duplicate=[...byId.values()].find(x=>x.signature===snapshot.signature&&x.savedAt===snapshot.savedAt);if(!duplicate)byId.set(snapshot.id,snapshot);});weeklyHistory=[...byId.values()].sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt)).slice(0,WEEKLY_MAX_SNAPSHOTS);try{persistWeeklyHistory();}catch(storageError){throw new Error(`El histórico es demasiado grande para este navegador: ${storageError.message||storageError}`);}weeklyBaselineId=weeklyHistory[0]?.id||'';renderWeeklyChanges();window.alert(`Histórico importado: ${incoming.length} fotografías válidas. Ahora hay ${weeklyHistory.length} referencias guardadas.`);}catch(error){window.alert(`No se ha podido importar el histórico: ${error.message||error}`);}finally{document.getElementById('weeklyHistoryFile').value='';}
+}
+function deleteWeeklySnapshot(){
+  const snapshot=selectedWeeklySnapshot();if(!snapshot)return;if(!window.confirm(`¿Borrar la fotografía del ${weeklyDateLabel(snapshot.savedAt)}?`))return;weeklyHistory=weeklyHistory.filter(x=>x.id!==snapshot.id);persistWeeklyHistory();weeklyBaselineId=weeklyHistory[0]?.id||'';renderWeeklyChanges();
+}
+function openWeeklyInfo(){
+  document.getElementById('infoTitle').textContent='Cambios desde la última actualización';document.getElementById('infoSubtitle').textContent='Seguimiento semanal guardado en tu navegador';document.getElementById('infoBody').innerHTML=`<div class="info-explanation"><p>La comparación vive en su propia pestaña. El aviso situado encima de las pestañas permanece visible y te indica si la fotografía de esta semana está <b>pendiente, guardada o desactualizada</b> porque los Excel han vuelto a cambiar.</p><p>Cuando los datos estén revisados, pulsa <b>Guardar fotografía semanal</b>. La semana siguiente el Radar descargará los Excel actualizados y comparará los datos vivos con esa referencia.</p><div class="info-formula"><strong>Qué significa cada categoría</strong><b>Mejoran:</b> aumenta el ingreso del año actual. <b>Empeoran:</b> disminuye por cancelaciones, reparos o cambios de producción. <b>Nuevos problemas:</b> aparece una regla que antes no se cumplía, como Perdido o BC sin Social. <b>Oportunidades resueltas:</b> el dato objetivo mejora realmente; por ejemplo, aparece Social en un cliente que tenía BC sin Social.</div><div class="info-example"><strong>Ajustes históricos</strong>Si cambia el importe del año anterior, se identifica aparte como corrección histórica para no presentarlo como una venta o pérdida de esta semana.</div><p>Las fotografías se guardan solo en este navegador y se conservan hasta <b>${WEEKLY_MAX_SNAPSHOTS} referencias</b>. Usa <b>Exportar JSON</b> para guardar una copia en SharePoint e <b>Importar JSON</b> para recuperarla en otro ordenador. La comparación utiliza los umbrales y filtros que estén activos en el momento de consultarla.</p></div>`;document.getElementById('infoBackdrop').classList.add('open');
+}
+
+function render(){evaluateAll();renderWeeklyChanges();renderOpportunitySummary();renderPriorityActions();renderSalesWindows();renderMatrix();if(DATA.quality?.reconciliation)renderMethod();}
+function getKpiMetrics(){const rows=filtered(),opps=rows.flatMap(r=>r.opportunities),high=rows.filter(r=>r.priority==='Alta').length,py=DATA.period.priorYear,cy=DATA.period.currentYear,risk=rows.filter(r=>r.opportunities.some(o=>['recovery','drop'].includes(o.type))).reduce((s,r)=>s+Math.max(0,r.m[py].total-r.m[cy].total),0),crossRows=rows.filter(r=>r.opportunities.some(o=>!['recovery','drop'].includes(o.type))),crossBase=[...new Map(crossRows.map(r=>[r.id,r])).values()].reduce((s,r)=>s+Math.max(0,r.m[cy].total),0),prog=rows.filter(r=>r.opportunities.some(o=>['direct','prog'].includes(o.type))).length;return{rows,opps,high,py,cy,risk,crossBase,prog};}
+function getSummaryMetric(type){
+  const rows=filtered({ignoreType:true}).filter(r=>r.opportunities.some(o=>o.type===type));
+  const py=DATA.period.priorYear,cy=DATA.period.currentYear;
+  const valueFor=r=>{const o=r.opportunities.find(x=>x.type===type);if(type==='recovery')return Math.max(0,r.m[py].total);if(type==='drop')return Math.max(0,r.m[py].total-r.m[cy].total);if(type==='print')return Math.max(0,r.m[cy].print);if(type==='bc')return Math.max(0,r.m[cy].bc);if(type==='direct')return Math.max(0,r.m[cy].direct);if(type==='prog')return Math.max(0,r.m[cy].programatica);return Math.max(0,o?.value||0);};
+  const amount=rows.reduce((sum,r)=>sum+valueFor(r),0);
+  const top=[...rows].sort((a,b)=>valueFor(b)-valueFor(a)||a.name.localeCompare(b.name,'es')).slice(0,3).map(r=>({name:r.name,value:valueFor(r)}));
+  const amountLabels={recovery:`Ingreso ${py} de los clientes perdidos`,drop:'Diferencia pendiente frente al año anterior',print:'Ingreso actual en Print',bc:'Ingreso actual en Branded Content',direct:'Contratación directa actual',prog:'Ingreso actual en Programática'};
+  return{type,rows,count:rows.length,amount:round2(amount),top,amountLabel:amountLabels[type]};
+}
+function renderOpportunitySummary(){
+  const types=availableOpportunityTypes(),active=document.getElementById('oppType').value,container=document.getElementById('opportunitySummary');
+  container.classList.toggle('compact',types.length===2);
+  container.innerHTML=types.map(type=>{const m=getSummaryMetric(type);return`<article class="summary-card ${type} ${active===type?'active':''}"><div class="summary-card-head"><div class="summary-title-row"><div class="summary-title">${escapeHtml(TYPE_LABELS[type])}</div><button type="button" class="info-btn" onclick="openSummaryInfo('${type}')" aria-label="Explicar ${escapeHtml(TYPE_LABELS[type])}" title="Ver la lógica">i</button></div></div><div class="summary-count">${nf.format(m.count)}</div><div class="summary-count-label">anunciantes</div><div class="summary-amount">${fmt.format(m.amount)}</div><div class="summary-amount-label">${escapeHtml(m.amountLabel)}</div>${m.top.length?`<div class="summary-top">${m.top.map(x=>`<div class="summary-top-item"><span>${escapeHtml(x.name)}</span><b>${fmt.format(x.value)}</b></div>`).join('')}</div>`:'<div class="summary-empty">No hay casos con los filtros actuales.</div>'}<button type="button" class="summary-action" onclick="applySummaryFilter('${type}')">${active===type?'Quitar filtro':'Ver anunciantes'} →</button></article>`;}).join('');
+}
+function applySummaryFilter(type){const select=document.getElementById('oppType');select.value=select.value===type?'':type;render();requestAnimationFrame(()=>document.getElementById('priorityActionsPanel')?.scrollIntoView({behavior:'smooth',block:'start'}));}
+function selectedActionOpportunity(r){const activeType=document.getElementById('oppType').value;return(activeType?r.opportunities.find(o=>o.type===activeType):r.opportunities[0])||r.opportunities[0]||null;}
+function priorityActionRows(){return filtered().map(r=>({r,o:selectedActionOpportunity(r)})).filter(x=>x.o).sort((a,b)=>b.o.score-a.o.score||b.o.value-a.o.value||b.r.m[DATA.period.currentYear].total-a.r.m[DATA.period.currentYear].total||a.r.name.localeCompare(b.r.name,'es'));}
+function digitalOther(m){return round2((m.digital||0)-(m.bc||0)-(m.social||0)-(m.display||0));}
+function metricValue(m,key){return key==='otherDigital'?digitalOther(m):Number(m[key]||0);}
+const LOSS_COMPONENTS=[
+  {key:'bc',label:'Branded Content',short:'BC'},
+  {key:'social',label:'Social',short:'Social'},
+  {key:'display',label:'Display',short:'Display'},
+  {key:'otherDigital',label:'Otros productos digitales',short:'Otros Digital'},
+  {key:'print',label:'Print',short:'Print'},
+  {key:'eventos',label:'Eventos',short:'Eventos'},
+  {key:'programatica',label:'Programática',short:'Programática'}
+];
+function lostComponents(r){
+  const py=DATA.period.priorYear,cy=DATA.period.currentYear,prev=r.m[py],cur=r.m[cy];
+  return LOSS_COMPONENTS.map(c=>{const prior=round2(metricValue(prev,c.key)),current=round2(metricValue(cur,c.key)),loss=round2(prior-current);return{...c,prior,current,loss};})
+    .filter(c=>c.prior>0&&c.loss>0.5)
+    .sort((a,b)=>b.loss-a.loss||b.prior-a.prior);
+}
+function topLostProduct(r,bucket){const py=DATA.period.priorYear,cy=DATA.period.currentYear,prev=r.productHistory?.[py]?.[bucket],cur=r.productHistory?.[cy]?.[bucket];if(!prev)return null;return[...prev.entries()].map(([name,prior])=>({name,prior:round2(prior),current:round2(cur?.get(name)||0),loss:round2(prior-(cur?.get(name)||0))})).filter(x=>x.prior>0&&x.loss>0.5).sort((a,b)=>b.loss-a.loss||b.prior-a.prior)[0]||null;}
+function lossPhrase(c,product=null){
+  const detail=product&&c.key==='otherDigital'?` (${product.name})`:'';
+  if(Math.abs(c.current)<0.5)return `${c.short}${detail}: ${fmt.format(c.prior)} el año pasado y 0 € este año`;
+  return `${c.short}${detail}: ${fmt.format(c.prior)} → ${fmt.format(c.current)} (pierde ${fmt.format(c.loss)})`;
+}
+function actionFromLoss(r,c,product=null){
+  const cy=DATA.period.currentYear,y=r.m[cy];
+  if(!c)return 'Revisar en la ficha qué productos explican la pérdida y preparar una propuesta de recuperación.';
+  if(c.key==='bc')return y.social>0?'Recuperar el volumen de BC aprovechando la actividad Social actual.':'Recuperar BC y acompañarlo con amplificación Social.';
+  if(c.key==='social')return y.bc>0?'Reforzar Social alrededor del Branded Content que todavía mantiene.':'Reactivar Social con una propuesta de contenido y distribución.';
+  if(c.key==='display')return y.bc>0||y.social>0?'Recuperar Display para amplificar la actividad digital actual.':'Plantear una propuesta de recuperación de Display.';
+  if(c.key==='otherDigital')return product?`Recuperar ${product.name} o plantear un formato digital equivalente.`:'Revisar los productos digitales perdidos y preparar una propuesta de recuperación específica.';
+  if(c.key==='print')return y.digital>0?'Recuperar Print apoyándose en la relación Digital que mantiene.':'Plantear una propuesta de recuperación en Print.';
+  if(c.key==='eventos')return 'Recuperar Eventos y acompañarlos con contenido y amplificación Social.';
+  if(c.key==='programatica')return y.direct>0?'Recuperar Programática aprovechando la relación directa actual.':'Revisar la pérdida de Programática y plantear una reactivación.';
+  return 'Preparar un plan de recuperación centrado en la principal pérdida detectada.';
+}
+function diagnosticPlan(r,o){
+  const py=DATA.period.priorYear,cy=DATA.period.currentYear,yPrev=r.m[py],yCur=r.m[cy];
+  if(o.type==='recovery'||o.type==='drop'){
+    const losses=lostComponents(r),main=losses[0],second=losses[1],mainProduct=main?topLostProduct(r,main.key):null,secondProduct=second?topLostProduct(r,second.key):null;
+    let diagnosis;
+    if(main){
+      diagnosis=`${o.type==='recovery'?'Sin ingreso este año. ':'La principal caída está en '}${lossPhrase(main,mainProduct)}.`;
+      if(second&&second.loss>=Math.max(1000,main.loss*.25))diagnosis+=` También cae ${lossPhrase(second,secondProduct)}.`;
+    }else{
+      const loss=Math.max(0,yPrev.total-yCur.total),dropPct=yPrev.total>0?loss/yPrev.total:0;
+      diagnosis=o.type==='recovery'?`${py}: ${fmt.format(yPrev.total)} · ${cy}: sin ingreso.`:`Cae ${pctFmt.format(dropPct)} y pierde ${fmt.format(loss)}.`;
+    }
+    return{diagnosis,plan:actionFromLoss(r,main,mainProduct),tag:o.short};
+  }
+  if(o.type==='print')return{diagnosis:`Tiene ${fmt.format(yCur.print)} en Print y no registra ingreso Digital.`,plan:'Proponer una extensión Digital vinculada a la actividad Print.',tag:o.short};
+  if(o.type==='bc')return{diagnosis:`Tiene ${fmt.format(yCur.bc)} en Branded Content y no registra Social.`,plan:'Añadir amplificación Social para dar más recorrido al contenido.',tag:o.short};
+  if(o.type==='direct')return{diagnosis:`Mantiene ${fmt.format(yCur.direct)} de contratación directa y no registra Programática.`,plan:'Explorar una capa Programática que complemente la contratación directa.',tag:o.short};
+  if(o.type==='prog')return{diagnosis:`Tiene ${fmt.format(yCur.programatica)} en Programática y no registra contratación directa.`,plan:'Convertir la relación Programática en una propuesta directa de contenido, Display o Eventos.',tag:o.short};
+  return{diagnosis:o.reason,plan:ACTION_LABELS[o.type]||'Revisar la oportunidad.',tag:o.short};
+}
+function diagnosticPlanHtml(r,o){
+  const d=diagnosticPlan(r,o);
+  return `<div class="diagnosis-plan"><div class="diagnosis-row"><span class="diagnosis-label">Diagnóstico</span><span class="diagnosis-text">${escapeHtml(d.diagnosis)}</span></div><div class="plan-row"><span class="plan-label">Plan sugerido</span><span><span class="plan-text">${escapeHtml(d.plan)}</span><br><span class="plan-tag ${o.type}">${escapeHtml(d.tag)}</span></span></div></div>`;
+}
+function renderPriorityActions(){
+  const all=priorityActionRows(),shown=actionLimit==='all'?all:all.slice(0,actionLimit),body=document.getElementById('priorityActionsBody'),activeType=document.getElementById('oppType').value;
+  document.querySelectorAll('[data-action-limit]').forEach(btn=>btn.classList.toggle('active',String(actionLimit)===btn.dataset.actionLimit));
+  document.getElementById('priorityActionsNote').textContent=activeType?`${activeContextLabel()} · Diagnóstico y plan de acción para “${TYPE_LABELS[activeType]}”.`:`${activeContextLabel()} · Una recomendación comercial principal por anunciante, basada en la pérdida o hueco más relevante.`;
+  if(!shown.length)body.innerHTML='<tr><td colspan="6" class="empty">No hay acciones prioritarias con los filtros y criterios actuales.</td></tr>';
+  else body.innerHTML=shown.map(({r,o})=>`<tr><td><span class="score ${scoreClass(o.priority)}">${o.score}</span><div class="subtext">${o.priority}</div></td><td><div class="name">${escapeHtml(r.name)}</div><div class="subtext">${escapeHtml(sectorLabel(r.sectors[0])||'Sector sin asignar')}</div></td><td>${diagnosticPlanHtml(r,o)}</td><td class="economic-base"><span class="money">${fmt.format(o.value)}</span><span class="base-label">${escapeHtml(ACTION_BASE_LABELS[o.type])}</span></td><td>${escapeHtml(r.commercials.join(' · ')||'Sin asignar')}<div class="subtext">${r.portfolioMapped?'Cartera actual':'Sin coincidencia exacta en Cartera'}</div></td><td><button class="detail-btn" onclick="openDetail('${jsq(r.id)}')">Ver ficha</button></td></tr>`).join('');
+  const limitLabel=actionLimit==='all'?'todas las':`las ${nf.format(Math.min(actionLimit,all.length))} primeras`;
+  document.getElementById('priorityActionsCount').textContent=`Mostrando ${limitLabel} acciones de ${nf.format(all.length)} anunciantes. Cada fila resume la principal pérdida o hueco y propone un siguiente paso.`;
+}
+function setActionLimit(value){actionLimit=value==='all'?'all':Number(value)||10;renderPriorityActions();}
+function openPriorityInfo(){
+  const activeType=document.getElementById('oppType').value;
+  document.getElementById('infoTitle').textContent='Acciones comerciales prioritarias';
+  document.getElementById('infoSubtitle').textContent='Una recomendación principal por anunciante';
+  document.getElementById('infoBody').innerHTML=`<div class="info-explanation"><p>Este bloque transforma cada señal en un <b>diagnóstico comercial y un siguiente paso</b>. Para clientes perdidos o con caída, identifica qué canal o producto explica la mayor parte de la pérdida: BC, Social, Display, otros productos digitales, Print, Eventos o Programática.</p><div class="info-formula"><strong>Cómo se elige</strong>${activeType?`Como está activo el filtro <b>${escapeHtml(TYPE_LABELS[activeType])}</b>, se muestra esa acción para cada anunciante.`:'Sin un tipo filtrado, se elige la oportunidad con mayor score de cada cliente.'} Después se ordenan por score y, en caso de empate, por la base económica relacionada.</div><div class="info-example"><strong>Plan sugerido</strong>Es una recomendación orientativa basada en la principal pérdida o hueco detectado. El detalle completo de publicaciones, productos y marcas sigue disponible en <b>Ver ficha</b>. La base económica es real, pero <b>no es una previsión del ingreso que se vaya a conseguir</b>.</div><p>Los botones <b>Top 10</b>, <b>Top 25</b> y <b>Todas</b> solo cambian cuántas filas se ven. Los filtros generales de anunciante, comercial, sector, oportunidad y prioridad también se aplican a este bloque.</p></div>`;
+  document.getElementById('infoBackdrop').classList.add('open');
+}
+function openSummaryInfo(type){
+  const m=getSummaryMetric(type),t=thresholds(),py=DATA.period.priorYear,cy=DATA.period.currentYear,progMin=Math.max(1000,t.tDirect*.1);
+  const details={
+    recovery:{title:'Cliente perdido',subtitle:`Tenía ingreso en ${py} y no presenta ingreso positivo en ${cy}`,body:`<p>Incluye anunciantes con al menos <b>${fmt.format(t.tRecovery)}</b> en toda la información disponible de ${py} y sin ingreso positivo en ${cy}.</p><div class="info-formula"><strong>Importe mostrado</strong>Suma el ingreso histórico de ${py} de esos anunciantes. Es una referencia de negocio perdido que conviene revisar, no una previsión segura de recuperación.</div>`},
+    drop:{title:'Caída interanual',subtitle:'Clientes activos cuyo ingreso baja de forma relevante',body:`<p>Incluye anunciantes que siguen activos, pero pierden al menos <b>${fmt.format(t.tDropLoss)}</b> y un <b>${formatThousandsDots(t.tDropPct)} %</b> frente al año anterior.</p><div class="info-formula"><strong>Importe mostrado</strong>Suma, anunciante a anunciante, la diferencia positiva entre el ingreso de ${py} y el de ${cy}.</div>`},
+    print:{title:'Print sin Digital',subtitle:'Clientes con base suficiente en Print y sin Digital directo',body:`<p>Incluye anunciantes con al menos <b>${fmt.format(t.tPrint)}</b> en Print y sin ingreso Digital directo en ${cy}.</p><div class="info-formula"><strong>Importe mostrado</strong>Suma la inversión actual en Print de esos clientes. No es el valor estimado de la venta Digital; es el tamaño de la relación actual desde la que trabajarla.</div>`},
+    bc:{title:'BC sin Social',subtitle:'Contenido contratado sin inversión Social identificada',body:`<p>Incluye anunciantes con al menos <b>${fmt.format(t.tBC)}</b> en Branded Content y sin ingreso Social identificado en el año actual.</p><div class="info-formula"><strong>Importe mostrado</strong>Suma la inversión actual en Branded Content de esos anunciantes. La siguiente evolución será detectar también los casos con Social, pero con una amplificación muy pequeña.</div>`},
+    direct:{title:'Directo sin Programática',subtitle:'Relación comercial directa sin Programática atribuida',body:`<p>Incluye anunciantes con al menos <b>${fmt.format(t.tDirect)}</b> de contratación directa entre Digital, Print y Eventos, y sin ingreso en Programática atribuida.</p><div class="info-formula"><strong>Importe mostrado</strong>Suma la contratación directa actual de esos clientes. Programática no añade ingreso al total: solo se resta de Google la parte atribuida a otros anunciantes y se reasigna a cada uno.</div>`},
+    prog:{title:'Programática sin Directo',subtitle:'Actividad programática sin contratación directa',body:`<p>Incluye anunciantes con al menos <b>${fmt.format(progMin)}</b> en Programática atribuida y sin contratación directa en Digital, Print o Eventos.</p><div class="info-formula"><strong>Importe mostrado</strong>Suma el ingreso programático actual de esos anunciantes, ya redistribuido desde Google.</div>`}
+  }[type];if(!details)return;document.getElementById('infoTitle').textContent=details.title;document.getElementById('infoSubtitle').textContent=details.subtitle;document.getElementById('infoBody').innerHTML=`<div class="info-explanation"><span class="info-current">${nf.format(m.count)} anunciantes · ${fmt.format(m.amount)}</span>${details.body}</div>`;document.getElementById('infoBackdrop').classList.add('open');
+}
+
+function isSalesWindowYearEnd(){return salesWindowDays==='yearEnd';}
+function salesWindowHorizonLabel(){return isSalesWindowYearEnd()?'Hasta final de año':`${salesWindowDays} días`;}
+function salesWindowFileSlug(){return isSalesWindowYearEnd()?'hasta-final-de-ano':`${salesWindowDays}-dias`;}
+function setSalesWindowDays(value){salesWindowDays=value==='yearEnd'?'yearEnd':(Number(value)||90);document.querySelectorAll('[data-sales-window]').forEach(btn=>btn.classList.toggle('active',btn.dataset.salesWindow===String(salesWindowDays)));renderSalesWindows();}
+function setSalesWindowLimit(value){salesWindowLimit=value==='all'?'all':25;document.querySelectorAll('[data-sales-limit]').forEach(btn=>btn.classList.toggle('active',btn.dataset.salesLimit===String(salesWindowLimit)));renderSalesWindows();}
+function upcomingMonths(days=salesWindowDays){
+  const now=new Date(),cy=DATA.period.currentYear;if(now.getFullYear()!==cy)return[];const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());start.setHours(0,0,0,0);const months=[],untilYearEnd=days==='yearEnd';
+  for(let month=now.getMonth()+2;month<=12;month++){const date=new Date(cy,month-1,1),diff=Math.ceil((date-start)/86400000);if(diff>0&&(untilYearEnd||diff<=Number(days)))months.push({month,daysUntil:diff,date});}
+  return months;
+}
+function windowRecordMatches(r){
+  const q=normalText(document.getElementById('search').value),com=document.getElementById('commercial').value,sec=document.getElementById('sector').value,typ=document.getElementById('oppType').value,pri=document.getElementById('priority').value;
+  if(q&&!normalText([r.name,...r.aliases].join(' ')).includes(q))return false;if(com&&!r.commercials.includes(com))return false;if(sec&&!r.sectors.includes(sec))return false;
+  if(typ||pri){const e=evaluate(r);if(typ&&!e.opportunities.some(o=>o.type===typ))return false;if(pri&&e.priority!==pri)return false;}
+  return true;
+}
+function dominantWindowCategory(m){
+  const categories=[['bc','Branded Content'],['social','Social'],['display','Display'],['print','Print'],['eventos','Eventos'],['programatica','Programática'],['otherDigital','Otros productos digitales']];
+  const values={...m,otherDigital:Math.max(0,round2((m.digital||0)-(m.bc||0)-(m.social||0)-(m.display||0)))};return categories.map(([key,label])=>({key,label,value:Math.max(0,values[key]||0)})).sort((a,b)=>b.value-a.value)[0]||{key:'otherDigital',label:'Actividad comercial',value:0};
+}
+function salesWindowAction(row){
+  const month=MONTH_NAMES[row.month],category=row.category.key,product=row.products[0]?.name||row.category.label;
+  if(row.current<=0){
+    if(category==='bc')return`Contactar ahora para recuperar el contenido de ${month} y valorar amplificación Social.`;
+    if(category==='social')return`Preparar la renovación de Social para ${month} y revisar si puede crecer con contenido.`;
+    if(category==='print')return`Anticipar una propuesta Print para ${month}, tomando como referencia la activación anterior.`;
+    if(category==='eventos')return`Contactar con antelación para renovar el evento o plantear una alternativa equivalente.`;
+    if(category==='programatica')return`Revisar la continuidad Programática prevista para ${month}.`;
+    if(category==='display')return`Proponer la renovación de Display para ${month} o un formato digital equivalente.`;
+    return`Recuperar ${product} para ${month} o plantear una alternativa digital equivalente.`;
+  }
+  return`Ya hay ${fmt.format(row.current)} reservado. Revisar una ampliación de ${fmt.format(row.gap)} para acercarse al nivel del año anterior.`;
+}
+function salesWindowRows(){
+  const py=DATA.period.priorYear,cy=DATA.period.currentYear,minHistory=thresholds().tRecovery,months=upcomingMonths(),rows=[];
+  currentRecords().filter(r=>r.eligible!==false&&windowRecordMatches(r)).forEach(r=>months.forEach(win=>{const previous=r.monthly?.[py]?.[win.month],current=r.monthly?.[cy]?.[win.month];if(!previous||!current)return;const historical=round2(previous.total||0),reserved=round2(current.total||0),gap=round2(historical-reserved);if(historical<minHistory||gap<=0)return;const category=dominantWindowCategory(previous),products=previous.products||[],publications=previous.publications||[];const row={id:r.id,name:r.name,month:win.month,daysUntil:win.daysUntil,historical,current:reserved,gap,category,products,publications,commercials:r.commercials,sectors:r.sectors,portfolioMapped:r.portfolioMapped};row.action=salesWindowAction(row);rows.push(row);}));
+  return rows.sort((a,b)=>a.daysUntil-b.daysUntil||b.gap-a.gap||b.historical-a.historical||a.name.localeCompare(b.name,'es'));
+}
+function windowContractHtml(row){const products=row.products.slice(0,2).map(x=>x.name),pubs=row.publications.slice(0,2).map(x=>x.name);return`<div class="window-detail"><b>${escapeHtml(row.category.label)}</b>${products.length?`<br>${escapeHtml(products.join(' · '))}`:''}${pubs.length?`<br><span class="subtext">${escapeHtml(pubs.join(' · '))}</span>`:''}</div>`;}
+function renderSalesWindows(){
+  const body=document.getElementById('salesWindowsBody');if(!body)return;const py=DATA.period.priorYear,cy=DATA.period.currentYear,months=upcomingMonths();lastSalesWindowRows=salesWindowRows();document.getElementById('salesWindowPriorYear').textContent=py;document.getElementById('salesWindowCurrentYear').textContent=cy;
+  const horizonText=salesWindowHorizonLabel();document.getElementById('salesWindowsNote').textContent=months.length?(isSalesWindowYearEnd()?`Meses restantes hasta final de ${cy}: ${months.map(x=>MONTH_NAMES_CAP[x.month]).join(', ')}. Se compara el neto del mismo mes del año anterior con lo ya reservado este año.`:`Meses que comienzan dentro de los próximos ${salesWindowDays} días: ${months.map(x=>MONTH_NAMES_CAP[x.month]).join(', ')}. Se compara el neto del mismo mes del año anterior con lo ya reservado este año.`):`No hay meses del año ${cy} dentro del horizonte “${horizonText}”.`;
+  const displayedRows=salesWindowLimit==='all'?lastSalesWindowRows:lastSalesWindowRows.slice(0,25);if(!lastSalesWindowRows.length)body.innerHTML='<tr><td colspan="9" class="empty">No hay ventanas pendientes con el horizonte, filtros y mínimo histórico actuales.</td></tr>';else body.innerHTML=displayedRows.map(row=>`<tr><td><div class="window-month">${escapeHtml(MONTH_NAMES_CAP[row.month])}</div><div class="window-days">comienza en ${nf.format(row.daysUntil)} días</div></td><td><div class="name">${escapeHtml(row.name)}</div><div class="subtext">${escapeHtml(row.category.label)}</div></td><td class="money">${fmt.format(row.historical)}</td><td class="money window-current ${row.current<=0?'zero':''}">${fmt.format(row.current)}</td><td class="money window-gap">(${fmt.format(-row.gap)})</td><td>${windowContractHtml(row)}</td><td><div class="window-action"><strong>Siguiente paso</strong>${escapeHtml(row.action)}</div></td><td>${escapeHtml(row.commercials.join(' · ')||'Sin asignar')}<div class="portfolio-note ${row.portfolioMapped?'':'unmapped'}">${row.portfolioMapped?'Cartera actual':'Sin coincidencia exacta en Cartera'}</div></td><td><button class="detail-btn" onclick="openDetail('${jsq(row.id)}')">Ver ficha</button></td></tr>`).join('');
+  const totalHistorical=lastSalesWindowRows.reduce((s,r)=>s+r.historical,0),totalGap=lastSalesWindowRows.reduce((s,r)=>s+r.gap,0);document.getElementById('salesWindowsCount').textContent=`Mostrando ${nf.format(displayedRows.length)} de ${nf.format(lastSalesWindowRows.length)} ventanas · histórico total ${fmt.format(totalHistorical)} · diferencia pendiente total ${fmt.format(totalGap)} · ${activeContextLabel()}.`;
+}
+function openSalesWindowInfo(){
+  const months=upcomingMonths();document.getElementById('infoTitle').textContent='Próximas ventanas de venta';document.getElementById('infoSubtitle').textContent='Anticipación comercial basada en el mes de inserción del año anterior';document.getElementById('infoBody').innerHTML=`<div class="info-explanation"><p>Busca anunciantes que tuvieron ingreso neto en un mes del año anterior y cuyo mismo mes del año actual todavía está a cero o por debajo.</p><div class="info-formula"><strong>Cálculo</strong>Histórico del mes ${DATA.period.priorYear} − importe ya reservado en el mismo mes de ${DATA.period.currentYear}. Solo aparece cuando el histórico alcanza el mínimo configurado para “Perdido” y la diferencia pendiente es positiva.</div><div class="info-example"><strong>Horizonte actual</strong>${months.length?months.map(x=>`${MONTH_NAMES_CAP[x.month]} comienza en ${x.daysUntil} días`).join(' · '):'No hay meses del año actual dentro del horizonte seleccionado.'}</div><p><b>Importante:</b> los Excel identifican el mes, pero no el día exacto de activación. Por eso 30, 60 y 90 días se calculan según el inicio de cada mes. La opción <b>Hasta final de año</b> incluye todos los meses completos que todavía no han comenzado, hasta diciembre. Todas las opciones deben interpretarse como una ventana orientativa para anticipar el contacto comercial.</p><p>El botón <b>Exportar Excel</b> descarga todas las ventanas que cumplen el horizonte, el ámbito, la fuente analizada y los filtros activos, aunque en pantalla esté seleccionado Top 25. El archivo crea una hoja por comercial; las ventas conjuntas se agrupan en una única hoja.</p></div>`;document.getElementById('infoBackdrop').classList.add('open');
+}
+async function exportSalesWindows(){
+  const rows=salesWindowRows();
+  if(!rows.length){alert('No hay próximas ventanas de venta para exportar con los filtros actuales.');return;}
+  if(!window.ExcelJS){alert('No se ha podido cargar la librería necesaria para crear el Excel con formato. Comprueba la conexión a Internet.');return;}
+  const py=DATA.period.priorYear,cy=DATA.period.currentYear,btn=document.getElementById('exportSalesWindowsBtn'),previousText=btn.textContent;
+  btn.disabled=true;btn.textContent='Preparando Excel...';
+  try{
+    const workbook=new ExcelJS.Workbook();
+    workbook.creator='Radar de Oportunidades Comerciales';
+    workbook.created=new Date();
+    workbook.modified=new Date();
+    const headers=['Ámbito','Horizonte','Mes previsto','Días hasta inicio de mes','Anunciante',`Histórico ${py}`,`Reservado ${cy}`,'Canal principal','Productos del año anterior','Publicaciones del año anterior','Acción sugerida','Comercial cartera actual','Sectores'];
+    const usedSheetNames=new Set(['METODOLOGIA']);
+    const cleanCommercials=row=>[...new Set((row.commercials||[]).map(x=>String(x||'').trim()).filter(Boolean))];
+    const exportGroupName=row=>{
+      const commercials=cleanCommercials(row);
+      const markedJoint=commercials.some(name=>/VENTAS?\s+(COMPARTIDAS?|CONJUNTAS?)/i.test(name));
+      if(commercials.length>1||markedJoint)return 'Ventas conjuntas';
+      return commercials[0]||'Sin asignar';
+    };
+    const safeSheetName=rawName=>{
+      const cleaned=String(rawName||'Sin asignar').replace(/[:\\/?*\[\]]/g,' ').replace(/\s+/g,' ').trim()||'Sin asignar';
+      let base=cleaned.slice(0,31),candidate=base,index=2;
+      const key=name=>name.toLocaleUpperCase('es-ES');
+      while(usedSheetNames.has(key(candidate))){
+        const suffix=` (${index++})`;
+        candidate=base.slice(0,31-suffix.length)+suffix;
+      }
+      usedSheetNames.add(key(candidate));
+      return candidate;
+    };
+    const styleCommercialSheet=worksheet=>{
+      const header=worksheet.getRow(1);
+      header.height=30;
+      header.eachCell(cell=>{
+        cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2563EB'}};
+        cell.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
+        cell.alignment={horizontal:'center',vertical:'middle',wrapText:false};
+      });
+      worksheet.eachRow((row,rowNumber)=>{
+        if(rowNumber>1)row.height=22;
+        row.eachCell({includeEmpty:true},cell=>{
+          if(rowNumber>1)cell.font={color:{argb:'FF1F2937'},size:11};
+          cell.alignment={horizontal:'center',vertical:'middle',wrapText:false};
+        });
+      });
+      [6,7].forEach(col=>{worksheet.getColumn(col).numFmt='#,##0 "€"';});
+      worksheet.columns.forEach((column,index)=>{
+        let maxLength=String(headers[index]||'').length;
+        column.eachCell({includeEmpty:true},cell=>{
+          let visible='';
+          if(cell.value===null||cell.value===undefined)visible='';
+          else if((index===5||index===6)&&typeof cell.value==='number')visible=new Intl.NumberFormat('es-ES',{maximumFractionDigits:0}).format(cell.value)+' €';
+          else visible=String(cell.value);
+          maxLength=Math.max(maxLength,visible.length);
+        });
+        column.width=Math.min(200,Math.max(12,maxLength+4));
+      });
+      worksheet.autoFilter={from:'A1',to:`M${worksheet.rowCount}`};
+    };
+    const grouped=new Map();
+    rows.forEach(row=>{
+      const group=exportGroupName(row);
+      if(!grouped.has(group))grouped.set(group,[]);
+      grouped.get(group).push(row);
+    });
+    const groupNames=[...grouped.keys()].sort((a,b)=>{
+      const rank=name=>name==='Ventas conjuntas'?1:name==='Sin asignar'?2:0;
+      return rank(a)-rank(b)||a.localeCompare(b,'es',{sensitivity:'base'});
+    });
+    groupNames.forEach(groupName=>{
+      const worksheet=workbook.addWorksheet(safeSheetName(groupName),{views:[{state:'frozen',ySplit:1,showGridLines:false}]});
+      worksheet.addRow(headers);
+      const groupRows=[...grouped.get(groupName)].sort((a,b)=>a.daysUntil-b.daysUntil||a.month-b.month||a.name.localeCompare(b.name,'es',{sensitivity:'base'}));
+      groupRows.forEach(row=>worksheet.addRow([
+        activeContextLabel(),salesWindowHorizonLabel(),MONTH_NAMES_CAP[row.month],row.daysUntil,row.name,
+        Math.round(row.historical),Math.round(row.current),row.category.label,
+        row.products.map(x=>x.name).join(' · '),row.publications.map(x=>x.name).join(' · '),row.action,
+        cleanCommercials(row).join(' · ')||'Sin asignar',sectorListLabel(row.sectors)
+      ]));
+      styleCommercialSheet(worksheet);
+    });
+    const methodology=workbook.addWorksheet('Metodología',{views:[{showGridLines:false}]});
+    const methodRows=[
+      ['Radar de Oportunidades Comerciales','Próximas ventanas de venta'],
+      ['Fecha de exportación',new Date().toLocaleString('es-ES')],
+      ['Ámbito',SEGMENT_LABELS[activeSegment]],
+      ['Fuente analizada',MEDIA_LABELS[activeMedia]],
+      ['Horizonte',salesWindowHorizonLabel()],
+      ['Organización','Una hoja por comercial. Los anunciantes asignados a más de un comercial se agrupan en la hoja Ventas conjuntas.'],
+      ['Lógica',`Ingreso neto del mes ${py} menos lo reservado en el mismo mes de ${cy}. Ventana mensual orientativa.`],
+      ['Mínimo histórico',Math.round(thresholds().tRecovery)]
+    ];
+    methodRows.forEach(r=>methodology.addRow(r));
+    methodology.getRow(1).height=30;
+    methodology.eachRow((row,rowNumber)=>{
+      if(rowNumber>1)row.height=22;
+      row.eachCell({includeEmpty:true},cell=>{
+        cell.alignment={horizontal:'center',vertical:'middle',wrapText:false};
+        if(rowNumber===1){
+          cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2563EB'}};
+          cell.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
+        }else{
+          cell.font={color:{argb:'FF1F2937'},size:11};
+        }
+      });
+    });
+    methodology.getCell('B7').numFmt='#,##0 "€"';
+    methodology.columns.forEach((column,index)=>{
+      let maxLength=0;
+      column.eachCell({includeEmpty:true},cell=>{
+        let visible=cell.value===null||cell.value===undefined?'':String(cell.value);
+        if(index===1&&cell.row===7&&typeof cell.value==='number')visible=new Intl.NumberFormat('es-ES',{maximumFractionDigits:0}).format(cell.value)+' €';
+        maxLength=Math.max(maxLength,visible.length);
+      });
+      column.width=Math.min(200,Math.max(18,maxLength+4));
+    });
+    const buffer=await workbook.xlsx.writeBuffer();
+    const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob),link=document.createElement('a'),stamp=new Date().toISOString().slice(0,10);
+    link.href=url;link.download=`proximas-ventanas-venta-${salesWindowFileSlug()}-${stamp}.xlsx`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(error){
+    console.error(error);alert(`No se ha podido generar el Excel: ${error.message||error}`);
+  }finally{
+    btn.disabled=false;btn.textContent=previousText;
+  }
+}
+
+function renderKpis(){const target=document.getElementById('kpis');if(!target)return;const m=getKpiMetrics();const values=[{id:'advertisers',label:'Anunciantes con oportunidad',value:nf.format(m.rows.length),hint:'Según filtros activos',className:''},{id:'opportunities',label:'Oportunidades detectadas',value:nf.format(m.opps.length),hint:'Un anunciante puede tener varias',className:'purple'},{id:'high',label:'Prioridad alta',value:nf.format(m.high),hint:'Score igual o superior a 75',className:'alert'},{id:'risk',label:'Ingreso histórico en riesgo',value:fmt.format(m.risk),hint:'Caídas y clientes sin actividad',className:'alert'},{id:'cross',label:'Ingreso actual de clientes con oportunidad cruzada',value:fmt.format(m.crossBase),hint:`Ingreso ${m.cy} de clientes con huecos`,className:'green'},{id:'programmatic',label:'Cruces con Programática',value:nf.format(m.prog),hint:'Directo sin programática o al revés',className:'purple'}];target.innerHTML=values.map(v=>`<div class="kpi ${v.className}"><div class="kpi-label-row"><div class="label">${v.label}</div><button type="button" class="info-btn" onclick="openKpiInfo('${v.id}')" aria-label="Explicar ${v.label}" title="Ver cómo se calcula">i</button></div><div class="value">${v.value}</div><div class="hint">${v.hint}</div></div>`).join('');}
+function openKpiInfo(id){const m=getKpiMetrics(),t=thresholds(),progMin=Math.max(1000,t.tDirect*.1);const info={advertisers:{title:'Anunciantes con oportunidad',subtitle:'Número de clientes únicos que aparecen en el Radar',current:nf.format(m.rows.length),body:`<p>Cuenta los <b>anunciantes diferentes</b> que cumplen al menos una de las reglas de oportunidad con los umbrales y filtros que están activos en este momento.</p><p>Cada anunciante se cuenta una sola vez, aunque tenga varias oportunidades.</p><div class="info-formula"><strong>Cálculo</strong>Anunciantes únicos con una o más oportunidades activas después de aplicar búsqueda, comercial, sector, tipo de oportunidad y prioridad.</div><div class="info-example"><strong>Ejemplo</strong>Si un anunciante tiene una caída y además Branded Content sin Social, suma <b>1 anunciante</b> en este indicador.</div>`},opportunities:{title:'Oportunidades detectadas',subtitle:'Número total de reglas comerciales activadas',current:nf.format(m.opps.length),body:`<p>Suma todas las oportunidades encontradas entre los anunciantes visibles. Un mismo cliente puede aportar más de una.</p><div class="info-formula"><strong>Cálculo</strong>Clientes perdidos + caídas + Print sin Digital + BC sin Social + cruces Directo/Programática que cumplen los umbrales actuales.</div><div class="info-example"><strong>Ejemplo</strong>Si un cliente cumple “Caída” y “BC sin Social”, aporta <b>2 oportunidades</b>, aunque en “Anunciantes con oportunidad” solo cuente una vez.</div>`},high:{title:'Prioridad alta',subtitle:'Clientes cuya oportunidad principal necesita más atención',current:nf.format(m.high),body:`<p>Cuenta los anunciantes cuyo <b>score más alto es 75 o superior</b>. El score combina la fuerza de la señal y el volumen económico implicado.</p><p>Se toma la oportunidad con mayor puntuación de cada anunciante, no la suma de todos sus scores.</p><div class="info-formula"><strong>Cálculo</strong>Anunciantes visibles con score máximo ≥ 75.</div><div class="info-example"><strong>Interpretación</strong>Sirve para saber cuántos clientes deberían revisarse primero; no representa euros ni garantiza que la venta vaya a recuperarse.</div>`},risk:{title:'Ingreso histórico en riesgo',subtitle:`Diferencia pendiente frente a ${m.py}`,current:fmt.format(m.risk),body:`<p>Suma la pérdida de los anunciantes que aparecen como <b>perdidos</b> o por <b>caída</b>, comparando toda la información disponible de ${m.py} con la de ${m.cy}.</p><div class="info-formula"><strong>Cálculo</strong>Para cada anunciante: máximo entre 0 € y (ingreso ${m.py} − ingreso ${m.cy}). Después se suman todas esas diferencias.</div><div class="info-example"><strong>Ejemplo</strong>Si en ${m.py} se consiguieron <b>20 M€</b> y en ${m.cy} llevamos <b>15 M€</b>, este indicador mostraría <b>5 M€</b>. Es una referencia de ingreso no recuperado, no una previsión segura de venta.</div>`},cross:{title:'Ingreso actual de clientes con oportunidad cruzada',subtitle:'Volumen actual sobre el que existe una relación comercial aprovechable',current:fmt.format(m.crossBase),body:`<p>Suma el ingreso de ${m.cy} de los anunciantes que ya tienen actividad, pero presentan al menos un hueco de venta cruzada: <b>Print sin Digital, BC sin Social, Directo sin Programática o Programática sin contratación directa</b>.</p><p><b>No es el valor económico de la oportunidad</b> ni una pérdida. Es la facturación actual de los clientes sobre los que ya existe una relación comercial y podría plantearse una ampliación.</p><div class="info-formula"><strong>Cálculo</strong>Ingreso total ${m.cy} de cada anunciante con al menos una oportunidad de venta cruzada, contando a cada cliente una sola vez.</div><div class="info-example"><strong>Ejemplo</strong>Si un cliente factura <b>100.000 €</b> en Print y no tiene Digital, aporta 100.000 € a esta base. El dato no afirma que se puedan vender otros 100.000 €; indica el tamaño actual de la relación desde la que trabajar la oportunidad.</div>`},programmatic:{title:'Cruces con Programática',subtitle:'Clientes con actividad en un lado y ausencia en el otro',current:nf.format(m.prog),body:`<p>Cuenta los anunciantes que tienen una oportunidad relacionada con Programática.</p><div class="info-formula"><strong>Reglas</strong>1) Contratación directa de al menos ${fmt.format(t.tDirect)} y sin Programática atribuida; o 2) Programática de al menos ${fmt.format(progMin)} y sin contratación directa en Digital, Print o Eventos.</div><div class="info-example"><strong>Importante</strong>Programática no se suma como ingreso adicional: solo se resta de Google en Producción Digital la parte atribuida a anunciantes distintos de Google; la parte de Google permanece en Google. Aquí se cuentan clientes únicos, no euros.</div>`}}[id];if(!info)return;document.getElementById('infoTitle').textContent=info.title;document.getElementById('infoSubtitle').textContent=info.subtitle;document.getElementById('infoBody').innerHTML=`<div class="info-explanation"><span class="info-current">Valor actual: ${info.current}</span>${info.body}</div>`;document.getElementById('infoBackdrop').classList.add('open');}
+function cell(v,op=false,label=''){return`<td class="matrix-cell"><div class="channel ${op?'opportunity':''}"><span class="amt">${fmt.format(v)}</span><span class="state">${op?(label||'Oportunidad'):(v>0?'Activo':'—')}</span></div></td>`;}
+function renderMatrix(){const rows=filtered(),body=document.getElementById('matrixBody'),cy=DATA.period.currentYear;if(!rows.length)body.innerHTML='<tr><td colspan="10" class="empty">No hay anunciantes para mostrar.</td></tr>';else body.innerHTML=rows.map(r=>{const types=new Set(r.opportunities.map(o=>o.type)),y=r.m[cy];return`<tr><td><div class="name">${escapeHtml(r.name)}</div><div class="subtext">Score ${r.maxScore} · ${r.priority}</div></td><td>${escapeHtml(r.commercials.join(' · ')||'Sin asignar')}</td><td class="money"><div class="matrix-total-current">${fmt.format(y.total)}</div>${r.delta<0?`<div class="matrix-loss" title="Pérdida frente a ${DATA.period.priorYear}">(${fmt.format(r.delta)})</div>`:''}</td>${cell(y.print,false)}${cell(y.digital,types.has('print'),'Venta Digital')}${cell(y.bc,false)}${cell(y.social,types.has('bc'),'Amplificar Social')}${cell(y.eventos,false)}${cell(y.programatica,types.has('direct'),'Venta Programática')}<td><button class="detail-btn" onclick="openDetail('${jsq(r.id)}')">Ver ficha</button></td></tr>`;}).join('');document.getElementById('matrixCount').textContent=`${activeContextLabel()} · ${nf.format(rows.length)} anunciantes ordenados por score de oportunidad.`;}
+function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function jsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function itemChips(items){return items.length?`<div class="list-chips">${items.map(x=>`<span class="list-chip"><b>${escapeHtml(x.name)}</b> · ${fmt.format(x.value)}</span>`).join('')}</div>`:'<span class="subtext">Sin actividad positiva identificada en el año actual.</span>';}
+function openDetail(id){const r=evaluated.find(x=>x.id===id)||currentRecords().filter(x=>x.eligible!==false).map(evaluate).find(x=>x.id===id);if(!r)return;const py=DATA.period.priorYear,cy=DATA.period.currentYear,y25=r.m[py],y26=r.m[cy];document.getElementById('modalTitle').textContent=r.name;document.getElementById('modalSubtitle').textContent=`${activeContextLabel()} · ${r.commercials.join(' · ')||'Sin comercial asignado'} · ${sectorListLabel(r.sectors)||'Sector sin asignar'}`;const channels=activeMedia==='digital'?[['Digital directo','digital'],['Branded Content','bc'],['Social','social'],['Display','display'],['Otros productos digitales','otherDigital'],['Programática atribuida','programatica']]:activeMedia==='print'?[['Print','print']]:activeMedia==='eventos'?[['Eventos','eventos']]:[['Digital directo','digital'],['Branded Content','bc'],['Social','social'],['Display','display'],['Otros productos digitales','otherDigital'],['Print','print'],['Eventos','eventos'],['Programática atribuida','programatica']];document.getElementById('modalBody').innerHTML=`<div class="kpis modal-kpis"><div class="kpi"><div class="label">Ingreso ${cy}</div><div class="value">${fmt.format(y26.total)}</div><div class="hint">Toda la información disponible</div></div><div class="kpi"><div class="label">Ingreso ${py}</div><div class="value">${fmt.format(y25.total)}</div><div class="hint">Toda la información disponible</div></div><div class="kpi ${r.delta<0?'alert':'green'}"><div class="label">Variación</div><div class="value">${r.delta>=0?'+':''}${fmt.format(r.delta)}</div><div class="hint">${y25.total?pctFmt.format(r.delta/y25.total):'Sin base comparable'}</div></div><div class="kpi purple"><div class="label">Score máximo</div><div class="value">${r.maxScore||'—'}</div><div class="hint">${r.opportunities.length?r.priority:'Sin oportunidad activa'}</div></div></div><div class="two-col"><div class="panel"><div class="panel-head"><div class="panel-title">Oportunidades detectadas</div></div><div class="method-body">${r.opportunities.length?r.opportunities.map(o=>`<div class="opp-card ${o.priority==='Alta'?'high':''}"><h4>${escapeHtml(o.label)}</h4><p>${escapeHtml(o.reason)}</p><div class="opp-meta">Score ${o.score} · Prioridad ${o.priority}</div></div>`).join(''):'<div class="empty">No cumple las reglas con los umbrales actuales.</div>'}</div></div><div class="panel"><div class="panel-head"><div class="panel-title">Desglose anual</div></div><div class="method-body"><table class="mini-table"><thead><tr><th>Canal</th><th class="right">${py}</th><th class="right">${cy}</th></tr></thead><tbody>${channels.map(c=>`<tr><td>${c[0]}</td><td class="right money">${fmt.format(metricValue(y25,c[1]))}</td><td class="right money">${fmt.format(metricValue(y26,c[1]))}</td></tr>`).join('')}</tbody></table></div></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Actividad actual</div><div class="panel-note">Principales elementos por ingreso neto del año actual.</div></div><div class="method-body"><h3>Publicaciones</h3>${itemChips(r.top.publications)}<h3 style="margin-top:16px">Productos</h3>${itemChips(r.top.products)}<h3 style="margin-top:16px">Marcas</h3>${itemChips(r.top.brands)}</div></div><div class="panel"><div class="panel-head"><div class="panel-title">Coincidencia y fuentes</div></div><div class="method-body"><p><b>Asignación comercial:</b> ${r.portfolioMapped?'coincidencia exacta normalizada con Cartera de Anunciantes.':'no se ha encontrado coincidencia exacta en Cartera; conviene revisar el nombre.'}</p><p><b>Fuentes con actividad:</b> ${escapeHtml(r.sources.join(', ')||'—')}.</p><p><b>Áreas que justifican el ámbito:</b> ${escapeHtml(r.areas?.join(' · ')||'—')}.</p><p><b>Clases de orden incluidas:</b> ${escapeHtml(r.orderClasses?.join(' · ')||'—')}.</p><p><b>Nombres encontrados:</b> ${escapeHtml(r.aliases.join(' · '))}.</p></div></div>`;document.getElementById('modalBackdrop').classList.add('open');}
+function renderMethod(){const q=DATA.quality,vq=currentView().quality||q,py=DATA.period.priorYear,cy=DATA.period.currentYear,rec25=q.reconciliation[py],rec26=q.reconciliation[cy],ok25=Math.abs(rec25.difference)<1,ok26=Math.abs(rec26.difference)<1;document.getElementById('quality').innerHTML=`<div><strong>${nf.format(vq.advertisers_total||0)}</strong><span>Anunciantes analizables · ${activeContextLabel()}</span></div><div><strong>${nf.format(vq.advertisers_active_current||0)}</strong><span>Con actividad ${cy}</span></div><div><strong>${vq.portfolio_mapping_pct||0}%</strong><span>Activos con coincidencia en Cartera</span></div>`;document.getElementById('sourceList').innerHTML=DATA.sources.map(s=>{let extra='';if(s.source==='digital')extra=` · ${nf.format(s.google_rows_source||0)} líneas de Google utilizadas como base · ${nf.format(s.vendor_rows_unattributed||0)} líneas de otros vendors incluidas en el total y fuera de oportunidades por anunciante`;if(s.source==='programatica')extra=` · ${nf.format(s.rows_used||0)} filas reasignadas a otros anunciantes · ${nf.format(s.google_rows_kept||0)} filas identificadas como Google`;return`<div class="source"><b>${escapeHtml(s.file)}</b><span>${nf.format(s.rows_used)} filas utilizadas${extra}</span><span>Actualización: ${escapeHtml(s.updated||'No indicada')}${s.note?` · ${escapeHtml(s.note)}`:''}</span></div>`;}).join('')+`<div class="source"><b>Conciliación de Programática</b><span>${py}: total Programática ${fmt2.format(rec25.programmaticTotal)} · Google en Digital durante los meses cubiertos por el desglose ${fmt2.format(rec25.googleDigitalCovered)} · diferencia ${fmt2.format(rec25.difference)} <span class="reconcile ${ok25?'ok':'warn'}">${ok25?'Cuadra':'Revisar'}</span></span><span>${py}: retirado de Google ${fmt2.format(rec25.googleRemoved)} · importe final de Google tras la redistribución ${fmt2.format(rec25.googleRetained)}</span><span>${cy}: total Programática ${fmt2.format(rec26.programmaticTotal)} · Google en Digital durante los meses cubiertos por el desglose ${fmt2.format(rec26.googleDigitalCovered)} · diferencia ${fmt2.format(rec26.difference)} <span class="reconcile ${ok26?'ok':'warn'}">${ok26?'Cuadra':'Revisar'}</span></span><span>${cy}: retirado de Google ${fmt2.format(rec26.googleRemoved)} · importe final de Google tras la redistribución ${fmt2.format(rec26.googleRetained)}</span></div><div class="source"><b>Programática de otros vendors sin anunciante final</b><span>${py}: ${fmt.format(q.vendor_unattributed[py])} · ${cy}: ${fmt.format(q.vendor_unattributed[cy])}</span><span>Estos importes sí forman parte del total real de Producción Digital. Se excluyen únicamente de las oportunidades por anunciante final y se revisan en el ámbito Programática.</span></div>`;}
+function reset(){activeSegment='all';activeMedia='all';document.getElementById('search').value='';['commercial','sector','oppType','priority'].forEach(id=>document.getElementById(id).value='');Object.entries(DEFAULTS).forEach(([k,v])=>document.getElementById(k).value=v);formatAllThresholdInputs();fillFilters();updateScopeUI();render();}
+
+function bindUI(){document.getElementById('weeklyQuickSaveBtn').addEventListener('click',saveWeeklySnapshot);document.getElementById('weeklyQuickOpenBtn').addEventListener('click',()=>activateTab('weekly'));document.querySelectorAll('[data-weekly-category]').forEach(btn=>btn.addEventListener('click',()=>setWeeklyCategory(btn.dataset.weeklyCategory)));document.getElementById('saveWeeklySnapshotBtn').addEventListener('click',saveWeeklySnapshot);document.getElementById('exportWeeklyHistoryBtn').addEventListener('click',exportWeeklyHistory);document.getElementById('importWeeklyHistoryBtn').addEventListener('click',()=>document.getElementById('weeklyHistoryFile').click());document.getElementById('weeklyHistoryFile').addEventListener('change',event=>importWeeklyHistoryFile(event.target.files?.[0]));document.getElementById('deleteWeeklySnapshotBtn').addEventListener('click',deleteWeeklySnapshot);document.getElementById('weeklyBaselineSelect').addEventListener('change',event=>{weeklyBaselineId=event.target.value;renderWeeklyChanges();});document.querySelectorAll('[data-scope]').forEach(btn=>btn.addEventListener('click',()=>setSegment(btn.dataset.scope)));document.querySelectorAll('[data-media]').forEach(btn=>btn.addEventListener('click',()=>setMedia(btn.dataset.media)));document.querySelectorAll('[data-action-limit]').forEach(btn=>btn.addEventListener('click',()=>setActionLimit(btn.dataset.actionLimit)));document.querySelectorAll('[data-sales-window]').forEach(btn=>btn.addEventListener('click',()=>setSalesWindowDays(btn.dataset.salesWindow)));document.querySelectorAll('[data-sales-limit]').forEach(btn=>btn.addEventListener('click',()=>setSalesWindowLimit(btn.dataset.salesLimit)));document.getElementById('exportSalesWindowsBtn').addEventListener('click',exportSalesWindows);document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));['search','commercial','sector','oppType','priority'].forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',()=>{if(currentRecords().length)render();}));Object.keys(DEFAULTS).forEach(id=>{const el=document.getElementById(id);el.addEventListener('focus',()=>{el.value=String(parseThresholdValue(el.value));el.select();});el.addEventListener('blur',()=>{formatThresholdInput(el);if(currentRecords().length)render();});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});document.getElementById('criteriaBtn').addEventListener('click',()=>{const wrap=document.getElementById('criteriaWrap'),btn=document.getElementById('criteriaBtn'),open=wrap.classList.toggle('open');btn.setAttribute('aria-expanded',String(open));btn.textContent=open?'Ocultar criterios':'Ajustar criterios';});document.getElementById('resetBtn').addEventListener('click',reset);document.getElementById('refreshBtn').addEventListener('click',loadLiveData);document.getElementById('retryBtn').addEventListener('click',loadLiveData);document.getElementById('modalClose').addEventListener('click',()=>document.getElementById('modalBackdrop').classList.remove('open'));document.getElementById('modalBackdrop').addEventListener('click',e=>{if(e.target.id==='modalBackdrop')e.currentTarget.classList.remove('open')});document.getElementById('infoClose').addEventListener('click',()=>document.getElementById('infoBackdrop').classList.remove('open'));document.getElementById('infoBackdrop').addEventListener('click',e=>{if(e.target.id==='infoBackdrop')e.currentTarget.classList.remove('open')});document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('modalBackdrop').classList.remove('open');document.getElementById('infoBackdrop').classList.remove('open');}});}
+
+loadWeeklyHistory();formatAllThresholdInputs();bindUI();loadLiveData();
+</script>
+</body></html>
