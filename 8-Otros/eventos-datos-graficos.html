@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVENTOS - Dashboard Publicidad</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --card:#111827;
+  --card-soft:#1f2933;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --accent:#38bdf8;
+  --accent2:#f59e0b;
+  --down:#f87171;
+  --ok-green: #34d399;
+  --comercial-color:#a78bfa;
+  --comercial-bg-light:#efe9ff;
+  --comercial-border:#cbb6ff;
+  --comercial-text:#111;
+  --print-color: #db2777;
+  --evento-color: #34d399;
+  --bc-color: #38bdf8;
+
+  /* VARIABLES DE CONTROL DE COLOR POR AÑO */
+  --year-base-color: #38bdf8;  /* Azul Digital */
+  --year-comp-color: #f59e0b;  /* Amarillo/Naranja */
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: linear-gradient(180deg,#020617,#0f172a);
+  color: var(--text);
+  overflow-y: scroll;
+}
+
+.nav-menu {
+  background: #111827;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-menu a {
+  color: #fff;
+  margin: 0 10px;
+  text-decoration: none;
+  font-size: .9em;
+  opacity: 0.8;
+}
+.nav-menu a:hover { opacity: 1; color: var(--bc-color); }
+.nav-menu .active { font-weight: bold; border-bottom: 2px solid var(--bc-color); opacity: 1; padding-bottom: 5px; }
+
+h1{ text-align:center; margin:20px 0; font-size: 1.5em; }
+
+.container{ max-width:1500px; margin:auto; padding:20px; }
+
+.card{
+  background:rgba(17,24,39,.85);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:20px;
+  border: 1px solid #1f2937;
+}
+
+.upload-label { 
+    display: block; 
+    font-weight: bold; 
+    margin-bottom: 12px; 
+    font-size: 0.95em;
+}
+
+.file-input-wrapper {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+}
+
+#fileInput {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    width: 100%;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+#loadStatus {
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.filters select,input[type=file]{
+  background:var(--card-soft);
+  color:var(--text);
+  border:1px solid #1f2937;
+  padding:8px 10px;
+  border-radius:8px;
+  margin-right:10px;
+  margin-bottom: 10px;
+}
+
+.label-base { color: var(--year-base-color); font-weight: 700; }
+.label-comp { color: var(--year-comp-color); font-weight: 700; }
+
+.months-container{ display:flex; flex-wrap:wrap; gap:10px; margin-top:5px; }
+.months-container label{ display:flex; align-items:center; gap:5px; cursor:pointer; font-size: 0.9em; font-weight: normal; }
+
+.kpis{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+.kpi{ text-align:center; padding:18px; background:linear-gradient(160deg,#020617,#111827); border-radius:12px; border: 1px solid #1f2937; }
+.kpi h2{ margin:0; font-size:1.6em; color:var(--accent); }
+.kpi p{ margin:6px 0 0; color:var(--muted); font-size: 0.9em; }
+.kpi span.pct{ display:block; margin-top:4px; font-size:0.9em; font-weight:600; }
+
+.chart{ height:680px; width: 100%; }
+
+#comercialBlock select#fComercial{
+  background:var(--comercial-bg-light);
+  color:var(--comercial-text);
+  border:1px solid var(--comercial-border);
+  border-radius:10px;
+  font-weight:700;
+  padding:8px 10px;
+}
+</style>
+</head>
+
+<body>
+
+<nav class="nav-menu">
+    <span style="color: #38bdf8; font-weight: bold; margin-right: 10px; opacity: 1;">DIGITAL:</span>
+    <a href="digital-datos-graficos.html">Datos</a>
+    <a href="digital-facturacion-desglosada.html">Desglose</a>
+    <a href="digital-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="digital-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="digital-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--print-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1;">PRINT:</span>
+    <a href="print-datos-graficos.html">Datos</a>
+    <a href="print-facturacion-desglosada.html">Desglose</a>
+    <a href="print-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="print-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="print-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--evento-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1; font-size: 0.95em;">EVENTOS:</span>
+    <a href="eventos-datos-graficos.html" class="active">Datos</a>
+    <a href="eventos-facturacion-desglosada.html">Desglose</a>
+    <a href="eventos-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="eventos-facturacion-por-anunciante-y-marca.html">Marcas</a>
+
+
+    
+    <a href="index.html" style="margin-left: 20px; border-left: 1px solid #4b5563; padding-left: 20px;">🏠 Home</a>
+</nav>
+
+<h1>EVENTOS - Dashboard Publicidad</h1>
+
+<div class="container">
+  <div class="card">
+    <label class="upload-label">Cargar datos (Excel):</label>
+    <div class="file-input-wrapper">
+        <input type="file" id="fileInput" accept=".json,.xlsx">
+    </div>
+    <div id="loadStatus">Esperando archivo...</div>
+  </div>
+  <div id="filters" class="card filters" style="display:none">
+    <span class="label-base">Año base</span> <select id="fYear"></select><br>
+    <div id="monthContainer1" class="months-container"></div><br>
+    <span class="label-comp">Año comparación</span> <select id="fYear2"></select><br>
+    <div id="monthContainer2" class="months-container"></div>
+  </div>
+
+  <div id="comercialBlock" class="card filters" style="display:none">
+    <span class="label label-comercial" style="color: var(--comercial-color); font-weight: bold;">Comercial </span>
+    <select id="fComercial"></select>
+  </div>
+
+  <div class="card kpis" id="kpisTotals"></div>
+
+  <div class="card"><h2>Ingresos por Revista</h2><div id="chartSite" class="chart"></div></div>
+  <div class="card"><h2>Ingresos por Área</h2><div id="chartArea" class="chart"></div></div>
+  <div class="card"><h2>Ingresos por Sector</h2><div id="chartSector" class="chart"></div></div>
+  <div class="card"><h2>Ingresos por Familia</h2><div id="chartFamilia" class="chart"></div></div>
+
+  <div class="card">
+    <h2>Desglose: EVENTOS</h2>
+    <div id="chartProductosEventos" class="chart" style="height:800px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Ingresos por Comercial</h2>
+    <div id="chartComercial" class="chart" style="height:1000px;"></div>
+  </div>
+</div>
+
+<script>
+const excelUrl = "https://javiap20.github.io/datos-en-excel/PRODUCCION EVENTOS.xlsx";
+
+window.addEventListener("DOMContentLoaded", () => {
+  const statusEl = document.getElementById("loadStatus");
+  if (statusEl) statusEl.innerText = "Cargando archivo https://javiap20.github.io/datos-en-excel/PRODUCCION EVENTOS.xlsx…";
+
+  fetch(excelUrl)
+    .then(resp => {
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return resp.arrayBuffer();
+    })
+    .then(buf => {
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      init(json);
+      if (statusEl) {
+        statusEl.innerText = "✅ Archivo cargado automáticamente";
+        statusEl.style.color = "var(--ok-green)";
+      }
+    })
+    .catch(err => {
+      console.error("Auto-carga fallida:", err);
+      if (statusEl) {
+        statusEl.innerText = "⚠️ No se pudo cargar automáticamente. Selecciona el Excel manualmente.";
+        statusEl.style.color = "var(--down)";
+      }
+    });
+});
+</script>
+
+<script>
+let rawData=[];
+const monthOrder=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+fileInput.onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const ext = f.name.split(".").pop().toLowerCase();
+      if(ext==="json") {
+        init(JSON.parse(ev.target.result));
+      } else {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, {type:"array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        init(XLSX.utils.sheet_to_json(ws, { defval: "" }));
+      }
+      document.getElementById("loadStatus").innerHTML = "✅ Archivo cargado";
+      document.getElementById("loadStatus").style.color = "var(--ok-green)";
+    } catch (err) {
+      document.getElementById("loadStatus").innerText = "❌ Error: " + err.message;
+      document.getElementById("loadStatus").style.color = "var(--down)";
+    }
+  };
+  if (f.name.endsWith("json")) r.readAsText(f);
+  else r.readAsArrayBuffer(f);
+};
+
+// FUNCIÓN CORREGIDA PARA LIMPIAR NÚMEROS DE EXCEL
+function normalizeMonth(m){
+  if(!m) return "";
+  let val = String(m).trim();
+  
+  // Si Excel envió un número de serie (ej: 46242)
+  if(!isNaN(val) && val.length > 4) {
+    const date = new Date((val - 25569) * 86400 * 1000);
+    const monthName = date.toLocaleString('es-ES', { month: 'long' });
+    return monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  }
+
+  // Lógica original para textos con espacios
+  const parts=val.split(" ");
+  return parts[parts.length-1];
+}
+
+function num(v){
+  if(v==null) return 0;
+  if(typeof v === 'number') return v;
+  const s = String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function formatLabel(val) {
+    if(!val) return "";
+    let s = String(val).toLowerCase().trim();
+    return s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+function init(data){
+  rawData = data.map(d => ({
+    ingreso:    num(d["Imp.Neto a Comisionar"]),
+    Año:        String(d["Año inserción"] || "").trim().toUpperCase(),
+    Mes:        normalizeMonth(d["Mes inserción"]),
+    Site:       String(d["Publicación"] || "Sin site").trim().toUpperCase(),
+    Familia:    String(d["Familia"] || "Sin familia").trim().toUpperCase(),
+    Area:       String(d["ÁREAS"] || "Sin área").trim().toUpperCase(),
+    Comercial:  String(d["Comercial"] || "Sin comercial").trim().toUpperCase(),
+    Producto:   String(d["Producto"] || "").trim().toUpperCase(),
+    Sector:     String(d["Sector"] || "Sin sector").trim().toUpperCase()
+  })).filter(d => d.Año !== "");
+
+  const years = [...new Set(rawData.map(d=>d.Año))].sort((a,b)=>b-a);
+  const months = [...new Set(rawData.map(d=>d.Mes))].sort((a,b)=>monthOrder.indexOf(a)-monthOrder.indexOf(b));
+  
+  fYear.innerHTML="<option>Todos</option>"+years.map(y=>`<option>${y}</option>`).join("");
+  fYear2.innerHTML="<option>Sin comparar</option>"+years.map(y=>`<option>${y}</option>`).join("");
+  
+  const uniqueComerciales = [...new Set(rawData.map(d => d.Comercial))].sort();
+  fComercial.innerHTML = "<option>Todos</option>" + 
+      uniqueComerciales.map(c => `<option value="${c}">${formatLabel(c)}</option>`).join("");
+
+  createMonthCheckboxes("monthContainer1", months);
+  createMonthCheckboxes("monthContainer2", months);
+
+  [fYear, fYear2, fComercial].forEach(s => s.onchange = render);
+  document.getElementById("filters").style.display="block"; 
+  document.getElementById("comercialBlock").style.display="block";
+  render();
+}
+
+function createMonthCheckboxes(id, months){
+  const c=document.getElementById(id); c.innerHTML="";
+  months.forEach(m=>{
+    if(!m) return;
+    const l=document.createElement("label");
+    const i=document.createElement("input"); i.type="checkbox"; i.value=m; i.onchange=render;
+    l.appendChild(i); l.appendChild(document.createTextNode(m)); c.appendChild(l);
+  });
+}
+
+function render(){
+  const y1=fYear.value, m1=Array.from(document.getElementById("monthContainer1").querySelectorAll("input:checked")).map(i=>i.value);
+  const y2=fYear2.value, m2=Array.from(document.getElementById("monthContainer2").querySelectorAll("input:checked")).map(i=>i.value);
+  const c=fComercial.value;
+
+  const filterFn = (y,m,co) => rawData.filter(d=>(y==="Todos"||d.Año===y)&&(m.length===0||m.includes(d.Mes))&&(co==="Todos"||d.Comercial===co));
+  
+  const d1=filterFn(y1,m1,c), d2=(y2!=="Sin comparar")?filterFn(y2,m2,c):[];
+  const t1=d1.reduce((acc,b)=>acc+b.ingreso,0), t2=d2.reduce((acc,b)=>acc+b.ingreso,0);
+
+  let pct=""; 
+  if(t2 !== 0){ 
+    const df=(t1-t2)/Math.abs(t2)*100; 
+    pct=`<span class="pct" style="color:${df>=0?'#38bdf8':'#f87171'}">${df>=0?'+':''}${df.toFixed(0)}%</span>`; 
+  }
+
+  kpisTotals.innerHTML = `<div class="kpi"><h2>€ ${Math.round(t1).toLocaleString("es-ES")}</h2><p>Total ${y1}</p>${pct}</div>`;
+  if(y2!=="Sin comparar") kpisTotals.innerHTML += `<div class="kpi"><h2>€ ${Math.round(t2).toLocaleString("es-ES")}</h2><p>Total ${y2}</p></div>`;
+
+  drawChart("chartSite","Site",d1,d2,y1,y2);
+  drawChart("chartArea","Area",d1,d2,y1,y2);
+  drawChart("chartSector","Sector",d1,d2,y1,y2);
+  drawChart("chartFamilia","Familia",d1,d2,y1,y2);
+  drawChart("chartProductosEventos","Producto",d1.filter(d=>d.Familia==="EVENTOS"),d2.filter(d=>d.Familia==="EVENTOS"),y1,y2);
+  drawChart("chartComercial","Comercial",d1,d2,y1,y2);
+}
+
+function drawChart(id,key,d1,d2,l1,l2){
+  const s1={}, s2={};
+  d1.forEach(d=>s1[d[key]]=(s1[d[key]]||0)+d.ingreso);
+  d2.forEach(d=>s2[d[key]]=(s2[d[key]]||0)+d.ingreso);
+  
+  const labs=[...new Set([...Object.keys(s1),...Object.keys(s2)])].sort((a,b)=>(s1[a]||0)-(s1[b]||0));
+
+  const textBars = labs.map(l => {
+      if(l2 === "Sin comparar") return "";
+      const v1 = s1[l] || 0; const v2 = s2[l] || 0;
+      if(v2 !== 0) {
+          const diff = Math.round(((v1 / Math.abs(v2)) - 1) * 100);
+          return ` ${diff > 0 ? '+' : ''}${diff}%`;
+      }
+      return "";
+  });
+
+  const traces=[];
+  
+  const style = getComputedStyle(document.documentElement);
+  const colorBase = style.getPropertyValue('--year-base-color').trim();
+  const colorComp = style.getPropertyValue('--year-comp-color').trim();
+
+  if(d2.length) {
+    traces.push({
+      y:labs.map(l => key === 'Comercial' || key === 'Site' ? formatLabel(l) : l), 
+      x:labs.map(l=>s2[l]||0), 
+      name:l2, type:"bar", orientation:'h', marker:{color: colorComp}
+    });
+  }
+
+  traces.push({
+    y:labs.map(l => key === 'Comercial' || key === 'Site' ? formatLabel(l) : l), 
+    x:labs.map(l=>s1[l]||0), 
+    name:l1, type:"bar", orientation:'h', marker:{color: colorBase},
+    text: textBars, textposition: 'outside', cliponaxis: false
+  });
+  
+  Plotly.newPlot(id,traces,{
+    barmode:"group", margin:{l:250, r:100, t:20, b:50}, 
+    paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
+    font:{color:"#e5e7eb", size:11}, legend:{orientation:"h", y:-0.1, traceorder: 'reversed'}, 
+    yaxis:{automargin:true}, xaxis: { ticksuffix: ' €'}
+  }, {responsive: true});
+}
+</script>
+</body>
+</html>

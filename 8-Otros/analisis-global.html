@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis Global - Publicidad Hearst</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --card:#111827;
+  --text:#e5e7eb;
+  --base:#38bdf8;      
+  --comp:#f59e0b;      
+  --neg:#f87171;
+  --diffColor:#6ee7b7;
+  --siteBg:#fef3c7; 
+  --familiaBg:#e9d5ff;
+  --areaBlockBg:#d1fae5;
+  --mixBg:#fca5a5;
+  --restBg:#94a3b8;
+  --totalGlobalBg: #ffffff;
+  --base-color: var(--base);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: linear-gradient(180deg,#020617,#0f172a);
+  color: var(--text);
+}
+
+.nav-menu {
+  background: #111827;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-menu a { color: #fff; margin: 0 10px; text-decoration: none; font-size: .9em; opacity: 0.8; }
+.nav-menu .active { opacity: 1; font-weight: bold; border-bottom: 2px solid var(--base-color); padding-bottom: 5px; }
+
+h1 { text-align: center; font-size: 1.5rem; margin: 20px 0; }
+.container{ max-width:1550px; margin:auto; padding:20px; }
+
+.card{
+  background:rgba(17,24,39,.9);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:20px;
+  border: 1px solid #1f2937;
+}
+
+.filters select, input[type=file]{
+  background:#1f2933; color:var(--text); border:1px solid #374151; padding:6px 8px; border-radius:8px; width: 100%; box-sizing: border-box; font-size: 0.85em;
+}
+.filters label{ font-weight:600; margin-right:6px; display:block; margin-top:8px; font-size: 0.85em; }
+.filtersRow{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
+.filtersRow div select{ width:170px; }
+
+.check-container { border: 1px solid rgba(0,0,0,0.1) !important; margin-bottom:10px; }
+.check-container label {
+    color: #ffffff !important;
+    font-size: 0.85em !important;
+    font-weight: 600 !important;
+    background: rgba(255,255,255,0.5);
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.checkboxGroup{ display:flex; flex-wrap:wrap; gap:8px; margin-top:5px; }
+.checkboxGroup label{ font-size:0.72em; color:#cbd5e1; display:flex; align-items:center; gap:4px; cursor:pointer; }
+.checkboxGroup label:hover{ color:#ffffff; }
+.checkboxGroup input[type=checkbox]{ accent-color:#38bdf8; }
+
+.statsBlock{ display:flex; justify-content:center; border-radius:12px; margin:10px 0 25px 0; gap:10px; }
+.subBlock{ border-radius:12px; padding:20px; display:flex; align-items:center; justify-content:center; flex:1; }
+
+.statsBase{ background:var(--base); color: #111; }
+.statsDiff{ background:var(--diffColor); color: #111; }
+.statsComp{ background:var(--comp); color: #111; }
+
+.statsValues{ display:flex; justify-content:center; font-size:14px; gap:20px; }
+.statsValues div{text-align:center;}
+.statsValues .value{ font-size:18px; font-weight:700; display: block; margin-top: 5px;}
+.value.negative { color: var(--neg) !important; }
+.diff-abs { font-size: 0.7em; font-weight: 400; display: block; opacity: 0.9; margin-top: 2px; }
+
+.section-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 10px; color: #fff; text-transform: uppercase; padding-left: 10px; margin-top: 15px; }
+.title-total { border-left: 4px solid var(--totalGlobalBg); }
+.title-fam { border-left: 4px solid var(--familiaBg); }
+.title-mix { border-left: 4px solid var(--mixBg); }
+.title-rest { border-left: 4px solid var(--restBg); }
+.title-rank { border-left: 4px solid #fde047; }
+
+.ranking-wrapper { 
+  display: none; /* Empezamos ocultos para que no se vea vacío al inicio */
+  flex-direction: row !important; 
+  flex-wrap: nowrap !important; 
+  gap: 20px; 
+  margin-top: 10px; 
+  width: 100%;
+}
+
+.ranking-wrapper .card { 
+  flex: 1 !important; 
+  min-width: 0; /* Evita que las cajas se desborden */
+}
+.rank-list { list-style: none; padding: 0; margin: 0; font-size: 0.85em; }
+.rank-item { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #374151; align-items: center; }
+.rank-item:nth-child(even) { background: rgba(255,255,255,0.03); }
+.rank-name { font-weight: 500; color: #94a3b8; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-value { font-weight: 700; color: var(--text); display: flex; align-items: center; }
+.rank-pct { font-size: 0.85em; margin-left: 8px; font-weight: bold; min-width: 45px; text-align: right; }
+
+
+
+
+/* Bloque Análisis IA - Negro Elegante */
+#ia-analysis-container {
+    margin: 40px 0;
+    padding: 30px;
+    background: #000000; /* Negro puro */
+    border-radius: 15px;
+    border: 1px solid #334155; /* Borde gris muy sutil */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    color: #e5e7eb; /* Texto claro */
+    display: none;
+}
+
+#ia-analysis-container h2 {
+    color: #818cf8; /* Azul brillante para el título principal */
+    border-bottom: 1px solid #312e81;
+    padding-bottom: 15px;
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ia-card-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 20px; 
+    margin-top: 20px; 
+}
+
+.ia-insight-card { 
+    background: rgba(255, 255, 255, 0.05); /* Tarjeta ligeramente grisácea para resaltar del fondo */
+    padding: 20px; 
+    border-radius: 12px; 
+    border-left: 4px solid #6366f1; /* Línea lateral azul/viva */
+    margin-bottom: 20px;
+}
+
+.ia-insight-card h3 { 
+    margin-top: 0; 
+    font-size: 1.1em; 
+    color: #a5b4fc; /* Título de tarjeta en azul suave */
+}
+
+.ia-highlight { 
+    color: #fbbf24; 
+    font-weight: bold; 
+}
+
+/* ===== BLOQUE RESUMEN ESTÁTICO ===== */
+#static-overview {
+    display: none;
+    margin-bottom: 30px;
+}
+.static-overview-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-left: 4px solid #818cf8;
+    padding-left: 12px;
+    margin-bottom: 6px;
+    margin-top: 30px;
+}
+.static-note {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-bottom: 18px;
+    padding-left: 16px;
+    font-style: italic;
+}
+.static-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.static-grid-full {
+    grid-column: 1 / -1;
+}
+.static-card {
+    background: rgba(17,24,39,0.95);
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+}
+.static-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #818cf8, #38bdf8);
+}
+.static-card-title {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #818cf8;
+    margin-bottom: 14px;
+}
+.static-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(129,140,248,0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(129,140,248,0.2);
+    margin-bottom: 8px;
+}
+.static-total-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+.static-total-val {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    text-align: right;
+}
+.static-sub-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 12px 8px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+}
+.static-sub-row:hover { background: rgba(255,255,255,0.03); }
+.static-sub-label {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    flex: 1;
+    padding-right: 10px;
+    line-height: 1.3;
+}
+.static-sub-label em {
+    font-style: normal;
+    font-size: 0.7em;
+    color: #64748b;
+    display: block;
+    margin-top: 2px;
+}
+.static-sub-vals {
+    text-align: right;
+    flex-shrink: 0;
+}
+.static-sub-val {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+.static-diff {
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: block;
+    margin-top: 2px;
+}
+.static-diff.pos { color: #6ee7b7; }
+.static-diff.neg { color: #f87171; }
+
+/* Mini donut/bar chart area */
+.static-chart-area {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #1e293b;
+}
+.static-chart-title {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #64748b;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+.bar-chart-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.bar-label {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    width: 130px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: capitalize;
+}
+.bar-track {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+}
+.bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.bar-pct {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+}
+/* Publications card — full width with chart on the side, 50/50 */
+.pub-card-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+.pub-list-col { min-width: 0; }
+.pub-chart-col { 
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.static-legend-note {
+    margin: 10px 0 4px 0;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid #475569;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+.static-legend-note .note-pos { color: #6ee7b7; font-weight: 700; }
+.static-legend-note .note-neg { color: #f87171; font-weight: 700; }
+
+/* ===== FIN BLOQUE RESUMEN ESTÁTICO ===== */
+
+/* Selector de tipo (Digital / Print / Eventos) */
+.type-selector-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px 20px;
+    background: #111827;
+    border-bottom: 1px solid #1f2937;
+    flex-wrap: wrap;
+}
+.type-btn {
+    padding: 10px 28px;
+    border-radius: 999px;
+    border: 2px solid #374151;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+}
+.type-btn:hover { border-color: #64748b; color: #e2e8f0; }
+.type-btn.active-digital  { border-color: #38bdf8; color: #38bdf8; background: rgba(56,189,248,0.08); }
+.type-btn.active-print    { border-color: #db2777; color: #db2777; background: rgba(219,39,119,0.08); }
+.type-btn.active-eventos  { border-color: #34d399; color: #34d399; background: rgba(52,211,153,0.08); }
+
+
+/* ── NAV HEARST CON MÁXIMO AIRE INFERIOR ── */
+.hn-bar {
+  background: #020617; 
+  border-bottom: 1px solid #1e293b;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  /* Aumentamos el aire: 15px arriba y 30px abajo */
+  padding: 15px 20px 30px 20px; 
+}
+
+.hn-inner {
+  max-width: 1500px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  gap: 5px;
+}
+
+.hn-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 0.72rem; 
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ESTADO ACTIVO: COLOR CHAMPÁN */
+.hn-link.hn-active {
+  color: #fcd34d; 
+  font-weight: 800;
+}
+
+/* LÍNEA INFERIOR CORTA (ESTILO FOTO) */
+.hn-link.hn-active::after {
+  content: "";
+  position: absolute;
+  bottom: -5px; /* Un poco más de separación del texto */
+  left: 25%;    /* Más corta aún para que quede muy fina */
+  right: 25%;   
+  height: 2px;  
+  background-color: #fcd34d; 
+  border-radius: 2px;
+}
+
+.hn-sep {
+  width: 1px;
+  height: 14px;
+  background: #334155;
+  margin: 0 10px;
+  flex-shrink: 0;
+}
+
+/* AJUSTE EXTRA PARA EL TÍTULO DEL CUERPO */
+h1 {
+  margin-top: 40px !important; /* Empuja el contenido hacia abajo para que no pegue con el menú */
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+
+<nav class="hn-bar" data-active="global-reporting">
+  <div class="hn-inner" id="hnInner">
+    <a class="hn-link" data-id="global-reporting"  href="analisis-global.html">Global (REporting)</a>
+    <a class="hn-link" data-id="marca"             href="analisis-por-marca.html">Marca Hearst</a>
+    <a class="hn-link" data-id="anunciante"        href="analisis-por-anunciante.html">Anunciantes</a>
+    <a class="hn-link" data-id="plataforma"        href="anunciantes-desglosados-por-canales.html">Anunciantes & Plataformas</a>
+    <a class="hn-link" data-id="comparativa"       href="comparativa.html">Anunciantes (Comparativa)</a>
+    <a class="hn-link" data-id="familia-producto"  href="digital-desglose-por-producto.html">Familia & Producto</a>
+    <a class="hn-link" data-id="global-consulta"   href="dashboard.html">Global (Consulta)</a>
+    <a class="hn-link" data-id="presupuestos"      href="presupuestos-medios.html">Presupuestos Medios</a>
+    <a class="hn-link" data-id="alertas"           href="dashboard-alertas.html">Alertas</a>
+  </div>
+</nav>
+
+<div class="type-selector-wrap">
+    <button class="type-btn" id="btnDigital"  onclick="selectType('DIGITAL')" >DIGITAL</button>
+    <button class="type-btn" id="btnPrint"    onclick="selectType('PRINT')"   >PRINT</button>
+    <button class="type-btn" id="btnEventos"  onclick="selectType('EVENTOS')" >EVENTOS</button>
+</div>
+
+<h1 id="mainPageTitle">Análisis Publicidad Hearst</h1>
+
+<div class="container">
+  <div class="card">
+    <label style="font-size: 0.9em; font-weight: bold;">Cargar datos (Excel):</label>
+    <input type="file" id="fileInput" accept=".json,.xlsx">
+  </div>
+
+  <div id="filters" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div>
+        <label style="color:var(--base)">Año base</label>
+        <select id="fYear"></select>
+        <div class="checkboxGroup" id="monthsBase"></div>
+      </div>
+      <div>
+        <label style="color:var(--comp)">Año comparación</label>
+        <select id="fYear2"></select>
+        <div class="checkboxGroup" id="monthsComp"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="siteBlock" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div><label>Site / Revista</label><select id="fSite"></select></div>
+      <div><label>Producto</label><select id="fProduct"></select></div>
+      <div><label>Sector</label><select id="fSector"></select></div>
+      <div><label>Comercial</label><select id="fComercial"></select></div>
+    </div>
+  </div>
+
+  <div id="statsBlockGlobal" style="display:none; margin-top: 20px;">
+    <div class="section-title title-total">TOTAL FACTURACIÓN</div>
+    <div class="statsBlock">
+      <div class="subBlock statsBase"><div class="statsValues"><div>Fact. Base (Total)<div id="g-totalStatsBase" class="value">0€</div></div><div>Nº líneas<div id="g-linesStatsBase" class="value">0</div></div><div>Presp. medio<div id="g-avgStatsBase" class="value">0€</div></div></div></div>
+      <div class="subBlock statsDiff"><div class="statsValues"><div>% Crec. Fact.<div id="g-diffTotalStats" class="value">0%</div></div><div>% Crec. Presp.<div id="g-diffAvgStats" class="value">0%</div></div></div></div>
+      <div class="subBlock statsComp"><div class="statsValues"><div>Fact. Comp (Total)<div id="g-totalStatsComp" class="value">-</div></div><div>Nº líneas<div id="g-linesStatsComp" class="value">0</div></div><div>Presp. medio<div id="g-avgStatsComp" class="value">-</div></div></div></div>
+    </div>
+  </div>
+
+  <div id="familyBlock" class="card check-container" style="display:none;">
+    <label style="color:#ffffff; font-weight:bold; margin-bottom:10px; display:block; background:none;">Seleccionar Familias:</label>
+    <div id="familyCheckboxes" class="checkboxGroup"></div>
+  </div>
+  <div id="statsBlockFam" style="display:none">
+    <div id="famTitleDisplay" class="section-title title-fam">Total Ingresos Familias</div>
+    <div class="statsBlock">
+      <div class="subBlock statsBase"><div class="statsValues"><div>Fact. Base (Fam)<div id="f-totalStatsBase" class="value">0€</div></div><div>Nº líneas<div id="f-linesStatsBase" class="value">0</div></div><div>Presp. medio<div id="f-avgStatsBase" class="value">0€</div></div></div></div>
+      <div class="subBlock statsDiff"><div class="statsValues"><div>% Crec. Fact.<div id="f-diffTotalStats" class="value">0%</div></div><div>% Crec. Presp.<div id="f-diffAvgStats" class="value">0%</div></div></div></div>
+      <div class="subBlock statsComp"><div class="statsValues"><div>Fact. Comp (Fam)<div id="f-totalStatsComp" class="value">-</div></div><div>Nº líneas<div id="f-linesStatsComp" class="value">0</div></div><div>Presp. medio<div id="f-avgStatsComp" class="value">-</div></div></div></div>
+    </div>
+  </div>
+
+  <div id="areaBlock" class="card check-container" style="display:none;">
+    <label style="color:#ffffff; font-weight:bold; margin-bottom:10px; display:block; background:none;">Seleccionar Áreas:</label>
+    <div id="areaCheckboxes" class="checkboxGroup"></div>
+  </div>
+
+  <div id="statsBlockMix" style="display:none; margin-top: 20px;">
+    <div id="mixTitleDisplay" class="section-title title-mix">Ingresos Familia + Área</div>
+    <div class="statsBlock">
+      <div class="subBlock statsBase"><div class="statsValues"><div>Fact. Base (Mix)<div id="m-totalStatsBase" class="value">0€</div></div><div>Nº líneas<div id="m-linesStatsBase" class="value">0</div></div><div>Presp. medio<div id="m-avgStatsBase" class="value">0€</div></div></div></div>
+      <div class="subBlock statsDiff"><div class="statsValues"><div>% Crec. Fact.<div id="m-diffTotalStats" class="value">0%</div></div><div>% Crec. Presp.<div id="m-diffAvgStats" class="value">0%</div></div></div></div>
+      <div class="subBlock statsComp"><div class="statsValues"><div>Fact. Comp (Mix)<div id="m-totalStatsComp" class="value">-</div></div><div>Nº líneas<div id="m-linesStatsComp" class="value">0</div></div><div>Presp. medio<div id="m-avgStatsComp" class="value">-</div></div></div></div>
+    </div>
+  </div>
+
+  <div id="statsBlockRest" style="display:none; margin-top: 20px; background: rgba(5,46,22,0.6); border: 1px solid #16a34a; border-radius: 12px; padding: 14px 14px 4px 14px;">
+    <div id="restTitleDisplay" class="section-title title-rest">Ingresos Restantes</div>
+    <div class="statsBlock">
+      <div class="subBlock statsBase"><div class="statsValues"><div>Fact. Base (Restante)<div id="r-totalStatsBase" class="value">0€</div></div><div>Nº líneas<div id="r-linesStatsBase" class="value">0</div></div><div>Presp. medio<div id="r-avgStatsBase" class="value">0€</div></div></div></div>
+      <div class="subBlock statsDiff"><div class="statsValues"><div>% Crec. Fact.<div id="r-diffTotalStats" class="value">0%</div></div><div>% Crec. Presp.<div id="r-diffAvgStats" class="value">0%</div></div></div></div>
+      <div class="subBlock statsComp"><div class="statsValues"><div>Fact. Comp (Resto)<div id="r-totalStatsComp" class="value">-</div></div><div>Nº líneas<div id="r-linesStatsComp" class="value">0</div></div><div>Presp. medio<div id="r-avgStatsComp" class="value">-</div></div></div></div>
+    </div>
+  </div>
+
+
+<!-- ===== BLOQUE RESUMEN ESTÁTICO ===== -->
+<div id="static-overview">
+    <div class="static-overview-title">📊 Resumen Global de Ingresos</div>
+    <p class="static-note">⚠️ Este bloque respeta la selección de meses, pero no se ve afectado por los filtros de site, sector, familia, área ni comercial. Solo cambia al modificar el año base, el año de comparación o los meses seleccionados.</p>
+
+    <div class="static-grid">
+        <!-- CAJA ÁREAS -->
+        <div class="static-card" id="static-areas-card">
+            <div class="static-card-title">🗺️ Ingresos por Área</div>
+            <div id="static-areas-list"></div>
+            <div class="static-legend-note" id="static-areas-note" style="display:none"></div>
+            <div class="static-chart-area">
+                <div class="static-chart-title">Peso de cada área sobre el total</div>
+                <div id="static-areas-chart"></div>
+            </div>
+        </div>
+
+        <!-- CAJA FAMILIAS -->
+        <div class="static-card" id="static-families-card">
+            <div class="static-card-title">🏷️ Ingresos por Familia</div>
+            <div id="static-families-list"></div>
+            <div class="static-legend-note" id="static-families-note" style="display:none"></div>
+            <div class="static-chart-area">
+                <div class="static-chart-title">Peso de cada familia sobre el total (Programática agrupada)</div>
+                <div id="static-families-chart"></div>
+            </div>
+        </div>
+
+        <!-- CAJA PUBLICACIONES (full width) -->
+        <div class="static-card static-grid-full" id="static-sites-card">
+            <div class="static-card-title">📰 Ingresos por Publicación</div>
+            <div class="pub-card-inner">
+                <div class="pub-list-col" id="static-sites-list"></div>
+                <div class="pub-chart-col">
+                    <div class="static-chart-title" style="margin-top:0">Peso de cada publicación — barras</div>
+                    <div id="static-sites-chart"></div>
+                    <div id="static-sites-danger"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ===== FIN BLOQUE RESUMEN ESTÁTICO ===== -->
+
+<div id="rankingMainTitle" class="section-title" style="display:none; border-left: 4px solid #fde047; margin-bottom: 5px; font-size: 1.1rem; color: #fde047; text-transform: uppercase;">
+  RANKING ANUNCIANTES: TOTAL FACTURACIÓN
+</div>
+
+  <div class="ranking-wrapper" id="brandRankings" style="display:none">
+    <div class="card">
+      <div id="rankTitleBase" class="section-title title-rank">TOP 25 FACT. AÑO BASE</div>
+      <ul id="listRankBase" class="rank-list"></ul>
+    </div>
+    <div class="card">
+      <div id="rankTitleComp" class="section-title title-rank">FUGAS Y CAÍDAS AÑO COMP.</div>
+      <ul id="listRankComp" class="rank-list"></ul>
+      
+      <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #374151; display: flex; flex-direction: column; gap: 5px;">
+        <div style="font-size: 0.7em; color: #94a3b8; display: flex; align-items: center; gap: 8px;">
+            <span style="background: #059669; color: #fff; padding: 1px 4px; border-radius: 3px; font-weight: bold; font-size: 0.8em; min-width: 45px; text-align: center;">NUEVO</span> 
+            Sin facturación el año anterior.
+        </div>
+        <div style="font-size: 0.7em; color: #94a3b8; display: flex; align-items: center; gap: 8px;">
+            <span style="background: #991b1b; color: #fff; padding: 1px 4px; border-radius: 3px; font-weight: bold; font-size: 0.8em; min-width: 45px; text-align: center;">FUGA</span> 
+            Facturó el año pasado pero no este año.
+        </div>
+      </div>
+    </div>
+</div>
+
+
+<div id="sectorMainTitle" class="section-title" style="display:none; border-left: 4px solid #fde047; margin-top: 30px; margin-bottom: 5px; font-size: 1.1rem; color: #fde047; text-transform: uppercase; text-align: center;">
+  RANKING SECTORES: TOTAL FACTURACIÓN
+</div>
+
+<div id="sectorRankings" style="display:none; max-width: 500px; margin: 0 auto;"> 
+  <div class="card">
+    <div id="sectorTitleBase" class="section-title title-rank">TOP 25 SECTORES AÑO BASE</div>
+    <ul id="listSectorBase" class="rank-list"></ul>
+  </div>
+</div>
+
+
+
+<div id="ia-analysis-container">
+      <h2><span>🤖</span> Análisis detallado de la selección anterior</h2>
+      <div id="ia-content" class="ia-card-grid"></div>
+  </div>
+
+
+<script>
+let excelUrl = "";
+let currentType = "";
+const MONTHS=["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio","07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+let rawData=[];
+
+function selectType(type) {
+    if (currentType === type) return;
+    currentType = type;
+
+    // Título página
+    document.getElementById('mainPageTitle').textContent = `${type} - Análisis Publicidad Hearst`;
+
+    // Label del filtro Site
+    const siteLabel = document.querySelector('#siteBlock label');
+    if (siteLabel) siteLabel.textContent = 'Site / Revista';
+
+    // Botones activos
+    ['DIGITAL','PRINT','EVENTOS'].forEach(t => {
+        const btn = document.getElementById('btn' + t.charAt(0) + t.slice(1).toLowerCase());
+        if (btn) btn.className = 'type-btn' + (t === type ? ` active-${t.toLowerCase()}` : '');
+    });
+
+    // URL Excel
+    // URLs de SharePoint para cada tipo de Excel
+    const sharepointUrls = {
+        'DIGITAL': 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y',
+        'PRINT': 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU',
+        'EVENTOS': 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU'
+    };
+    excelUrl = sharepointUrls[type];
+
+    // Resetear datos y ocultar bloques
+    rawData = [];
+    ["filters","siteBlock","brandRankings","sectorRankings","ia-analysis-container"].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+
+    // Cargar Excel
+    const statusEl = document.querySelector('#fileInput + *') || document.querySelector('.card label');
+    fetch(excelUrl).then(resp => resp.ok ? resp.arrayBuffer() : null).then(buf => {
+        if (buf) {
+            const wb = XLSX.read(buf, {type:"array"});
+            init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""}));
+        }
+    }).catch(() => {});
+}
+
+function toTitleCase(str) { return str ? str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : ""; }
+function num(v){ if(v==null) return 0; if(typeof v === 'number') return v; let s = String(v).replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,"."); return Number(s) || 0; }
+const curF = new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: 0, 
+    maximumFractionDigits: 0, 
+    useGrouping: true   // 🔥 Fuerza separador de miles SIEMPRE
+});
+
+function formatCurrency(n) {
+    const val = Number(n ?? 0);
+    return curF.format(val) + '€';   // 🔥 ya incluye puntos miles en 1.234, 4.000, 9.876
+}
+
+const numF = new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+    useGrouping: true
+});
+
+function formatNumber(n) {
+    return numF.format(Number(n ?? 0));
+}
+
+
+fileInput.onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => init(XLSX.utils.sheet_to_json(XLSX.read(new Uint8Array(ev.target.result), {type:"array"}).Sheets[XLSX.read(new Uint8Array(ev.target.result), {type:"array"}).SheetNames[0]], {defval:""}));
+  r.readAsArrayBuffer(f);
+};
+
+function init(data){
+  rawData = data.map(d => ({
+    ingreso: num(d["Imp.Neto a Comisionar"]),
+    Año: String(d["Año inserción"] || "").trim(),
+    Mes: MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+    Site: String(d["Publicación"] || "").trim().toLowerCase(),
+    Anunciante: String(d["Anunciante"] || "SIN ANUNCIANTE").trim().toUpperCase(),
+    Family: toTitleCase(String(d["Familia"] || "").trim()),
+    Product: toTitleCase(String(d["Producto"] || "").trim()),
+    Sector: toTitleCase(String(d["Sector"] || "").replace(/^[0-9* ]+/, "")),
+    Comercial: toTitleCase(String(d["Comercial"] || "").trim()),
+    Area: toTitleCase(String(d["ÁREAS"] || "").trim())
+  })).filter(d => d.Año !== ""); 
+
+  const populate = (id, arr, forceLower = false) => {
+    const el = document.getElementById(id); if(!el) return;
+    el.innerHTML = "<option>Todos</option>" + [...new Set(arr.filter(Boolean))].sort().map(v=> `<option>${forceLower ? v.toLowerCase() : v}</option>`).join("");
+  };
+
+  populate("fSite", rawData.map(d=>d.Site), true);
+  populate("fProduct", rawData.map(d=>d.Product));
+  populate("fSector", rawData.map(d=>d.Sector));
+  populate("fComercial", rawData.map(d=>d.Comercial));
+  
+  const families = [...new Set(rawData.map(d => d.Family).filter(Boolean))].sort();
+  document.getElementById("familyCheckboxes").innerHTML = families.map(f => `<label><input type="checkbox" class="fam-check" value="${f}" onchange="render()"> ${f}</label>`).join("");
+
+  const areas = [...new Set(rawData.map(d => d.Area).filter(Boolean))].sort();
+  document.getElementById("areaCheckboxes").innerHTML = areas.map(a => `<label><input type="checkbox" class="area-check" value="${a}" onchange="render()"> ${a}</label>`).join("");
+
+  const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+  fYear.innerHTML = "<option>Todos</option>" + years.map(y=>`<option>${y}</option>`).join("");
+  fYear2.innerHTML = "<option>Sin comparar</option>" + years.map(y=>`<option>${y}</option>`).join("");
+
+  document.getElementById("monthsBase").innerHTML = MONTHS.map(m => `<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+  document.getElementById("monthsComp").innerHTML = MONTHS.map(m => `<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+
+  [fSite,fProduct,fSector,fYear,fYear2,fComercial].forEach(e => e.onchange = render);
+  
+  // Esta línea muestra todo el panel de golpe:
+  siteBlock.style.display = familyBlock.style.display = areaBlock.style.display = filters.style.display = statsBlockFam.style.display = statsBlockMix.style.display = statsBlockRest.style.display = statsBlockGlobal.style.display = "block"; 
+  
+  // Y esta activa los rankings en modo flex:
+  brandRankings.style.setProperty('display', 'flex', 'important'); 
+  
+  render();
+}
+
+function calcNetting(data) {
+    const totalFact = data.reduce((acc, b) => acc + b.ingreso, 0);
+    const groups = {};
+    data.forEach(d => { if (!groups[d.Anunciante]) groups[d.Anunciante] = []; groups[d.Anunciante].push(d.ingreso); });
+    let lines = 0;
+    Object.values(groups).forEach(pool => {
+        let filteredPool = pool.filter(v => v !== 0).sort((a, b) => Math.abs(a) - Math.abs(b));
+        while (filteredPool.length > 0) {
+            let cur = filteredPool.shift();
+            let idx = filteredPool.findIndex(v => v === -cur);
+            if (idx !== -1) filteredPool.splice(idx, 1);
+            else if (cur > 0) lines++;
+        }
+    });
+    return { total: totalFact, lines, avg: lines ? totalFact / lines : 0 };
+}
+
+function updatePanel(prefix, dataBase, dataComp, y2) {
+  const res1 = calcNetting(dataBase);
+  document.getElementById(prefix + "totalStatsBase").textContent = formatCurrency(res1.total);
+  document.getElementById(prefix + "linesStatsBase").textContent = formatNumber(res1.lines);
+  document.getElementById(prefix + "avgStatsBase").textContent = formatCurrency(res1.avg);
+  
+  if(y2 !== "Sin comparar") {
+    const res2 = calcNetting(dataComp);
+    document.getElementById(prefix + "totalStatsComp").textContent = formatCurrency(res2.total);
+    document.getElementById(prefix + "linesStatsComp").textContent = formatNumber(res2.lines);
+    document.getElementById(prefix + "avgStatsComp").textContent = formatCurrency(res2.avg);
+    const dTotPct = res2.total ? Math.round(((res1.total/res2.total)-1)*100) : 0;
+    const dAvgPct = res2.avg ? Math.round(((res1.avg/res2.avg)-1)*100) : 0;
+    const dTotAbs = res1.total - res2.total;
+    const dAvgAbs = res1.avg - res2.avg;
+    document.getElementById(prefix + "diffTotalStats").innerHTML = `${dTotPct > 0 ? "+" : ""}${dTotPct}% <span class="diff-abs">(${dTotAbs > 0 ? "+" : ""}${formatCurrency(dTotAbs)})</span>`;
+    document.getElementById(prefix + "diffTotalStats").className = "value" + (dTotPct < 0 ? " negative" : "");
+    document.getElementById(prefix + "diffAvgStats").innerHTML = `${dAvgPct > 0 ? "+" : ""}${dAvgPct}% <span class="diff-abs">(${dAvgAbs > 0 ? "+" : ""}${formatCurrency(dAvgAbs)})</span>`;
+    document.getElementById(prefix + "diffAvgStats").className = "value" + (dAvgPct < 0 ? " negative" : "");
+  }
+}
+
+function renderRankings(dataBase, dataComp) {
+    // Agrupamos por Anunciante y recolectamos sus Familias
+    const getStats = (arr) => {
+        const stats = {};
+        arr.forEach(d => {
+            if (!stats[d.Anunciante]) {
+                stats[d.Anunciante] = { ingreso: 0, familias: new Set() };
+            }
+            stats[d.Anunciante].ingreso += d.ingreso;
+            // Usamos Set para que no se repitan nombres de familias
+            if(d.Family) stats[d.Anunciante].familias.add(d.Family);
+        });
+        
+        const final = {};
+        for (const name in stats) {
+            // Convertimos el Set a un texto separado por comas
+            const famText = Array.from(stats[name].familias).join(", ");
+            final[name] = { total: stats[name].ingreso, allFamilies: famText };
+        }
+        return final;
+    };
+
+    const statsBase = getStats(dataBase);
+    const statsComp = getStats(dataComp);
+
+    // 1. TOP 25 AÑO BASE
+    const topBase = Object.entries(statsBase).sort((a,b) => b[1].total - a[1].total).slice(0, 25);
+    const topBaseNames = topBase.map(item => item[0]);
+
+    document.getElementById("listRankBase").innerHTML = topBase.map(([name, data], index) => {
+        const valComp = statsComp[name]?.total || 0;
+        let pctHtml = "";
+        let vsHtml = "";
+
+        if (dataComp.length > 0) {
+            if (valComp > 0) {
+                const diffPct = Math.round(((data.total / valComp) - 1) * 100);
+                const diff = data.total - valComp;
+                const color = diffPct < 0 ? 'var(--neg)' : 'var(--diffColor)';
+                pctHtml = `<span class="rank-pct" style="color:${color}">${diffPct > 0 ? '+' : ''}${diffPct}%</span>`;
+                const diffLabel = diff >= 0 ? 'Ganancia' : 'Pérdida';
+                const diffColor = diff >= 0 ? 'var(--diffColor)' : 'var(--neg)';
+                vsHtml = `<div style="font-size:0.7em; color:${diffColor}; margin-top:3px; text-align:right; font-weight:600;">${diffLabel}: ${diff >= 0 ? '+' : ''}${formatCurrency(diff)}</div>`;
+            } else {
+                pctHtml = `<span class="rank-pct" style="color:#fff; font-size: 0.65em; background: #059669; padding: 2px 5px; border-radius: 4px;">NUEVO</span>`;
+            }
+        }
+
+        return `<li class="rank-item" style="align-items: flex-start; margin-bottom: 12px;">
+                  <span class="rank-name" title="${data.allFamilies}" style="color: #ffffff; line-height: 1.2;">
+                    ${index+1}. ${name} <br> 
+                    <span style="font-size: 0.75em; color: #ffffff; opacity: 0.7; font-weight: normal; margin-left: 15px; display: block;">(${data.allFamilies})</span>
+                  </span>
+                  <div style="text-align:right; padding-top: 2px;">
+                    <div class="rank-value" style="color: #ffffff;">${formatCurrency(data.total)} ${pctHtml}</div>
+                    ${vsHtml}
+                  </div>
+                </li>`;
+    }).join("");
+
+    // 2. SEGUNDA COLUMNA: Fugas y Caídas — ordenadas por mayor pérdida absoluta
+    const listCompFiltered = Object.entries(statsComp)
+        .filter(([name, data]) => {
+            if (topBaseNames.includes(name)) return false;
+            const valBase = statsBase[name]?.total || 0;
+            return valBase < data.total; 
+        })
+        .map(([name, data]) => {
+            const valBase = statsBase[name]?.total || 0;
+            const loss = data.total - valBase; // pérdida absoluta (positivo = hemos perdido esto)
+            return [name, data, valBase, loss];
+        })
+        .sort((a, b) => b[3] - a[3]) // ordenar por mayor pérdida absoluta
+        .slice(0, 25);
+
+    document.getElementById("listRankComp").innerHTML = listCompFiltered.map(([name, data, valBase, loss], index) => {
+        let labelHtml = "";
+        let vsHtml = "";
+
+        if (valBase === 0) {
+            labelHtml = `<span class="rank-pct" style="color:#fff; font-size: 0.65em; background: #991b1b; padding: 2px 5px; border-radius: 4px;">FUGA</span>`;
+            vsHtml = `<div style="font-size:0.7em; color:#94a3b8; margin-top:3px; text-align:right;">0€ vs ${formatCurrency(data.total)}</div>`;
+        } else {
+            const diffPct = Math.round(((valBase / data.total) - 1) * 100);
+            labelHtml = `<span class="rank-pct" style="color:var(--neg)">${diffPct}%</span>`;
+            vsHtml = `<div style="font-size:0.7em; color:#94a3b8; margin-top:3px; text-align:right;">${formatCurrency(valBase)} vs ${formatCurrency(data.total)}</div>`;
+        }
+
+        return `<li class="rank-item" style="align-items: flex-start; margin-bottom: 12px;">
+                  <span class="rank-name" title="${data.allFamilies}" style="color: #ffffff; line-height: 1.2;">
+                    ${index+1}. ${name} <br> 
+                    <span style="font-size: 0.75em; color: #ffffff; opacity: 0.7; font-weight: normal; margin-left: 15px; display: block;">(${data.allFamilies})</span>
+                  </span>
+                  <div style="text-align:right; padding-top: 2px;">
+                    <div class="rank-value" style="color: var(--neg);">-${formatCurrency(loss)} ${labelHtml}</div>
+                    ${vsHtml}
+                  </div>
+                </li>`;
+    }).join("");
+}
+
+
+function renderSectorRankings(dataBase, dataComp) {
+    const getSums = (arr) => arr.reduce((acc, d) => { acc[d.Sector] = (acc[d.Sector] || 0) + d.ingreso; return acc; }, {});
+    const sumsBase = getSums(dataBase);
+    const sumsComp = getSums(dataComp);
+
+    // Generamos el TOP 25 del Año Base
+    const topBase = Object.entries(sumsBase).sort((a,b) => b[1] - a[1]).slice(0, 25);
+
+    document.getElementById("listSectorBase").innerHTML = topBase.map(([name, val], index) => {
+        const valComp = sumsComp[name] || 0;
+        const diffPct = valComp ? Math.round(((val/valComp)-1)*100) : 0;
+        const color = diffPct < 0 ? 'var(--neg)' : 'var(--diffColor)';
+        const pctHtml = dataComp.length > 0 ? `<span class="rank-pct" style="color:${color}">${diffPct > 0 ? '+' : ''}${diffPct}%</span>` : "";
+        return `<li class="rank-item"><span class="rank-name">${index+1}. ${name}</span><div class="rank-value">${formatCurrency(val)} ${pctHtml}</div></li>`;
+    }).join("");
+}
+
+
+function render(){
+  const siteF = fSite.value, prodF = fProduct.value, sectF = fSector.value, comF = fComercial.value, y1 = fYear.value, y2 = fYear2.value;
+
+  // Mostrar siempre todos los valores disponibles
+  const dataForYear = rawData;
+
+  const refreshCheckboxes = (containerId, values, cssClass) => {
+    const container = document.getElementById(containerId);
+    const checked = new Set(Array.from(container.querySelectorAll("input:checked")).map(i => i.value));
+    const opts = [...new Set(values.filter(Boolean))].sort();
+    container.innerHTML = opts.map(v =>
+      `<label><input type="checkbox" class="${cssClass}" value="${v}" ${checked.has(v) ? "checked" : ""} onchange="render()"> ${v}</label>`
+    ).join("");
+  };
+
+  refreshCheckboxes("familyCheckboxes", dataForYear.map(d => d.Family), "fam-check");
+  refreshCheckboxes("areaCheckboxes", dataForYear.map(d => d.Area), "area-check");
+
+  const famF = Array.from(document.querySelectorAll(".fam-check:checked")).map(c => c.value);
+  const areaF = Array.from(document.querySelectorAll(".area-check:checked")).map(c => c.value);
+  const m1 = Array.from(document.getElementById("monthsBase").querySelectorAll("input:checked")).map(c => c.value);
+  const m2 = Array.from(document.getElementById("monthsComp").querySelectorAll("input:checked")).map(c => c.value);
+
+  const filterFn = (y, m, fArr, aArr) => rawData.filter(d => 
+    (y === "Todos" || d.Año === y) && 
+    (siteF === "Todos" || d.Site === siteF.toLowerCase()) && 
+    (prodF === "Todos" || d.Product === prodF) && 
+    (sectF === "Todos" || d.Sector === sectF) && 
+    (comF === "Todos" || d.Comercial === comF) && 
+    (m.length === 0 || m.includes(d.Mes)) &&
+    (fArr.length === 0 || fArr.includes(d.Family)) && 
+    (aArr.length === 0 || aArr.includes(d.Area))
+  );
+
+  const filterGlobal = (y, m) => rawData.filter(d => 
+    (y === "Todos" || d.Año === y) && 
+    (siteF === "Todos" || d.Site === siteF.toLowerCase()) && 
+    (prodF === "Todos" || d.Product === prodF) && 
+    (sectF === "Todos" || d.Sector === sectF) && 
+    (comF === "Todos" || d.Comercial === comF) && 
+    (m.length === 0 || m.includes(d.Mes))
+  );
+
+  const gBase = filterGlobal(y1, m1);
+  const gComp = filterGlobal(y2, m2);
+  updatePanel("g-", gBase, gComp, y2);
+
+  // Bloque Familias: si hay familia seleccionada → solo esa familia; si no → total global
+  const famBase = filterFn(y1, m1, famF, []);
+  const famComp = filterFn(y2, m2, famF, []);
+  updatePanel("f-", famBase, famComp, y2);
+
+  // Bloque Área (antes "Mix"): si hay área seleccionada → solo esa área (sin filtro familia); si no → total global
+  const areaOnlyBase = filterFn(y1, m1, [], areaF);
+  const areaOnlyComp = filterFn(y2, m2, [], areaF);
+  updatePanel("m-", areaOnlyBase, areaOnlyComp, y2);
+
+  // Restantes: Total − Familias − Área, evitando doble conteo de líneas en ambos filtros.
+  // Usamos suma de importes: Total - famF - areaF + intersección(famF∩areaF)  [inclusión-exclusión]
+  const interBase = famF.length > 0 && areaF.length > 0
+    ? filterFn(y1, m1, famF, areaF)   // líneas que son familia Y área a la vez
+    : [];
+  const interComp = famF.length > 0 && areaF.length > 0
+    ? filterFn(y2, m2, famF, areaF)
+    : [];
+  const sumIngreso = arr => arr.reduce((s, d) => s + d.ingreso, 0);
+  const gTotalBase = sumIngreso(gBase);
+  const gTotalComp = sumIngreso(gComp);
+  const restTotalBase = gTotalBase
+    - (famF.length > 0 ? sumIngreso(famBase) : 0)
+    - (areaF.length > 0 ? sumIngreso(areaOnlyBase) : 0)
+    + sumIngreso(interBase);   // sumamos de vuelta lo que restamos dos veces
+  const restTotalComp = gTotalComp
+    - (famF.length > 0 ? sumIngreso(famComp) : 0)
+    - (areaF.length > 0 ? sumIngreso(areaOnlyComp) : 0)
+    + sumIngreso(interComp);
+  // Para líneas y presupuesto medio: filtramos líneas reales que no están en ninguno de los dos grupos
+  const restBase = gBase.filter(d =>
+    (famF.length === 0 || !famF.includes(d.Family)) &&
+    (areaF.length === 0 || !areaF.includes(d.Area))
+  );
+  const restComp = gComp.filter(d =>
+    (famF.length === 0 || !famF.includes(d.Family)) &&
+    (areaF.length === 0 || !areaF.includes(d.Area))
+  );
+  // Parcheamos el total con el valor correcto (inclusión-exclusión) manteniendo líneas reales para el avg
+  const restLinesBase = restBase.reduce((s,d) => s + (d.ingreso !== 0 ? 1 : 0), 0);
+  const restLinesComp = restComp.reduce((s,d) => s + (d.ingreso !== 0 ? 1 : 0), 0);
+  // Usamos updatePanel con datos reales pero sobreescribimos el total con el valor corregido
+  updatePanel("r-", restBase, restComp, y2);
+  // Corregir el total mostrado con inclusión-exclusión
+  document.getElementById("r-totalStatsBase").textContent = formatCurrency(restTotalBase);
+  document.getElementById("r-avgStatsBase").textContent = formatCurrency(
+    restBase.length > 0 ? restTotalBase / Math.max(1, calcNetting(restBase).lines) : 0
+  );
+  if (y2 !== "Sin comparar") {
+    document.getElementById("r-totalStatsComp").textContent = formatCurrency(restTotalComp);
+    document.getElementById("r-avgStatsComp").textContent = formatCurrency(
+      restComp.length > 0 ? restTotalComp / Math.max(1, calcNetting(restComp).lines) : 0
+    );
+    const dPct = restTotalComp ? Math.round(((restTotalBase / restTotalComp) - 1) * 100) : 0;
+    const dAbs = restTotalBase - restTotalComp;
+    document.getElementById("r-diffTotalStats").innerHTML =
+      `${dPct > 0 ? "+" : ""}${dPct}% <span class="diff-abs">(${dAbs >= 0 ? "+" : ""}${formatCurrency(dAbs)})</span>`;
+    document.getElementById("r-diffTotalStats").className = "value" + (dPct < 0 ? " negative" : "");
+  }
+
+  // Alias para rankings y otras funciones que usan mixBase/mixComp
+  const mixBase = famBase;
+  const mixComp = famComp;
+
+  const labels = [];
+  if (siteF !== "Todos") labels.push(`SITE: ${siteF.toUpperCase()}`);
+  if (prodF !== "Todos") labels.push(`PROD: ${prodF.toUpperCase()}`);
+  if (sectF !== "Todos") labels.push(`SECT: ${sectF.toUpperCase()}`);
+  if (comF !== "Todos") labels.push(`COM: ${comF.toUpperCase()}`);
+  if (famF.length > 0) labels.push(`FAM: ${famF.join(", ").toUpperCase()}`);
+  if (areaF.length > 0) labels.push(`AREA: ${areaF.join(", ").toUpperCase()}`);
+
+  // --- ACTUALIZACIÓN DE RANKINGS ANUNCIANTES ---
+  const mainTitleEl = document.getElementById("rankingMainTitle");
+  if (mainTitleEl) {
+      mainTitleEl.textContent = labels.length > 0 ? "RANKING ANUNCIANTES: " + labels.join(" | ") : "RANKING ANUNCIANTES: TOTAL FACTURACIÓN";
+      mainTitleEl.style.display = "block";
+  }
+
+  const rtBase = document.getElementById("rankTitleBase");
+  const rtComp = document.getElementById("rankTitleComp");
+  if (rtBase) rtBase.textContent = `TOP 25 FACT. AÑO BASE (${y1})`;
+  if (rtComp) rtComp.textContent = `OTRAS FUGAS/BAJADAS EN (${y2 === "Sin comparar" ? "-" : y2})`;
+  
+  renderRankings(mixBase, mixComp);
+
+  const bRankings = document.getElementById("brandRankings");
+  if (bRankings) bRankings.style.setProperty('display', 'flex', 'important');
+
+  // --- TÍTULOS DE PANELES ---
+  const famText = famF.length > 0 ? famF.join(", ") : "Todas";
+  const areaText = areaF.length > 0 ? areaF.join(", ") : "Todas";
+
+  if (typeof famTitleDisplay !== 'undefined') famTitleDisplay.innerHTML = `Total Ingresos Familias <span style="font-size: 0.75em; opacity: 0.8;">(${famText})</span>`;
+  if (typeof mixTitleDisplay !== 'undefined') mixTitleDisplay.innerHTML = `Ingresos por Área <span style="font-size: 0.7em; opacity: 0.8;">(${areaText})</span>`;
+  
+  const rTD = document.getElementById("restTitleDisplay");
+  if (rTD) {
+      if (famF.length > 0 && areaF.length > 0) {
+          rTD.innerHTML = `🔢 Restantes <span style="font-size: 0.75em; opacity: 0.8;">(Total − familia: ${famText} − área: ${areaText})</span>`;
+      } else if (famF.length > 0) {
+          rTD.innerHTML = `🔢 Restantes <span style="font-size: 0.75em; opacity: 0.8;">(Total − familia: ${famText})</span>`;
+      } else if (areaF.length > 0) {
+          rTD.innerHTML = `🔢 Restantes <span style="font-size: 0.75em; opacity: 0.8;">(Total − área: ${areaText})</span>`;
+      } else {
+          rTD.innerHTML = "🔢 Ingresos Restantes <span style=\"font-size: 0.75em; opacity: 0.6;\">(selecciona familia o área para ver la diferencia)</span>";
+      }
+  }
+
+  // --- BLOQUE DE SECTORES (LO QUE BUSCAMOS) ---
+  const sMainTitle = document.getElementById("sectorMainTitle");
+  if (sMainTitle) {
+      sMainTitle.textContent = labels.length > 0 ? "RANKING SECTORES: " + labels.join(" | ") : "RANKING SECTORES: TOTAL FACTURACIÓN";
+      sMainTitle.style.display = "block";
+  }
+
+  const sTitleBase = document.getElementById("sectorTitleBase");
+  if (sTitleBase) sTitleBase.textContent = `TOP 25 SECTORES BASE (${y1})`;
+
+  // Llamada a la función (asegurándonos de que existe)
+  if (typeof renderSectorRankings === "function") {
+      renderSectorRankings(mixBase, mixComp);
+  }
+
+  const sRankings = document.getElementById("sectorRankings");
+  if (sRankings) sRankings.style.display = "block";
+
+  renderStaticOverview();
+runIAAnalysis(mixBase, mixComp, y1, y2);
+}
+
+
+
+
+
+function renderStaticOverview() {
+    const y1 = fYear.value;
+    const y2 = fYear2.value;
+    const hasComp = y2 !== "Sin comparar";
+
+    // Months DO affect this block — read selected months from both selectors
+    const m1 = Array.from(document.getElementById("monthsBase").querySelectorAll("input:checked")).map(c => c.value);
+    const m2 = Array.from(document.getElementById("monthsComp").querySelectorAll("input:checked")).map(c => c.value);
+
+    // Filter by year + months only (no other filters)
+    const allBase = rawData.filter(d =>
+        (y1 === "Todos" || d.Año === y1) &&
+        (m1.length === 0 || m1.includes(d.Mes))
+    );
+    const allComp = hasComp ? rawData.filter(d =>
+        d.Año === y2 &&
+        (m2.length === 0 || m2.includes(d.Mes))
+    ) : [];
+
+    const sumBy = (arr, key) => arr.reduce((acc, d) => {
+        const k = d[key] || "(Sin especificar)";
+        acc[k] = (acc[k] || 0) + d.ingreso;
+        return acc;
+    }, {});
+
+    const totalBase = allBase.reduce((s, d) => s + d.ingreso, 0);
+    const totalComp = allComp.reduce((s, d) => s + d.ingreso, 0);
+
+    // Palette for bar charts
+    const PALETTE = ["#818cf8","#38bdf8","#6ee7b7","#fbbf24","#f472b6","#a78bfa","#34d399","#fb923c","#60a5fa","#e879f9",
+                     "#4ade80","#facc15","#f87171","#c084fc","#2dd4bf","#f97316","#84cc16","#a3e635","#22d3ee","#fb7185"];
+
+    const fmtDiff = (base, comp) => {
+        if (!hasComp || comp === 0) return "";
+        const pct = Math.round(((base / comp) - 1) * 100);
+        const abs = base - comp;
+        const cls = pct < 0 ? "neg" : "pos";
+        const sign = pct > 0 ? "+" : "";
+        return `<span class="static-diff ${cls}">${sign}${pct}% (${abs >= 0 ? "+" : ""}${formatCurrency(abs)})</span>`;
+    };
+
+    const fmtDiffRaw = (base, comp) => {
+        if (!hasComp || comp === 0) return { pct: 0, abs: 0, cls: "" };
+        const pct = Math.round(((base / comp) - 1) * 100);
+        const abs = base - comp;
+        return { pct, abs, cls: pct < 0 ? "neg" : "pos", sign: pct > 0 ? "+" : "" };
+    };
+
+    const yearLabel = (y) => y === "Todos" ? "Todos los años" : y;
+
+    // ===================== ÁREAS =====================
+    const AREA_INTERNACIONAL = "Internacional";
+    const AREA_PROGRAMATICA  = "Programática";
+    const AREAS_MADRID  = ["Brand Experience","Client Experience Lifestyle","Client Experience Lujo"];
+    const AREA_BCN      = "Client Experience Barcelona";
+
+    const areaBase = sumBy(allBase, "Area");
+    const areaComp = hasComp ? sumBy(allComp, "Area") : {};
+
+    const excl = (arr, excludedAreas) => arr.filter(d => !excludedAreas.includes(d.Area));
+
+    // totalPct: % de variación del TOTAL (base vs comp). Se usa para destacar filas peores que el total.
+    const totalPct = (hasComp && totalComp > 0) ? Math.round(((totalBase / totalComp) - 1) * 100) : null;
+
+    const buildSubRow = (label, hint, baseVal, compVal, highlightIfWorse = false) => {
+        const d = fmtDiffRaw(baseVal, compVal);
+        const isWorse = highlightIfWorse && hasComp && totalPct !== null && d.pct < totalPct;
+        const rowStyle = isWorse ? ' style="border-left:3px solid #f59e0b;"' : '';
+        const worseBadge = isWorse ? `<span style="font-size:0.6rem;background:#78350f;color:#fcd34d;padding:1px 5px;border-radius:3px;margin-left:6px;font-weight:700;vertical-align:middle;">▼ por debajo del total</span>` : '';
+        const diffHtml = hasComp ? `<span class="static-diff ${d.cls}">${d.sign}${d.pct}% (${d.abs >= 0 ? "+" : ""}${formatCurrency(d.abs)})</span>` : "";
+        return `<div class="static-sub-row"${rowStyle}>
+            <div class="static-sub-label">${label}${worseBadge}<em>${hint}</em></div>
+            <div class="static-sub-vals">
+                <div class="static-sub-val">${formatCurrency(baseVal)}${hasComp ? ` <span style="font-size:0.7em;color:#64748b">/ ${formatCurrency(compVal)}</span>` : ""}</div>
+                ${diffHtml}
+            </div>
+        </div>`;
+    };
+
+    const excluirAreaBase = (names) => names.reduce((s, n) => s + (areaBase[n] || 0), 0);
+    const excluirAreaComp = (names) => names.reduce((s, n) => s + (areaComp[n] || 0), 0);
+
+    const areaRowsBase = [
+        buildSubRow("Sin Internacional", `Excluye: ${AREA_INTERNACIONAL}`,
+            totalBase - (areaBase[AREA_INTERNACIONAL] || 0),
+            totalComp - (areaComp[AREA_INTERNACIONAL] || 0), true
+        ),
+        buildSubRow("Sin Madrid", `Excluye: ${AREAS_MADRID.join(", ")}`,
+            totalBase - excluirAreaBase(AREAS_MADRID),
+            totalComp - excluirAreaComp(AREAS_MADRID), true
+        ),
+        buildSubRow("Sin Barcelona", `Excluye: ${AREA_BCN}`,
+            totalBase - (areaBase[AREA_BCN] || 0),
+            totalComp - (areaComp[AREA_BCN] || 0), true
+        )
+    ];
+
+    const areaRows = currentType === "DIGITAL"
+        ? [...areaRowsBase, buildSubRow("Sin Programática", `Excluye área: ${AREA_PROGRAMATICA}`,
+            totalBase - (areaBase[AREA_PROGRAMATICA] || 0),
+            totalComp - (areaComp[AREA_PROGRAMATICA] || 0), true
+          )]
+        : [...areaRowsBase, buildSubRow("Sin Programática", `Excluye área: ${AREA_PROGRAMATICA}`,
+            totalBase - (areaBase[AREA_PROGRAMATICA] || 0),
+            totalComp - (areaComp[AREA_PROGRAMATICA] || 0), true
+          )];
+
+    document.getElementById("static-areas-list").innerHTML = `
+        <div class="static-total-row">
+            <div class="static-total-label">Total ingresos ${yearLabel(y1)}</div>
+            <div class="static-total-val">
+                ${formatCurrency(totalBase)}
+                ${hasComp ? `<span style="font-size:0.7em;color:#64748b;display:block"> vs ${formatCurrency(totalComp)} (${yearLabel(y2)})</span>` : ""}
+                ${fmtDiff(totalBase, totalComp)}
+            </div>
+        </div>
+        ${areaRows.join("")}`;
+
+    // Footnote for areas
+    if (hasComp) {
+        const totalPctStr = totalPct !== null ? `${totalPct > 0 ? "+" : ""}${totalPct}%` : "—";
+        const noteEl = document.getElementById("static-areas-note");
+        noteEl.style.display = "block";
+        noteEl.innerHTML = `ℹ️ <b>Cómo leer esto:</b> cada fila muestra qué pasaría con el total <em>si quitáramos ese área</em>. Si ese % es <strong>peor</strong> que el total global (${totalPctStr}), significa que esa área ha aportado más este año que el anterior y ha compensado bajadas en otras áreas. Las filas marcadas con <span style="background:#78350f;color:#fcd34d;padding:1px 5px;border-radius:3px;font-size:0.85em;font-weight:700;">▼ por debajo del total</span> son precisamente esas: áreas cuya aportación relativa este año ha sido clave para el resultado global.`;
+    }
+
+    // Area bar chart
+    const areaSorted = Object.entries(areaBase).sort((a, b) => b[1] - a[1]);
+    const areaChartHtml = areaSorted.map(([name, val], i) => {
+        const pct = totalBase > 0 ? ((val / totalBase) * 100).toFixed(1) : 0;
+        return `<div class="bar-chart-row">
+            <div class="bar-label" title="${name}">${name}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${PALETTE[i % PALETTE.length]}"></div></div>
+            <div class="bar-pct">${pct}%</div>
+        </div>`;
+    }).join("");
+    document.getElementById("static-areas-chart").innerHTML = areaChartHtml;
+
+    // ===================== FAMILIAS =====================
+    const FAM_SPONSORSHIP = "Sponsorship";
+    const FAM_RRSS        = "Social Networks";
+    const FAM_DISPLAY     = "Display";
+    const FAMS_PROG       = ["Programatica Display Directo","Programatica Display Indirecto","Programatico Directo Video","Programatico Indirecto"];
+    const FAM_CURATED     = "Curated";
+    const FAM_CONVENCIONAL = "Convencional";
+    const FAM_ELEM_ESP    = "Elementos Especiales";
+
+    const famBase = sumBy(allBase, "Family");
+    const famComp = hasComp ? sumBy(allComp, "Family") : {};
+
+    const excluirFamBase = (names) => names.reduce((s, n) => s + (famBase[n] || 0), 0);
+    const excluirFamComp = (names) => names.reduce((s, n) => s + (famComp[n] || 0), 0);
+
+    let famRows;
+    if (currentType === "DIGITAL") {
+        famRows = [
+            buildSubRow("Sin Sponsorship", `Excluye familia: ${FAM_SPONSORSHIP}`,
+                totalBase - (famBase[FAM_SPONSORSHIP] || 0),
+                totalComp - (famComp[FAM_SPONSORSHIP] || 0), true
+            ),
+            buildSubRow("Sin RRSS", `Excluye familia: ${FAM_RRSS}`,
+                totalBase - (famBase[FAM_RRSS] || 0),
+                totalComp - (famComp[FAM_RRSS] || 0), true
+            ),
+            buildSubRow("Sin Display", `Excluye familia: ${FAM_DISPLAY}`,
+                totalBase - (famBase[FAM_DISPLAY] || 0),
+                totalComp - (famComp[FAM_DISPLAY] || 0), true
+            ),
+            buildSubRow("Sin Programática", `Excluye: ${FAMS_PROG.join(", ")}`,
+                totalBase - excluirFamBase(FAMS_PROG),
+                totalComp - excluirFamComp(FAMS_PROG), true
+            )
+        ];
+    } else {
+        // PRINT y EVENTOS
+        famRows = [
+            buildSubRow("Sin Sponsorship", `Excluye familia: ${FAM_SPONSORSHIP}`,
+                totalBase - (famBase[FAM_SPONSORSHIP] || 0),
+                totalComp - (famComp[FAM_SPONSORSHIP] || 0), true
+            ),
+            buildSubRow("Sin Curated", `Excluye familia: ${FAM_CURATED}`,
+                totalBase - (famBase[FAM_CURATED] || 0),
+                totalComp - (famComp[FAM_CURATED] || 0), true
+            ),
+            buildSubRow("Sin Convencional", `Excluye familia: ${FAM_CONVENCIONAL}`,
+                totalBase - (famBase[FAM_CONVENCIONAL] || 0),
+                totalComp - (famComp[FAM_CONVENCIONAL] || 0), true
+            ),
+            buildSubRow("Sin Elementos Especiales", `Excluye familia: ${FAM_ELEM_ESP}`,
+                totalBase - (famBase[FAM_ELEM_ESP] || 0),
+                totalComp - (famComp[FAM_ELEM_ESP] || 0), true
+            )
+        ];
+    }
+
+    document.getElementById("static-families-list").innerHTML = `
+        <div class="static-total-row">
+            <div class="static-total-label">Total ingresos ${yearLabel(y1)}</div>
+            <div class="static-total-val">
+                ${formatCurrency(totalBase)}
+                ${hasComp ? `<span style="font-size:0.7em;color:#64748b;display:block"> vs ${formatCurrency(totalComp)} (${yearLabel(y2)})</span>` : ""}
+                ${fmtDiff(totalBase, totalComp)}
+            </div>
+        </div>
+        ${famRows.join("")}`;
+
+    // Footnote for families
+    if (hasComp) {
+        const totalPctStr = totalPct !== null ? `${totalPct > 0 ? "+" : ""}${totalPct}%` : "—";
+        const noteEl = document.getElementById("static-families-note");
+        noteEl.style.display = "block";
+        noteEl.innerHTML = `ℹ️ <b>Cómo leer esto:</b> cada fila muestra qué pasaría con el total <em>si quitáramos esa familia</em>. Si ese % es <strong>peor</strong> que el total global (${totalPctStr}), esa familia ha aportado más este año que el anterior y ha amortiguado la caída general. Las filas marcadas con <span style="background:#78350f;color:#fcd34d;padding:1px 5px;border-radius:3px;font-size:0.85em;font-weight:700;">▼ por debajo del total</span> son esas familias estratégicas cuya contribución relativa ha mejorado respecto al año comparado.`;
+    }
+
+    // Families bar chart — group programática
+    const famGrouped = {};
+    let progTotal = 0;
+    Object.entries(famBase).forEach(([k, v]) => {
+        if (FAMS_PROG.includes(k)) { progTotal += v; }
+        else { famGrouped[k] = v; }
+    });
+    if (progTotal > 0) famGrouped["Programática (agrupada)"] = progTotal;
+
+    const famSorted = Object.entries(famGrouped).sort((a, b) => b[1] - a[1]);
+    const famChartHtml = famSorted.map(([name, val], i) => {
+        const pct = totalBase > 0 ? ((val / totalBase) * 100).toFixed(1) : 0;
+        return `<div class="bar-chart-row">
+            <div class="bar-label" title="${name}">${name}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${PALETTE[i % PALETTE.length]}"></div></div>
+            <div class="bar-pct">${pct}%</div>
+        </div>`;
+    }).join("");
+    document.getElementById("static-families-chart").innerHTML = famChartHtml;
+
+    // ===================== PUBLICACIONES =====================
+    const siteBase = sumBy(allBase, "Site");
+    const siteComp = hasComp ? sumBy(allComp, "Site") : {};
+
+    const siteSorted = Object.entries(siteBase).sort((a, b) => b[1] - a[1]);
+
+    // Site names: lowercase for DIGITAL, capitalize first letter for PRINT/EVENTOS
+    const formatSiteName = (name) => {
+        if (currentType === "DIGITAL") return name; // already lowercase, keep as-is
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    };
+
+    const siteSubRows = siteSorted.map(([name, val]) => {
+        const compVal = siteComp[name] || 0;
+        return buildSubRow(formatSiteName(name), "", val, compVal);
+    }).join("");
+
+    document.getElementById("static-sites-list").innerHTML = `
+        <div class="static-total-row">
+            <div class="static-total-label">Total ingresos ${yearLabel(y1)}</div>
+            <div class="static-total-val">
+                ${formatCurrency(totalBase)}
+                ${hasComp ? `<span style="font-size:0.7em;color:#64748b;display:block"> vs ${formatCurrency(totalComp)} (${yearLabel(y2)})</span>` : ""}
+                ${fmtDiff(totalBase, totalComp)}
+            </div>
+        </div>
+        ${siteSubRows}`;
+
+    const siteChartHtml = siteSorted.map(([name, val], i) => {
+        const pct = totalBase > 0 ? ((val / totalBase) * 100).toFixed(1) : 0;
+        return `<div class="bar-chart-row">
+            <div class="bar-label" title="${name}">${formatSiteName(name)}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${PALETTE[i % PALETTE.length]}"></div></div>
+            <div class="bar-pct">${pct}%</div>
+        </div>`;
+    }).join("");
+    document.getElementById("static-sites-chart").innerHTML = siteChartHtml;
+
+    // ⚠️ Tabla "Publicaciones en peligro" — las 3 con peor % vs año comparado
+    const dangerEl = document.getElementById("static-sites-danger");
+    if (dangerEl) {
+        if (hasComp && siteSorted.length > 0) {
+            // Calcular % variación por publicación
+            const withPct = siteSorted
+                .filter(([, val]) => val > 0)
+                .map(([name, val]) => {
+                    const comp = siteComp[name] || 0;
+                    const pct = comp > 0 ? Math.round(((val / comp) - 1) * 100) : null;
+                    return { name, val, comp, pct };
+                })
+                .filter(d => d.pct !== null)
+                .sort((a, b) => a.pct - b.pct); // peores primero
+
+            const top3worst = withPct.slice(0, 3);
+            const top3best  = withPct.slice().sort((a, b) => b.pct - a.pct).slice(0, 3);
+
+            const dangerRows = top3worst.map((d, i) => {
+                const medals = ["🥇","🥈","🥉"];
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <div style="font-size:0.75rem;color:#fca5a5;font-weight:600;">${medals[i]} ${formatSiteName(d.name)}</div>
+                    <div style="text-align:right;">
+                        <div style="font-size:0.78rem;font-weight:700;color:#f87171;">${d.pct}%</div>
+                        <div style="font-size:0.65rem;color:#64748b;">${formatCurrency(d.val)} vs ${formatCurrency(d.comp)}</div>
+                    </div>
+                </div>`;
+            }).join("");
+
+            const bestRows = top3best.map((d, i) => {
+                const medals = ["🥇","🥈","🥉"];
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <div style="font-size:0.75rem;color:#6ee7b7;font-weight:600;">${medals[i]} ${formatSiteName(d.name)}</div>
+                    <div style="text-align:right;">
+                        <div style="font-size:0.78rem;font-weight:700;color:#6ee7b7;">+${d.pct > 0 ? "" : ""}${d.pct}%</div>
+                        <div style="font-size:0.65rem;color:#64748b;">${formatCurrency(d.val)} vs ${formatCurrency(d.comp)}</div>
+                    </div>
+                </div>`;
+            }).join("");
+
+            dangerEl.innerHTML = `
+                <div style="margin-top:20px;padding-top:14px;border-top:1px solid #1e293b;">
+                    <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#f87171;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <span style="background:#7f1d1d;padding:2px 7px;border-radius:4px;">⚠️ Publicaciones en peligro</span>
+                        <span style="color:#475569;font-size:0.6rem;">peor % vs ${yearLabel(y2)}</span>
+                    </div>
+                    ${dangerRows}
+                </div>
+                <div style="margin-top:16px;">
+                    <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#6ee7b7;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <span style="background:#064e3b;padding:2px 7px;border-radius:4px;">🚀 Publicaciones estrella</span>
+                        <span style="color:#475569;font-size:0.6rem;">mejor % vs ${yearLabel(y2)}</span>
+                    </div>
+                    ${bestRows}
+                </div>`;
+        } else {
+            dangerEl.innerHTML = "";
+        }
+    }
+
+    document.getElementById("static-overview").style.display = "block";
+}
+
+function runIAAnalysis(dataBase, dataComp, y1, y2) {
+    const container = document.getElementById("ia-analysis-container");
+    const content = document.getElementById("ia-content");
+    if (!container || !content) return;
+    
+    container.style.display = "block";
+    content.style.display = "block"; 
+
+    const format = (v) => formatCurrency(v);
+    const getPct = (b, c) => c ? ((b / c - 1) * 100).toFixed(1) : "100";
+
+    const getCausaRaiz = (dimName, valueName, subDim) => {
+        const filtered = dataBase.filter(d => d[dimName] === valueName);
+        const filteredComp = dataComp.filter(d => d[dimName] === valueName);
+        const subMap = filtered.reduce((acc, d) => { acc[d[subDim]] = (acc[d[subDim]] || 0) + d.ingreso; return acc; }, {});
+        const subMapComp = filteredComp.reduce((acc, d) => { acc[d[subDim]] = (acc[d[subDim]] || 0) + d.ingreso; return acc; }, {});
+        const diffs = [...new Set([...Object.keys(subMap), ...Object.keys(subMapComp)])].map(k => ({
+            name: k,
+            diff: (subMap[k] || 0) - (subMapComp[k] || 0)
+        })).sort((a,b) => Math.abs(b.diff) - Math.abs(a.diff));
+        return diffs[0] ? diffs[0] : { name: "N/A", diff: 0 };
+    };
+
+    const getSubBalance = (dimParent, valParent, dimSub) => {
+        const fBase = dataBase.filter(d => d[dimParent] === valParent);
+        const fComp = dataComp.filter(d => d[dimParent] === valParent);
+        const mB = fBase.reduce((acc, d) => { acc[d[dimSub]] = (acc[d[dimSub]] || 0) + d.ingreso; return acc; }, {});
+        const mC = fComp.reduce((acc, d) => { acc[d[dimSub]] = (acc[d[dimSub]] || 0) + d.ingreso; return acc; }, {});
+        const todos = [...new Set([...Object.keys(mB), ...Object.keys(mC)])]
+            .map(k => ({ name: k, diff: (mB[k] || 0) - (mC[k] || 0) }))
+            .sort((a,b) => b.diff - a.diff);
+        return {
+            pos: todos.filter(x => x.diff > 0).slice(0, 3),
+            neg: todos.filter(x => x.diff < 0).sort((a,b) => a.diff - b.diff).slice(0, 3),
+            pos5: todos.filter(x => x.diff > 0).slice(0, 5),
+            neg5: todos.filter(x => x.diff < 0).sort((a,b) => a.diff - b.diff).slice(0, 5),
+            pos10: todos.filter(x => x.diff > 0).slice(0, 10),
+            neg10: todos.filter(x => x.diff < 0).sort((a,b) => a.diff - b.diff).slice(0, 10)
+        };
+    };
+
+    const getDeepStats = (dim) => {
+        const baseMap = dataBase.reduce((acc, d) => { acc[d[dim]] = (acc[d[dim]] || 0) + d.ingreso; return acc; }, {});
+        const compMap = dataComp.reduce((acc, d) => { acc[d[dim]] = (acc[d[dim]] || 0) + d.ingreso; return acc; }, {});
+        return [...new Set([...Object.keys(baseMap), ...Object.keys(compMap)])].map(key => {
+            const vB = baseMap[key] || 0;
+            const vC = compMap[key] || 0;
+            return { name: key, base: vB, comp: vC, diff: vB - vC, pct: getPct(vB, vC) };
+        }).sort((a, b) => b.diff - a.diff);
+    };
+
+    const sections = [
+        { title: "1. AUDITORÍA DE SECTORES", id: "Sector", sub: "Product", labelSub: "Producto Crítico" },
+        { title: "2. ANUNCIANTES GANADOS Y PERDIDOS", id: "Anunciante", sub: "Site", labelSub: "Publicación" },
+        { title: "3. RENDIMIENTO DE PUBLICACIONES (SITES)", id: "Site", sub: "Sector", labelSub: "Sector Responsable" },
+        { title: "4. ANÁLISIS DE ÁREAS", id: "Area", sub: "Anunciante", labelSub: "Anunciante Clave" },
+        { title: "5. COMPORTAMIENTO DE FAMILIAS", id: "Family", sub: "Product", labelSub: "Mix Producto" },
+        { title: "6. MIX DE PRODUCTOS", id: "Product", sub: "Sector", labelSub: "Sector Principal" }
+    ];
+
+    let html = "";
+    sections.forEach(sec => {
+        let allStats = getDeepStats(sec.id);
+        let top5 = allStats.filter(x => x.diff > 0).slice(0, 5);
+        let bottom5 = allStats.sort((a,b) => a.diff - b.diff).filter(x => x.diff < 0).slice(0, 5);
+
+        html += `
+        <div class="ia-insight-card" style="margin-bottom: 40px; border-left: 10px solid #4338ca; width: 100%; box-sizing: border-box;">
+            <h3 style="font-size: 1.6rem; color: #818cf8; margin-bottom: 25px; border-bottom: 2px solid #312e81; padding-bottom: 10px;">${sec.title}</h3>
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <div style="background: rgba(110, 231, 183, 0.05); padding: 20px; border-radius: 10px;">
+                    <h4 style="color: var(--diffColor); border-bottom: 1px solid var(--diffColor); padding-bottom: 5px; margin-top: 0; font-size: 0.9rem;">TOP 5 CRECIMIENTO</h4>
+                    ${top5.map(x => {
+                        const causa = getCausaRaiz(sec.id, x.name, sec.sub);
+                        let extra = "";
+                        
+                        if (sec.id === "Sector") {
+                            const balAnu = getSubBalance("Sector", x.name, "Anunciante");
+                            const balProd = getSubBalance("Sector", x.name, "Product");
+                            extra = `<div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div style="font-size:0.75rem; color:#e5e7eb; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;"><b>Anunciantes (Top +):</b><br>${balAnu.pos.map(a => `• ${a.name} (+${format(a.diff)})`).join('<br>')}</div>
+                                <div style="font-size:0.75rem; color:#6ee7b7; background: rgba(110, 231, 183, 0.1); padding: 8px; border-radius: 4px;"><b>Productos (Top +):</b><br>${balProd.pos.map(p => `• ${p.name} (+${format(p.diff)})`).join('<br>')}</div>
+                            </div>`;
+                        }
+
+                        if (sec.id === "Anunciante") {
+                            const areaPrincipal = getCausaRaiz("Anunciante", x.name, "Area");
+                            const balProd = getSubBalance("Anunciante", x.name, "Product");
+                            const balSite = getSubBalance("Anunciante", x.name, "Site");
+                            extra = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="font-size:0.85rem; color:#38bdf8; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">↳ <b>Área Responsable:</b> ${areaPrincipal.name} (+${format(areaPrincipal.diff)})</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div style="font-size:0.75rem; color:#fbbf24; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
+                                        <b>Sites (Balance):</b><br><span style="color:#6ee7b7">↑ ${balSite.pos.map(s => `${s.name} (+${format(s.diff)})`).join('<br>↑ ')}</span><br><span style="color:#f87171">↓ ${balSite.neg.length ? balSite.neg.map(s => `${s.name} (${format(s.diff)})`).join('<br>↓ ') : 'Sin fugas'}</span>
+                                    </div>
+                                    <div style="font-size:0.75rem; color:#e5e7eb; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                        <b>Productos:</b><br><span style="color:#6ee7b7">↑ ${balProd.pos.map(p => `${p.name} (+${format(p.diff)})`).join('<br>↑ ')}</span><br><span style="color:#f87171">↓ ${balProd.neg.length ? balProd.neg.map(p => `${p.name} (${format(p.diff)})`).join('<br>↓ ') : 'Ninguno'}</span>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }
+
+                        if (sec.id === "Site" || sec.id === "Area" || sec.id === "Family" || sec.id === "Product") {
+                            const balSec = getSubBalance(sec.id, x.name, "Sector");
+                            const balAnu = getSubBalance(sec.id, x.name, "Anunciante");
+                            const balProd = getSubBalance(sec.id, x.name, "Product");
+                            const balSite = getSubBalance(sec.id, x.name, "Site");
+                            const balArea = getSubBalance(sec.id, x.name, "Area");
+                            
+                            extra = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size:0.8rem; color:#6ee7b7; background: rgba(110, 231, 183, 0.15); padding: 6px; border-radius: 4px;"><b>Sectores (+):</b> ${balSec.pos.map(s => `${s.name} (+${format(s.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#10b981; background: rgba(6, 78, 59, 0.3); padding: 6px; border-radius: 4px;"><b>Sectores (-):</b> ${balSec.neg.map(s => `${s.name} (${format(s.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#fbbf24; background: rgba(251, 191, 36, 0.15); padding: 6px; border-radius: 4px;"><b>Publicaciones (+):</b> ${balSite.pos.map(s => `${s.name} (+${format(s.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#d97706; background: rgba(120, 53, 15, 0.3); padding: 6px; border-radius: 4px;"><b>Publicaciones (-):</b> ${balSite.neg.map(s => `${s.name} (${format(s.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#38bdf8; background: rgba(56, 189, 248, 0.15); padding: 6px; border-radius: 4px;"><b>Áreas (+):</b> ${balArea.pos.map(a => `${a.name} (+${format(a.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#93c5fd; background: rgba(30, 58, 138, 0.3); padding: 6px; border-radius: 4px;"><b>Áreas (-):</b> ${balArea.neg.map(a => `${a.name} (${format(a.diff)})`).join(' | ')}</div>
+                                
+                                <div style="margin-top:5px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <b style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.1);">BALANCE DE ANUNCIANTES (TOP 10 +/-)</b>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div style="font-size:0.7rem; color:#6ee7b7;">${balAnu.pos10.map(a => `↑ ${a.name} (+${format(a.diff)})`).join('<br>')}</div>
+                                        <div style="font-size:0.7rem; color:#f87171;">${balAnu.neg10.map(a => `↓ ${a.name} (${format(a.diff)})`).join('<br>')}</div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }
+
+                        return `<div style="margin-top: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                            <div style="display:flex; justify-content:space-between; font-size: 1.1rem; font-weight:bold;"><span>${x.name}</span> <span style="color:var(--diffColor)">+${format(x.diff)}</span></div>
+                            <div style="font-size:0.9rem; color:#9ca3af; margin: 5px 0;">Total ${y1}: <b>${format(x.base)}</b> | Incremento: <span style="color:var(--diffColor)">${x.pct}%</span></div>
+                            ${extra}
+                        </div>`;
+                    }).join('')}
+                </div>
+
+                <div style="background: rgba(248, 113, 113, 0.05); padding: 20px; border-radius: 10px;">
+                    <h4 style="color: var(--neg); border-bottom: 1px solid var(--neg); padding-bottom: 5px; margin-top: 0; font-size: 0.9rem;">TOP 5 DECRECIMIENTO</h4>
+                    ${bottom5.map(x => {
+                        const causa = getCausaRaiz(sec.id, x.name, sec.sub);
+                        let extra = "";
+
+                        if (sec.id === "Sector") {
+                            const balAnuNeg = getSubBalance("Sector", x.name, "Anunciante");
+                            const balProdNeg = getSubBalance("Sector", x.name, "Product");
+                            extra = `<div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div style="font-size:0.75rem; color:#e5e7eb; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;"><b>Anunciantes (Top -):</b><br>${balAnuNeg.neg.map(a => `• ${a.name} (${format(a.diff)})`).join('<br>')}</div>
+                                <div style="font-size:0.75rem; color:#f87171; background: rgba(248, 113, 113, 0.1); padding: 8px; border-radius: 4px;"><b>Productos (Top -):</b><br>${balProdNeg.neg.map(p => `• ${p.name} (${format(p.diff)})`).join('<br>')}</div>
+                            </div>`;
+                        }
+
+                        if (sec.id === "Anunciante") {
+                            const areaPrincipal = getCausaRaiz("Anunciante", x.name, "Area");
+                            const balProd = getSubBalance("Anunciante", x.name, "Product");
+                            const balSite = getSubBalance("Anunciante", x.name, "Site");
+                            extra = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="font-size:0.85rem; color:#38bdf8; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">↳ <b>Área Responsable:</b> ${areaPrincipal.name} (${format(areaPrincipal.diff)})</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div style="font-size:0.75rem; color:#fbbf24; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
+                                        <b>Sites (Balance):</b><br><span style="color:#6ee7b7">↑ ${balSite.pos.map(s => `${s.name} (+${format(s.diff)})`).join('<br>↑ ')}</span><br><span style="color:#f87171">↓ ${balSite.neg.length ? balSite.neg.map(s => `${s.name} (${format(s.diff)})`).join('<br>↓ ') : 'Sin fugas'}</span>
+                                    </div>
+                                    <div style="font-size:0.75rem; color:#e5e7eb; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                        <b>Productos:</b><br><span style="color:#6ee7b7">↑ ${balProd.pos.map(p => `${p.name} (+${format(p.diff)})`).join('<br>↑ ')}</span><br><span style="color:#f87171">↓ ${balProd.neg.length ? balProd.neg.map(p => `${p.name} (${format(p.diff)})`).join('<br>↓ ') : 'Ninguno'}</span>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }
+
+                        if (sec.id === "Site" || sec.id === "Area" || sec.id === "Family" || sec.id === "Product") {
+                            const balSec = getSubBalance(sec.id, x.name, "Sector");
+                            const balAnu = getSubBalance(sec.id, x.name, "Anunciante");
+                            const balProd = getSubBalance(sec.id, x.name, "Product");
+                            const balSite = getSubBalance(sec.id, x.name, "Site");
+                            const balArea = getSubBalance(sec.id, x.name, "Area");
+
+                            extra = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size:0.8rem; color:#6ee7b7; background: rgba(110, 231, 183, 0.15); padding: 6px; border-radius: 4px;"><b>Sectores (+):</b> ${balSec.pos.map(s => `${s.name} (+${format(s.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#10b981; background: rgba(6, 78, 59, 0.3); padding: 6px; border-radius: 4px;"><b>Sectores (-):</b> ${balSec.neg.map(s => `${s.name} (${format(s.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#fbbf24; background: rgba(251, 191, 36, 0.15); padding: 6px; border-radius: 4px;"><b>Publicaciones (+):</b> ${balSite.pos.map(s => `${s.name} (+${format(s.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#d97706; background: rgba(120, 53, 15, 0.3); padding: 6px; border-radius: 4px;"><b>Publicaciones (-):</b> ${balSite.neg.map(s => `${s.name} (${format(s.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#38bdf8; background: rgba(56, 189, 248, 0.15); padding: 6px; border-radius: 4px;"><b>Áreas (+):</b> ${balArea.pos.map(a => `${a.name} (+${format(a.diff)})`).join(' | ')}</div>
+                                <div style="font-size:0.8rem; color:#93c5fd; background: rgba(30, 58, 138, 0.3); padding: 6px; border-radius: 4px;"><b>Áreas (-):</b> ${balArea.neg.map(a => `${a.name} (${format(a.diff)})`).join(' | ')}</div>
+                                
+                                <div style="margin-top:5px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <b style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.1);">BALANCE DE ANUNCIANTES (TOP 10 +/-)</b>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div style="font-size:0.7rem; color:#6ee7b7;">${balAnu.pos10.map(a => `↑ ${a.name} (+${format(a.diff)})`).join('<br>')}</div>
+                                        <div style="font-size:0.7rem; color:#f87171;">${balAnu.neg10.map(a => `↓ ${a.name} (${format(a.diff)})`).join('<br>')}</div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }
+
+                        return `<div style="margin-top: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                            <div style="display:flex; justify-content:space-between; font-size: 1.1rem; font-weight:bold;"><span>${x.name}</span> <span style="color:var(--neg)">${format(x.diff)}</span></div>
+                            <div style="font-size:0.9rem; color:#9ca3af; margin: 5px 0;">Total ${y1}: <b>${format(x.base)}</b> | Caída: <span style="color:var(--neg)">${x.pct}%</span></div>
+                            ${extra}
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        </div>`;
+    });
+    content.innerHTML = html;
+}
+
+(function(){
+  const nav = document.querySelector('.hn-bar');
+  if (!nav) return;
+  const active = nav.dataset.active;
+  const link = nav.querySelector(`[data-id="${active}"]`);
+  if (link) link.classList.add('hn-active');
+})();
+
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGITAL - Facturación Display</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --card:#111827;
+  --text:#e5e7eb;
+  --base:#38bdf8;
+  --comp:#f59e0b;
+  --neg:#f87171;
+  --diffColor:#6ee7b7;
+  --ok-green: #34d399;
+  --totalBg:#1e40af;
+  --siteBg:#fef3c7; 
+  --productoBg:#dbeafe; 
+  --sectorBg:#fbcfe8; 
+  --comercialBg:#d1fae5; 
+  --areaBg:#fcd5ce;
+  --base-color: #38bdf8;
+}
+
+body{
+  margin:0;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  background:linear-gradient(180deg,#020617,#0f172a);
+  color:var(--text);
+}
+
+.nav-menu {
+  background: #111827;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-menu a { color: #fff; margin: 0 10px; text-decoration: none; font-size: .9em; opacity: 0.8; }
+.nav-menu .active { opacity: 1; font-weight: bold; border-bottom: 2px solid var(--base-color); padding-bottom: 5px; }
+
+h1 { text-align: center; font-size: 1.5rem; margin: 20px 0; }
+.container{ max-width:1500px; margin:auto; padding:20px; }
+
+.card{
+  background:rgba(17,24,39,.9);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:20px;
+  border: 1px solid #1f2937;
+}
+
+.label-style { font-size: 0.95em; font-weight: bold; margin-bottom: 8px; display: block; }
+
+.filters select, input[type=file]{
+  background:#1f2933; 
+  color:var(--text); 
+  border:1px solid #374151;
+  padding:8px 10px; 
+  border-radius:8px; 
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.filtersRow { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.filtersRow div { display: flex; flex-direction: column; }
+.filtersRow label { font-weight: 600; margin-bottom: 6px; display: block; margin-top: 10px; }
+.filtersRow select { width: 220px !important; }
+
+.year-filter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.year-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.year-row label {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.checkboxGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 5px;
+}
+
+.checkboxGroup label {
+    font-size: 0.9em;
+    font-weight: 400;
+    color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    flex-direction: row !important;
+    margin: 0 !important;
+}
+
+.checkboxGroup input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+#fProduct{ background:var(--productoBg); color:#111; }
+#fSite{ background:var(--siteBg); color:#111; }
+#fSector{ background:var(--sectorBg); color:#111; }
+#fComercial{ background:var(--comercialBg); color:#111; }
+#fArea{ background:var(--areaBg); color:#111; }
+
+.totalBlock{ background:var(--totalBg); padding:15px; border-radius:12px; margin-top:10px; }
+.totalValues{ display:flex; justify-content:space-around; font-size:18px; }
+.totalValues div{ text-align:center; }
+.totalValues .value{ font-size:22px; font-weight:700; display: block; margin-top: 5px; }
+#diffPercent.negative { color: var(--neg); }
+
+.statsBlock{ display:flex; justify-content:center; border-radius:12px; margin:20px 0; gap:10px; flex-wrap:nowrap; }
+.subBlock{ border-radius:12px; padding:20px; display:flex; align-items:center; justify-content:center; color: #111; }
+.statsBase{ flex:1; background:var(--comp); }
+.statsDiff{ flex:0 0 300px; background:var(--diffColor); text-align: center; }
+.statsComp{ flex:1; background:var(--base); }
+.statsValues{ display:flex; justify-content:center; font-size:15px; gap:20px; flex-wrap:wrap; }
+.statsValues div{ text-align:center; }
+.statsValues .value{ font-size:18px; font-weight:700; display: block; margin-top: 5px; }
+.statsDiff .value.negative{ color:var(--neg); }
+
+.labelBase{ color:#f59e0b; font-weight:700; }
+.labelComp{ color:#38bdf8; font-weight:700; }
+
+#chartProductsBars{ width:100%; min-height: 400px; }
+.notice{ padding:14px; background:#1f2937; border-radius:10px; color:#cbd5e1; margin-top:10px; border: 1px dashed #4b5563; }
+
+.detail-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.85em; color: #e5e7eb; }
+.detail-table th { text-align: center; padding: 12px; border-bottom: 2px solid #374151; color: var(--base); text-transform: uppercase; letter-spacing: 1px; }
+.detail-table td { padding: 10px; border-bottom: 1px solid #1f2937; text-align: center; }
+
+.growth-up { color: var(--ok-green); font-weight: bold; font-size: 0.9em; margin-left: 8px; }
+.growth-down { color: var(--neg); font-weight: bold; font-size: 0.9em; margin-left: 8px; }
+.diff-amount { font-size: 0.75em; opacity: 0.6; margin-left: 4px; font-weight: normal; }
+
+.row-total-anunciante { background: #1e293b; font-weight: bold; color: #fff; }
+.row-total-anunciante td:first-child { text-align: left; padding-left: 15px; } /* NOMBRE ANUNCIANTE A LA IZQUIERDA */
+.spacer-row td { height: 25px; border: none !important; background: transparent !important; }
+
+.btn-load-more {
+    display: block; width: 200px; margin: 20px auto; padding: 10px;
+    background: var(--base); color: #111; border: none; border-radius: 8px;
+    font-weight: bold; cursor: pointer; text-align: center;
+}
+</style>
+</head>
+<body>
+
+<nav class="nav-menu">
+    <a href="digital-datos-graficos.html" style="color: var(--base-color); font-weight: bold; margin-right: 10px; opacity: 1;">DIGITAL:</a>
+    <a href="digital-totales-familas-productos.html">Productos</a>
+    <a href="digital-display.html" class="active">Display (s2i)</a>
+    <a href="digital-display-dashboard.html">Display (adserver)</a>
+    <a href="digital-redes-sociales.html">RRSS</a>
+    <a href="index.html" style="margin-left: 20px; border-left: 1px solid #4b5563; padding-left: 20px;">🏠 Home</a>
+</nav>
+
+<h1>DIGITAL - Facturación Display (Informe s2i)</h1>
+
+<div class="container">
+    <div class="card">
+        <label class="label-style">Cargar datos (Excel):</label>
+        <input type="file" id="fileInput" accept=".xlsx">
+        <div id="loadStatus">Esperando archivo...</div>
+    </div>
+
+  <div id="filters" class="card filters" style="display:none">
+    <div class="year-filter-container">
+      <div class="year-row">
+          <label class="labelBase">Año base</label>
+          <select id="fYear"></select>
+          <div class="checkboxGroup" id="monthsBase"></div>
+      </div>
+      <div class="year-row" style="margin-top: 10px;">
+          <label class="labelComp">Año comparación</label>
+          <select id="fYear2"></select>
+          <div class="checkboxGroup" id="monthsComp"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="siteBlock" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div><label>Familia Display</label><select id="fProduct"></select></div>
+      <div><label>Site</label><select id="fSite"></select></div>
+      <div><label>Sector</label><select id="fSector"></select></div>
+      <div><label>Comercial</label><select id="fComercial"></select></div>
+      <div><label>Área</label><select id="fArea"></select></div>
+    </div>
+  </div>
+
+  <div id="totalBlock" class="card" style="display:none">
+    <div class="totalBlock">
+      <div class="totalValues">
+        <div>Año base<span id="totalYear1" class="value">0€</span></div>
+        <div>Año comparación<span id="totalYear2" class="value">-</span></div>
+        <div>% Diferencia<span id="diffPercent" class="value">-</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="statsBlock" class="statsBlock" style="display:none">
+      <div class="subBlock statsBase">
+        <div class="statsValues">
+          <div>Fact. Año Base<span id="totalStatsBase" class="value">0€</span></div>
+          <div>Nº líneas<span id="linesStatsBase" class="value">0</span></div>
+          <div>Presup. medio<span id="avgStatsBase" class="value">0€</span></div>
+        </div>
+      </div>
+      <div class="subBlock statsDiff">
+        <div class="statsValues">
+          <div>% Crec. Presup. Medio<span id="diffAvgStats" class="value" style="font-size: 1.8em; display:block; margin-top: 5px;">-</span></div>
+        </div>
+      </div>
+      <div class="subBlock statsComp">
+        <div class="statsValues">
+          <div>Fact. Año Comparación<span id="totalStatsComp" class="value">-</span></div>
+          <div>Nº líneas<span id="linesStatsComp" class="value">-</span></div>
+          <div>Presup. medio<span id="avgStatsComp" class="value">-</span></div>
+        </div>
+      </div>
+  </div>
+
+  <div id="chartCardBars" class="card" style="display:none">
+    <h2>Ingresos por Producto</h2>
+    <div id="chartProductsBars"></div>
+    <div id="msgTodos" class="notice" style="display:none">Elige una <b>Familia Display</b> para ver sus productos.</div>
+  </div>
+
+  <div id="detailCard" class="card" style="display:none">
+    <h2>Desglose detallado por anunciante</h2>
+    <div id="msgTablaVacia" class="notice">Selecciona una <b>Familia Display</b> y un <b>Año base</b> para ver el listado.</div>
+    <div id="tableWrapper" style="display:none; overflow-x: auto;">
+        <table class="detail-table">
+            <thead>
+                <tr>
+                    <th>Anunciante</th>
+                    <th>Marca</th>
+                    <th>Mes</th>
+                    <th>Producto</th>
+                    <th>Site</th>
+                    <th>Facturación Año Base</th>
+                </tr>
+            </thead>
+            <tbody id="detailBody"></tbody>
+        </table>
+        <button id="btnLoadMore" class="btn-load-more" style="display:none;" onclick="loadMoreRows()">Cargar más líneas...</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS=["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio","07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+const FAMILIAS_DISPLAY = ["Display", "Programatica Display Directo", "Programatica Display Indirecto", "Video", "Video Programatico Directo", "Video Programatico Indirecto"];
+let rawData=[];
+let currentRowsToDisplay = [];
+let currentIndex = 0;
+const ROWS_PER_PAGE = 100;
+const excelUrl = "https://javiap20.github.io/datos-en-excel/PRODUCCION DIGITAL.xlsx";
+
+function toTitleCase(str) {
+    if(!str) return "";
+    return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+function cleanSector(str) {
+    if(!str) return "";
+    let s = str.replace(/^[0-9* ]+/, "");
+    return toTitleCase(s);
+}
+
+fileInput.onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, {type:"array"});
+        init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }));
+        document.getElementById("loadStatus").innerText = "✅ Archivo cargado";
+        document.getElementById("loadStatus").style.color = "var(--ok-green)";
+    } catch(err) {
+        document.getElementById("loadStatus").innerText = "❌ Error: " + err.message;
+        document.getElementById("loadStatus").style.color = "var(--neg)";
+    }
+  };
+  r.readAsArrayBuffer(f);
+};
+
+// Carga automática al abrir la página
+fetch(excelUrl)
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+        const wb = XLSX.read(new Uint8Array(buf), {type:"array"});
+        init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""}));
+        document.getElementById("loadStatus").innerText = "✅ Datos cargados automáticamente";
+        document.getElementById("loadStatus").style.color = "var(--ok-green)";
+    })
+    .catch(() => {
+        document.getElementById("loadStatus").innerText = "⚠️ No se pudo cargar automáticamente. Carga el archivo manualmente.";
+    });
+
+function num(v){
+  if(v==null) return 0;
+  if(typeof v === 'number') return v;
+  const s = String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+const currencyFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function formatCurrency(n){ return currencyFormatter.format(Math.round(n || 0)) + '€'; }
+const integerFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true, maximumFractionDigits: 0 });
+function formatInteger(n){ return integerFormatter.format(n || 0); }
+
+function init(data){
+  rawData = data.map(d => ({
+    ingreso:  num(d["Imp.Neto a Comisionar"]),
+    Año:      String(d["Año inserción"] || "").trim(),
+    Mes:      MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+    Site:      String(d["Publicación"] || "").trim().toLowerCase(),
+    Familia:  toTitleCase(String(d["Familia"] || "").trim()),
+    Producto: String(d["Producto"] || "").trim().toUpperCase(),
+    Sector:   cleanSector(String(d["Sector"] || "")),
+    Comercial:toTitleCase(String(d["Comercial"] || "").trim()),
+    Area:     toTitleCase(String(d["ÁREAS"] || "").trim()),
+    Anunciante: toTitleCase(String(d["Anunciante"] || "").trim()),
+    Marca:      toTitleCase(String(d["Marca"] || "").trim())
+  })).filter(d => d.Año !== "");
+
+  const populate = (id, arr) => {
+    document.getElementById(id).innerHTML = "<option>Todos</option>" + [...new Set(arr.filter(Boolean))].sort().map(v=>`<option>${v}</option>`).join("");
+  };
+
+  populate("fSite", rawData.map(d=>d.Site));
+  populate("fProduct", FAMILIAS_DISPLAY.map(f => toTitleCase(f)));
+  populate("fSector", rawData.map(d=>d.Sector));
+  populate("fComercial", rawData.map(d=>d.Comercial));
+  populate("fArea", rawData.map(d=>d.Area));
+  
+  const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+  fYear.innerHTML  = "<option>Todos</option>" + years.map(y=>`<option>${y}</option>`).join("");
+  fYear2.innerHTML = "<option>Sin comparar</option>" + years.map(y=>`<option>${y}</option>`).join("");
+
+  document.getElementById("monthsBase").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> <span>${m.split(" ")[1]}</span></label>`).join("");
+  document.getElementById("monthsComp").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> <span>${m.split(" ")[1]}</span></label>`).join("");
+
+  [fSite,fProduct,fSector,fYear,fYear2,fComercial,fArea].forEach(e=>e.onchange=render);
+  ["siteBlock","filters","totalBlock","statsBlock","chartCardBars","detailCard"].forEach(id=>document.getElementById(id).style.display="block");
+  document.getElementById("statsBlock").style.display="flex";
+  render();
+}
+
+function calcWithNetting(data) {
+    const famPermitidas = FAMILIAS_DISPLAY.map(f => f.toUpperCase());
+    const filtered = data.filter(d => famPermitidas.includes(d.Familia.toUpperCase()));
+    const total = filtered.reduce((a, b) => a + b.ingreso, 0);
+    let pool = filtered.filter(d => d.ingreso !== 0).map(d => d.ingreso);
+    let lines = 0;
+    pool.sort((a, b) => Math.abs(a) - Math.abs(b));
+    while (pool.length > 0) {
+        let current = pool.shift();
+        let idx = pool.findIndex(v => v === -current);
+        if (idx !== -1) pool.splice(idx, 1);
+        else if (current > 0) lines++;
+    }
+    return { total, lines, avg: lines ? total / lines : 0 };
+}
+
+function render(){
+  const site = fSite.value.toLowerCase(),
+        prod = fProduct.value.toLowerCase(),
+        sect = fSector.value.toLowerCase(),
+        y1   = fYear.value,
+        y2   = fYear2.value,
+        com  = fComercial.value.toLowerCase(),
+        area = fArea.value.toLowerCase();
+
+  const mBase = Array.from(document.getElementById("monthsBase").querySelectorAll("input:checked")).map(i=>i.value);
+  const mComp = Array.from(document.getElementById("monthsComp").querySelectorAll("input:checked")).map(i=>i.value);
+  const famPermitidas = FAMILIAS_DISPLAY.map(f => f.toLowerCase());
+
+  const filterData = (y, selectedMonths) => rawData.filter(d => 
+     famPermitidas.includes(d.Familia.toLowerCase()) && 
+     (y==="Todos" || d.Año===y) &&
+     (selectedMonths.length === 0 || selectedMonths.includes(d.Mes)) &&
+     (site==="todos" || d.Site===site) &&
+     (prod==="todos" || d.Familia.toLowerCase()===prod) &&
+     (sect==="todos" || d.Sector.toLowerCase()===sect) &&
+     (com==="todos" || d.Comercial.toLowerCase()===com) &&
+     (area==="todos" || d.Area.toLowerCase()===area)
+  );
+
+  const d1 = filterData(y1, mBase);
+  const d2 = (y2!=="Sin comparar") ? filterData(y2, mComp) : [];
+
+  const s1 = calcWithNetting(d1);
+  const s2 = calcWithNetting(d2);
+
+  totalYear1.textContent = formatCurrency(s1.total);
+  totalStatsBase.textContent = formatCurrency(s1.total);
+  linesStatsBase.textContent = formatInteger(s1.lines);
+  avgStatsBase.textContent = formatCurrency(s1.avg);
+
+  if(y2!=="Sin comparar"){
+    totalYear2.textContent = formatCurrency(s2.total);
+    totalStatsComp.textContent = formatCurrency(s2.total);
+    linesStatsComp.textContent = formatInteger(s2.lines);
+    avgStatsComp.textContent = formatCurrency(s2.avg);
+    const dPct = s2.total ? Math.round((s1.total/s2.total - 1)*100) : 0;
+    diffPercent.textContent = (dPct > 0 ? "+" : "") + dPct + "%";
+    diffPercent.className = "value" + (dPct < 0 ? " negative" : "");
+    const aPct = s2.avg ? Math.round((s1.avg/s2.avg - 1)*100) : 0;
+    diffAvgStats.textContent = (aPct > 0 ? "+" : "") + aPct + "%";
+    diffAvgStats.style.color = aPct < 0 ? "var(--neg)" : "#111";
+  } else {
+    totalYear2.textContent = "-"; totalStatsComp.textContent = "-"; linesStatsComp.textContent = "-";
+    avgStatsComp.textContent = "-"; diffPercent.textContent = "-"; diffAvgStats.textContent = "-";
+  }
+
+  const div = document.getElementById("chartProductsBars");
+  if(fProduct.value === "Todos") {
+    document.getElementById("msgTodos").style.display = "block";
+    Plotly.purge(div);
+  } else {
+    document.getElementById("msgTodos").style.display = "none";
+    const m1 = {}, m2 = {};
+    d1.forEach(d => m1[d.Producto] = (m1[d.Producto]||0) + d.ingreso);
+    d2.forEach(d => m2[d.Producto] = (m2[d.Producto]||0) + d.ingreso);
+    const labels = [...new Set([...Object.keys(m1), ...Object.keys(m2)])].sort((a,b) => (m1[b]||0) - (m1[a]||0));
+    const traces = [{
+      y: labels, x: labels.map(l => m1[l]||0), name: y1,
+      type: 'bar', orientation: 'h', marker: {color: "#38bdf8"},
+      text: labels.map(l => {
+        if(y2==="Sin comparar" || !(m2[l]>0)) return "";
+        const p = Math.round(((m1[l]||0)/(m2[l]||0)-1)*100);
+        return ` ${p>0?'+':''}${p}%`;
+      }), textposition: 'outside', cliponaxis: false
+    }];
+    if(y2!=="Sin comparar") {
+      traces.push({
+        y: labels, x: labels.map(l => m2[l]||0), name: y2,
+        type: 'bar', orientation: 'h', marker: {color: "#f59e0b"}
+      });
+    }
+    div.style.height = Math.max(400, (150 + labels.length * 45)) + "px";
+    Plotly.newPlot(div, traces, {
+      paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)", font:{color:"#eee"},
+      margin:{l:280, r:100, t:20, b:50}, barmode: 'group',
+      xaxis: { gridcolor: '#1f2937', tickformat: ',.0f', ticksuffix: '€' },
+      yaxis: { automargin: true, autorange: "reversed" }
+    }, {responsive: true});
+  }
+
+  const detailBody = document.getElementById("detailBody");
+  const msgTabla = document.getElementById("msgTablaVacia");
+  const tableWrapper = document.getElementById("tableWrapper");
+
+  if(fProduct.value === "Todos" || fYear.value === "Todos") {
+      detailBody.innerHTML = "";
+      msgTabla.style.display = "block";
+      tableWrapper.style.display = "none";
+  } else {
+      msgTabla.style.display = "none";
+      tableWrapper.style.display = "block";
+      detailBody.innerHTML = "";
+      currentIndex = 0;
+
+      const map1 = {}; 
+      const mapTotalAnunciante1 = {};
+      const mapTotalAnunciante2 = {};
+      const mapTotalMarca1 = {};
+
+      d1.forEach(d => {
+          const key = `${d.Anunciante}|${d.Marca}|${d.Mes}|${d.Producto}|${d.Site}`;
+          const mKey = `${d.Anunciante}|${d.Marca}`;
+          map1[key] = (map1[key] || 0) + d.ingreso;
+          mapTotalAnunciante1[d.Anunciante] = (mapTotalAnunciante1[d.Anunciante] || 0) + d.ingreso;
+          mapTotalMarca1[mKey] = (mapTotalMarca1[mKey] || 0) + d.ingreso;
+      });
+
+      d2.forEach(d => {
+          mapTotalAnunciante2[d.Anunciante] = (mapTotalAnunciante2[d.Anunciante] || 0) + d.ingreso;
+      });
+
+      const sortedKeys = Object.keys(map1).sort((a, b) => {
+          const partsA = a.split('|');
+          const partsB = b.split('|');
+          const anunA = partsA[0], marcA = partsA[1];
+          const anunB = partsB[0], marcB = partsB[1];
+          const mKeyA = `${anunA}|${marcA}`;
+          const mKeyB = `${anunB}|${marcB}`;
+          if (mapTotalAnunciante1[anunB] !== mapTotalAnunciante1[anunA]) return mapTotalAnunciante1[anunB] - mapTotalAnunciante1[anunA];
+          if (mapTotalMarca1[mKeyB] !== mapTotalMarca1[mKeyA]) return mapTotalMarca1[mKeyB] - mapTotalMarca1[mKeyA];
+          return map1[b] - map1[a];
+      });
+
+      currentRowsToDisplay = [];
+      let lastAnunciante = null;
+
+      sortedKeys.forEach(key => {
+          const parts = key.split('|');
+          const anun = parts[0];
+          if (anun !== lastAnunciante) {
+              const t1 = mapTotalAnunciante1[anun];
+              const t2 = mapTotalAnunciante2[anun] || 0;
+              let growthHeader = "";
+              if(y2 !== "Sin comparar" && t2 !== 0) {
+                  const pct = Math.round(((t1/t2)-1)*100);
+                  const diff = t1 - t2;
+                  growthHeader = ` <span class="${pct >= 0 ? 'growth-up' : 'growth-down'}">${pct > 0 ? '+' : ''}${pct}% <span class="diff-amount">(${diff > 0 ? '+' : ''}${formatCurrency(diff)})</span></span>`;
+              }
+              currentRowsToDisplay.push({ type: 'header', anunciante: anun, total: t1, growth: growthHeader });
+              lastAnunciante = anun;
+          }
+          currentRowsToDisplay.push({ type: 'row', key: key, fact: map1[key] });
+      });
+
+      loadMoreRows();
+  }
+}
+
+function loadMoreRows() {
+    const detailBody = document.getElementById("detailBody");
+    const btn = document.getElementById("btnLoadMore");
+    const nextBatch = currentRowsToDisplay.slice(currentIndex, currentIndex + ROWS_PER_PAGE);
+    const y2 = fYear2.value;
+    const mComp = Array.from(document.getElementById("monthsComp").querySelectorAll("input:checked")).map(i=>i.value);
+    const famPermitidas = FAMILIAS_DISPLAY.map(f => f.toLowerCase());
+    
+    let map2 = {};
+    if(y2 !== "Sin comparar") {
+        const d2 = rawData.filter(d => famPermitidas.includes(d.Familia.toLowerCase()) && (d.Año===y2) && (mComp.length === 0 || mComp.includes(d.Mes)));
+        d2.forEach(d => {
+            const k = `${d.Anunciante}|${d.Marca}|${d.Mes}|${d.Producto}|${d.Site}`;
+            map2[k] = (map2[k] || 0) + d.ingreso;
+        });
+    }
+
+    nextBatch.forEach(item => {
+        if (item.type === 'header') {
+            if(currentIndex > 0 || detailBody.children.length > 0) {
+                detailBody.innerHTML += `<tr class="spacer-row"><td colspan="6"></td></tr>`;
+            }
+            detailBody.innerHTML += `<tr class="row-total-anunciante">
+                <td colspan="5">TOTAL ${item.anunciante.toUpperCase()}</td>
+                <td style="text-align: center;">${formatCurrency(item.total)}${item.growth}</td>
+            </tr>`;
+        } else {
+            const parts = item.key.split('|');
+            const anun = parts[0], marc = parts[1], mesFull = parts[2], prod = parts[3], site = parts[4];
+            const mesSolo = mesFull.split(" ")[1].toLowerCase();
+            const f1 = item.fact;
+            const f2 = map2[item.key] || 0;
+            let growth = "";
+            if(y2 !== "Sin comparar" && f2 !== 0) {
+                const p = Math.round(((f1/f2)-1)*100);
+                const d = f1 - f2;
+                growth = ` <span class="${p >= 0 ? 'growth-up' : 'growth-down'}">${p > 0 ? '+' : ''}${p}% <span class="diff-amount">(${d > 0 ? '+' : ''}${formatCurrency(d)})</span></span>`;
+            }
+            detailBody.innerHTML += `<tr>
+                <td style="color: #94a3b8;">${anun}</td>
+                <td>${marc}</td>
+                <td style="color: #6ee7b7; font-weight: 500;">${mesSolo}</td>
+                <td style="font-size: 0.9em; color: #cbd5e1;">${prod}</td>
+                <td style="text-transform: lowercase;">${site}</td>
+                <td style="font-weight: bold;">${formatCurrency(f1)}${growth}</td>
+            </tr>`;
+        }
+    });
+
+    currentIndex += ROWS_PER_PAGE;
+    btn.style.display = currentIndex < currentRowsToDisplay.length ? "block" : "none";
+}
+</script>
+</body>
+</html>

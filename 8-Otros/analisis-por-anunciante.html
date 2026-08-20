@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis por Anunciante</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --primary-brand: #38bdf8;
+  --secondary-brand: #f59e0b;
+  --accent-print: #db2777;
+  --success: #34d399;
+  --danger: #f87171;
+  --neutral-gray: #4b5563;
+  --bg-dark: #020617;
+  --card-bg: #111827;
+  --text-main: #e5e7eb;
+  --comp: var(--primary-brand);
+  --base: var(--secondary-brand);
+  --neg: var(--danger);
+  --ok-green: var(--success);
+  --siteBg: #fef3c7;
+  --anuncianteBg: #e9d5ff;
+}
+
+body { margin:0; font-family:'Inter',Arial,sans-serif; background:linear-gradient(180deg,var(--bg-dark),#0f172a); color:var(--text-main); overflow-y:scroll; }
+h1 { text-align:center; font-size:1.5rem; margin:20px 0; }
+.container { max-width:1400px; margin:auto; padding:20px; }
+.card { background:rgba(17,24,39,.9); border-radius:14px; padding:18px; margin-bottom:20px; border:1px solid #1f2937; }
+.label-style { font-size:0.95em; font-weight:bold; margin-bottom:8px; display:block; }
+.filters select, input[type=file] { background:#1f2933; color:var(--text-main); border:1px solid #374151; padding:8px 10px; border-radius:8px; width:100%; box-sizing:border-box; }
+#loadStatus { margin-top:10px; font-weight:600; font-size:0.85em; }
+.filters label { font-weight:600; display:block; margin-top:10px; }
+.filtersRow { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+.filtersRow > div select { width:220px; font-weight:600; }
+#fSite2 { background:var(--siteBg); color:#111; }
+#fAnunciante2 { background:var(--anuncianteBg); color:#111; }
+#fProduct2 { background:#dbeafe; color:#111; }
+#fSector2 { background:#fbcfe8; color:#111; }
+.checkboxGroup { display:flex; flex-wrap:wrap; gap:10px; margin-top:5px; }
+.checkboxGroup label { font-size:0.85em; font-weight:400; color:#cbd5e1; display:flex; align-items:center; gap:4px; cursor:pointer; }
+
+/* Type selector */
+.type-selector-wrap { display:flex; justify-content:center; gap:12px; padding:18px 20px; background:#111827; border-bottom:1px solid #1f2937; flex-wrap:wrap; }
+.type-btn { padding:10px 28px; border-radius:999px; border:2px solid #374151; background:transparent; color:#94a3b8; font-size:0.9rem; font-weight:700; cursor:pointer; letter-spacing:0.05em; transition:all 0.15s; }
+.type-btn:hover { border-color:#64748b; color:#e2e8f0; }
+.type-btn.active-digital { border-color:#38bdf8; color:#38bdf8; background:rgba(56,189,248,0.08); }
+.type-btn.active-print   { border-color:#db2777; color:#db2777; background:rgba(219,39,119,0.08); }
+.type-btn.active-eventos { border-color:#34d399; color:#34d399; background:rgba(52,211,153,0.08); }
+
+/* Totales */
+.totalBlock { background:#1e40af; padding:15px; border-radius:12px; margin-top:10px; }
+.totalValues { display:flex; justify-content:space-around; font-size:18px; }
+.totalValues div { text-align:center; }
+.totalValues .value { font-size:22px; font-weight:700; display:block; margin-top:5px; }
+#diffPercent2.negative { color:var(--neg); }
+
+/* Stats bar */
+.statsBlock2 { display:flex; justify-content:center; border-radius:12px; margin:20px 0; gap:10px; flex-wrap:wrap; }
+.subBlock { border-radius:12px; padding:20px; display:flex; align-items:center; justify-content:center; }
+.statsBase { flex:0 0 420px; background:var(--comp); color:#111; }
+.statsDiff { flex:0 0 280px; background:#6ee7b7; color:#111; }
+.statsComp { flex:0 0 420px; background:var(--base); color:#111; }
+.statsValues { display:flex; justify-content:center; font-size:16px; gap:18px; flex-wrap:wrap; }
+.statsValues div { text-align:center; }
+.statsValues .value { font-size:18px; font-weight:700; display:block; margin-top:5px; }
+.statsDiff .value.negative { color:var(--neg); }
+
+/* Grid de anunciantes */
+.adv-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(640px,1fr)); gap:24px; margin-top:10px; }
+.adv-card {
+  background:rgba(2,6,23,0.5);
+  border:1px solid rgba(75,85,99,0.5);
+  border-radius:16px;
+  padding:20px;
+  transition:border-color 0.2s;
+}
+.adv-card:hover { border-color:#38bdf8; }
+.adv-header {
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  margin-bottom:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(75,85,99,0.4);
+}
+.adv-name { font-size:1.15rem; font-weight:800; color:#fff; flex:1; }
+.adv-total { font-size:1.35rem; font-weight:900; color:#38bdf8; white-space:nowrap; }
+.adv-pct { font-size:0.85rem; font-weight:700; padding:2px 8px; border-radius:6px; }
+.adv-pct.pos { color:#34d399; border:1px solid #34d399; background:rgba(52,211,153,0.1); }
+.adv-pct.neg { color:#f87171; border:1px solid #f87171; background:rgba(248,113,113,0.1); }
+.adv-diff-line { font-size:0.82rem; font-weight:600; text-align:right; margin-top:4px; }
+.adv-diff-line.pos { color:#34d399; }
+.adv-diff-line.neg { color:#f87171; }
+
+/* Bloques internos */
+.adv-section { margin-bottom:14px; }
+.adv-section-title {
+  font-size:0.72rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  margin-bottom:8px;
+  padding:3px 8px;
+  border-radius:4px;
+  display:inline-block;
+}
+.title-area    { background:rgba(249,115,22,0.15); color:#fb923c; }
+.title-familia { background:rgba(168,85,247,0.15); color:#c084fc; }
+.title-marca   { background:rgba(56,189,248,0.15); color:#38bdf8; }
+.title-producto{ background:rgba(219,39,119,0.15); color:#f472b6; }
+
+/* Barras */
+.bar-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.82em; }
+.bar-label { width:140px; min-width:140px; color:#cbd5e1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bar-wrap { flex:1; background:rgba(255,255,255,0.07); border-radius:4px; height:10px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:4px; transition:width 0.4s; }
+.bar-amount { width:90px; min-width:90px; text-align:right; font-weight:700; color:#e5e7eb; font-size:0.8em; }
+.bar-pct { width:44px; min-width:44px; text-align:right; font-size:0.78em; }
+.bar-pct.pos { color:#34d399; }
+.bar-pct.neg { color:#f87171; }
+
+/* Familia accordeon */
+.familia-block { border:1px solid rgba(75,85,99,0.3); border-radius:10px; margin-bottom:8px; overflow:hidden; }
+.familia-header { display:flex; align-items:center; gap:10px; padding:9px 12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:background 0.15s; }
+.familia-header:hover { background:rgba(0,0,0,0.35); }
+.familia-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.familia-label { font-weight:700; font-size:0.88em; flex:1; }
+.familia-sum { font-weight:800; color:#e5e7eb; font-size:0.88em; }
+.familia-pct-total { font-size:0.78em; opacity:0.7; }
+.familia-body { padding:10px 12px; background:rgba(0,0,0,0.15); border-top:1px solid rgba(75,85,99,0.2); }
+.familia-toggle { font-size:0.75em; color:#64748b; margin-left:4px; }
+.marca-chip {
+  display:inline-block;
+  background:rgba(56,189,248,0.12);
+  border:1px solid rgba(56,189,248,0.25);
+  color:#93c5fd;
+  border-radius:20px;
+  padding:3px 10px;
+  font-size:0.78em;
+  font-weight:600;
+  margin:3px 3px 3px 0;
+}
+.prod-row { font-size:0.8em; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; gap:6px; }
+.prod-row:last-child { border:none; }
+.prod-name { flex:1; color:#cbd5e1; }
+.prod-amount { font-weight:700; color:#e5e7eb; white-space:nowrap; }
+.prod-pct-bar { width:60px; background:rgba(255,255,255,0.07); border-radius:3px; height:6px; overflow:hidden; display:inline-block; vertical-align:middle; }
+.prod-pct-fill { height:100%; border-radius:3px; }
+
+/* Alerta tarifa */
+.alert-below { background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.4); border-radius:4px; padding:1px 5px; }
+
+/* Año comparación integrada */
+.comp-badge { font-size:0.75em; color:#94a3b8; margin-left:6px; }
+.comp-amount { color:#f59e0b; font-weight:700; }
+
+.empty-state { text-align:center; color:#475569; padding:40px; font-size:1.1rem; }
+
+/* Título bloque anunciantes */
+.adv-grid-title {
+  font-size:1.35rem; font-weight:800;
+  padding:10px 0 16px 0; letter-spacing:0.02em;
+  display:block; text-align:center; color:#e5e7eb;
+}
+#advGrid2 .adv-grid-title    { color:#f87171; }
+#advGridBest2 .adv-grid-title { color:#34d399; }
+
+/* Leyenda / pie de tarjeta */
+.adv-legend {
+  margin-top:14px; padding:10px 12px;
+  background:rgba(255,255,255,0.03);
+  border-radius:8px;
+  border-left:3px solid #334155;
+  font-size:0.73rem; color:#64748b; line-height:1.6;
+}
+.adv-legend strong { color:#94a3b8; }
+
+/* Filtro Área checkboxes */
+.area-filter-label {
+  font-weight:700; font-size:0.85em; display:block;
+  margin-bottom:6px; color:#34d399;
+}
+
+/* ── Bloque detalle de marcas ─────────────────────────────────────────────── */
+.detail-block {
+  margin-top: 28px;
+  background: rgba(2,6,23,0.6);
+  border: 1px solid rgba(56,189,248,0.2);
+  border-radius: 16px;
+  padding: 22px;
+}
+.detail-block-title {
+  font-size: 1rem; font-weight: 800; color: #e2e8f0;
+  margin-bottom: 18px; padding-bottom: 12px;
+  border-bottom: 1px solid rgba(75,85,99,0.4);
+  display: flex; align-items: center; gap: 8px;
+}
+.detail-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;          /* sin gap vertical — las filas se alinean por posición */
+}
+/* Cada columna es también un grid con subgrid para alinear filas entre sí */
+.detail-col-inner {
+  display: grid;
+  grid-template-rows: auto; /* se expande con el contenido */
+}
+.detail-col-header {
+  font-size: 0.78rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.06em; padding: 6px 10px; border-radius: 6px;
+  margin-bottom: 12px;
+}
+.detail-col-header.base { background: rgba(56,189,248,0.15); color: #38bdf8; }
+.detail-col-header.comp { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
+/* Lista de marcas en el detalle */
+.brand-item { padding: 12px 0; border-bottom: 1px solid rgba(75,85,99,0.2); }
+.brand-item:last-child { border: none; }
+.brand-gap  { padding: 12px 0; border-bottom: 1px solid rgba(75,85,99,0.08); }
+.brand-gap:last-child { border: none; }
+.brand-name-row { font-weight: 800; font-size: 0.9em; color: #fff; margin-bottom: 6px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.brand-total { color: #38bdf8; font-size: 1em; }
+.brand-pct-badge { font-size: 0.78em; font-weight: 700; padding: 1px 7px; border-radius: 5px; }
+.brand-pct-badge.pos { color: #34d399; border: 1px solid #34d399; background: rgba(52,211,153,0.1); }
+.brand-pct-badge.neg { color: #f87171; border: 1px solid #f87171; background: rgba(248,113,113,0.1); }
+.brand-sub { margin-left: 14px; font-size: 0.8em; margin-top: 4px; border-left: 3px solid; padding-left: 8px; line-height: 1.5; }
+.brand-sub-inner { padding: 2px 5px; border-radius: 3px; display: inline-block; }
+.brand-sub-family { font-weight: 800; text-transform: uppercase; font-size: 0.85em; }
+/* Filas espejo alineadas */
+.mirror-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;
+  border-bottom: 1px solid rgba(75,85,99,0.2);
+}
+.mirror-row:last-child { border: none; }
+.mirror-cell { padding: 0; }
+/* Dentro de mirror-row los brand-item no llevan border propio */
+.mirror-cell .brand-item,
+.mirror-cell .brand-gap { border-bottom: none; }
+
+.detail-empty { color: #475569; font-style: italic; font-size: 0.85em; padding: 10px 0; }
+
+
+/* ── NAV HEARST CON MÁXIMO AIRE INFERIOR ── */
+.hn-bar {
+  background: #020617; 
+  border-bottom: 1px solid #1e293b;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  /* Aumentamos el aire: 15px arriba y 30px abajo */
+  padding: 15px 20px 30px 20px; 
+}
+
+.hn-inner {
+  max-width: 1500px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  gap: 5px;
+}
+
+.hn-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 0.72rem; 
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ESTADO ACTIVO: COLOR CHAMPÁN */
+.hn-link.hn-active {
+  color: #fcd34d; 
+  font-weight: 800;
+}
+
+/* LÍNEA INFERIOR CORTA (ESTILO FOTO) */
+.hn-link.hn-active::after {
+  content: "";
+  position: absolute;
+  bottom: -5px; /* Un poco más de separación del texto */
+  left: 25%;    /* Más corta aún para que quede muy fina */
+  right: 25%;   
+  height: 2px;  
+  background-color: #fcd34d; 
+  border-radius: 2px;
+}
+
+.hn-sep {
+  width: 1px;
+  height: 14px;
+  background: #334155;
+  margin: 0 10px;
+  flex-shrink: 0;
+}
+
+/* AJUSTE EXTRA PARA EL TÍTULO DEL CUERPO */
+h1 {
+  margin-top: 40px !important; /* Empuja el contenido hacia abajo para que no pegue con el menú */
+}
+
+
+</style>
+</head>
+<body>
+
+
+<nav class="hn-bar" data-active="anunciante">
+  <div class="hn-inner" id="hnInner">
+    <a class="hn-link" data-id="global-reporting"  href="analisis-global.html">Global (REporting)</a>
+    <a class="hn-link" data-id="marca"             href="analisis-por-marca.html">Marca Hearst</a>
+    <a class="hn-link" data-id="anunciante"        href="analisis-por-anunciante.html">Anunciantes</a>
+    <a class="hn-link" data-id="plataforma"        href="anunciantes-desglosados-por-canales.html">Anunciantes & Plataformas</a>
+    <a class="hn-link" data-id="comparativa"       href="comparativa.html">Anunciantes (Comparativa)</a>
+    <a class="hn-link" data-id="familia-producto"  href="digital-desglose-por-producto.html">Familia & Producto</a>
+    <a class="hn-link" data-id="global-consulta"   href="dashboard.html">Global (Consulta)</a>
+    <a class="hn-link" data-id="presupuestos"      href="presupuestos-medios.html">Presupuestos Medios</a>
+    <a class="hn-link" data-id="alertas"           href="dashboard-alertas.html">Alertas</a>
+  </div>
+</nav>
+
+
+<div class="type-selector-wrap">
+  <button class="type-btn" id="btn2Digital"  onclick="selectType2('DIGITAL')">DIGITAL</button>
+  <button class="type-btn" id="btn2Print"    onclick="selectType2('PRINT')">PRINT</button>
+  <button class="type-btn" id="btn2Eventos"  onclick="selectType2('EVENTOS')">EVENTOS</button>
+</div>
+
+<h1 id="mainPageTitle2">Análisis por Anunciante</h1>
+
+<div class="container">
+  <div class="card">
+    <label class="label-style">Cargar datos (Excel):</label>
+    <input type="file" id="fileInput2" accept=".xlsx,.json">
+    <div id="loadStatus2">Esperando archivo...</div>
+  </div>
+
+  <!-- Filtros principales: Site + Anunciante + Sector + Producto en la misma fila -->
+  <div id="topFilters2" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div>
+        <label id="siteLabel2">Site / Revista</label>
+        <select id="fSite2"></select>
+      </div>
+      <div>
+        <label>Anunciante (Por Volumen)</label>
+        <select id="fAnunciante2"></select>
+      </div>
+      <div>
+        <label>Sector</label>
+        <select id="fSector2" style="width:190px;"></select>
+      </div>
+      <div>
+        <label>Producto</label>
+        <select id="fProduct2" style="width:210px;"></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtro de Áreas (checkboxes) -->
+  <div id="areaFilterBlock2" class="card filters" style="display:none">
+    <span class="area-filter-label">Área</span>
+    <div id="fAreaGroup2" class="checkboxGroup" style="max-height:80px; overflow-y:auto;"></div>
+  </div>
+
+  <!-- Filtros de año -->
+  <div id="yearFilters2" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div>
+        <label style="color:var(--comp);">Año base</label>
+        <select id="fYear2a"></select>
+        <div class="checkboxGroup" id="monthsBase2"></div>
+      </div>
+      <div>
+        <label style="color:var(--base);">Año comparación</label>
+        <select id="fYear2b"></select>
+        <div class="checkboxGroup" id="monthsComp2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Totales -->
+  <div id="totalBlock2" class="card" style="display:none">
+    <div class="totalBlock">
+      <div class="totalValues">
+        <div>Año base<div id="totalYear2a" class="value">0€</div></div>
+        <div>Año comparación<div id="totalYear2b" class="value">-</div></div>
+        <div>% diferencia<div id="diffPercent2" class="value">-</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div id="statsBlock2" class="statsBlock2" style="display:none">
+    <div class="subBlock statsBase">
+      <div class="statsValues">
+        <div>Fact. Año Base<div id="totalStatsBase2" class="value">0€</div></div>
+        <div>Nº líneas<div id="linesStatsBase2" class="value">0</div></div>
+        <div>Presupuesto medio<div id="avgStatsBase2" class="value">0€</div></div>
+      </div>
+    </div>
+    <div class="subBlock statsDiff">
+      <div class="statsValues">
+        <div>% Crec. Presup. Medio<div id="diffAvgStats2" class="value">0%</div></div>
+      </div>
+    </div>
+    <div class="subBlock statsComp">
+      <div class="statsValues">
+        <div>Fact. Año Comparación<div id="totalStatsComp2" class="value">-</div></div>
+        <div>Nº líneas<div id="linesStatsComp2" class="value">0</div></div>
+        <div>Presupuesto medio<div id="avgStatsComp2" class="value">-</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid: anunciantes perdidos -->
+  <div id="advGrid2" style="display:none">
+    <div class="adv-grid-title" id="advGridTitle2">📉 Anunciantes perdidos vs año anterior</div>
+    <div id="advGridSubtitle2" style="font-size:0.82rem;color:#94a3b8;margin-bottom:14px;padding-left:2px;">
+      Los 20 anunciantes con mayor ingresos en el año de comparación que muestran caída de ingresos en el año base (solo aparecen si hay variación negativa)
+    </div>
+    <div class="adv-grid" id="advGridInner2"></div>
+  </div>
+
+  <!-- Grid: anunciantes con mejor comportamiento -->
+  <div id="advGridBest2" style="display:none;margin-top:48px;">
+    <div class="adv-grid-title">📈 Anunciantes con mejor comportamiento este año</div>
+    <div id="advGridBestSubtitle2" style="font-size:0.82rem;color:#94a3b8;margin-bottom:14px;padding-left:2px;">
+      Los 10 anunciantes con mayor crecimiento total bruto del año base respecto al año de comparación. Solo aparecen si hay variación positiva, por lo que ha tenido que tener ingresos en ambos años. No aparecen los NUEVOS, es decir, los que no tuvieron ingreso el año anterior).
+    </div>
+    <div class="adv-grid" id="advGridBestInner2"></div>
+  </div>
+
+  <!-- Bloque detalle marcas (solo cuando hay un anunciante seleccionado) -->
+  <div id="detailBlock2" style="display:none">
+    <div class="detail-block">
+      <div class="detail-block-title">🔍 Detalle de Marcas — <span id="detailAdvName2" style="color:#38bdf8;"></span></div>
+      <!-- Headers de columna (solo cuando hay comparación) -->
+      <div id="detailColHeaders2" class="detail-cols" style="margin-bottom:8px;">
+        <div><div class="detail-col-header base" id="detailColHeaderBase2">Año base</div></div>
+        <div><div class="detail-col-header comp" id="detailColHeaderComp2" style="display:none">Año comparación</div></div>
+      </div>
+      <!-- Filas espejo: se genera dinámicamente -->
+      <div class="detail-cols" id="detailMirrorRows2"></div>
+      <!-- Fallback columnas independientes (sin comparación) -->
+      <div class="detail-cols" id="detailColsFallback2" style="display:none">
+        <div><div id="detailBrandsBase2" class="detail-col-inner"></div></div>
+        <div><div id="detailBrandsComp2" class="detail-col-inner"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Estado global ───────────────────────────────────────────────────────────
+let rawData2  = [];
+let currentType2 = "";
+let excelUrl2 = "";
+
+const MONTHS2 = ["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio",
+                 "07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+
+// Colores de familia
+const FAM_COLORS2 = {
+  "Sponsorship":                     "#38bdf8",
+  "Social Networks":                 "#a855f7",
+  "Curated":                         "#fbbf24",
+  "Display":                         "#34d399",
+  "Video":                           "#6ee7b7",
+  "Programatica Display Directo":    "#fb7185",
+  "Programatica Display Indirecto":  "#fda4af",
+  "Video Programatico Directo":      "#c084fc",
+  "Video Programatico Indirecto":    "#e879f9",
+};
+const FAM_COLOR_DEFAULT = "#94a3b8";
+
+// Tarifas de referencia (para alertas de precio)
+const REF_STANDARD = {
+  "caranddriver":5250,"cosmopolitan":7500,"diezminutos":5250,"elle":9000,
+  "elledecor":5250,"esquire":7500,"fotogramas":6000,"harpersbazaar":7500,
+  "menshealth":6000,"micasarevista":5250,"nuevo-estilo":5250,
+  "runnersworld":5250,"womenshealthmag":6000
+};
+const REF_VIDEO = {
+  "caranddriver":7600,"cosmopolitan":10400,"diezminutos":7600,"elle":12000,
+  "elledecor":7600,"esquire":10400,"fotogramas":8400,"harpersbazaar":10400,
+  "menshealth":8400,"micasarevista":7600,"nuevo-estilo":7600,
+  "runnersworld":7600,"womenshealthmag":8400
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function num2(v){ if(v==null) return 0; if(typeof v==='number') return v; const s=String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,"."); const n=Number(s); return Number.isFinite(n)?n:0; }
+function toTC(str){ if(!str) return ""; return str.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' '); }
+function cleanSec(str){ if(!str) return ""; return toTC(str.replace(/^[0-9* ]+/,"")); }
+function limpSite(url){ if(!url) return "Desconocido"; return url.replace(/^(www\.)?/,'').split('.')[0]; }
+const fmtEur = new Intl.NumberFormat('es-ES',{useGrouping:true,minimumFractionDigits:0,maximumFractionDigits:0});
+function fmtC(n){ return fmtEur.format(Math.round(n||0))+'€'; }
+function fmtI(n){ return new Intl.NumberFormat('es-ES').format(Math.round(n||0)); }
+
+function calcNetting2(data){
+  const total = data.reduce((a,b)=>a+b.ingreso,0);
+  const groups={};
+  data.forEach(d=>{ if(!groups[d.Anunciante]) groups[d.Anunciante]=[]; groups[d.Anunciante].push(d.ingreso); });
+  let lines=0;
+  Object.values(groups).forEach(pool=>{
+    let fp=pool.filter(v=>v!==0).sort((a,b)=>Math.abs(a)-Math.abs(b));
+    while(fp.length>0){ let cur=fp.shift(); let idx=fp.findIndex(v=>v===-cur); if(idx!==-1) fp.splice(idx,1); else if(cur>0) lines++; }
+  });
+  return { total, lines, avg: lines ? total/lines : 0 };
+}
+
+// ─── Selector de tipo ─────────────────────────────────────────────────────────
+function selectType2(type){
+  if(currentType2===type) return;
+  currentType2 = type;
+
+  document.getElementById('mainPageTitle2').textContent = `${type} — Análisis por Anunciante`;
+
+  document.getElementById('siteLabel2').textContent = 'Site / Revista';
+
+  ['DIGITAL','PRINT','EVENTOS'].forEach(t=>{
+    const btn = document.getElementById('btn2'+t.charAt(0)+t.slice(1).toLowerCase());
+    if(btn) btn.className='type-btn'+(t===type?` active-${t.toLowerCase()}`:'');
+  });
+
+  // URLs de SharePoint para cada tipo de Excel
+  const sharepointUrls2 = {
+    'DIGITAL': 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y',
+    'PRINT': 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU',
+    'EVENTOS': 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU'
+  };
+  excelUrl2 = sharepointUrls2[type];
+  rawData2=[];
+  ['topFilters2','yearFilters2','totalBlock2','advGrid2','advGridBest2'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  document.getElementById('statsBlock2').style.display='none';
+
+  const statusEl = document.getElementById('loadStatus2');
+  statusEl.innerText = "Cargando archivo...";
+  statusEl.style.color = "";
+  fetch(excelUrl2)
+    .then(r=>r.ok?r.arrayBuffer():Promise.reject())
+    .then(buf=>{
+      const wb=XLSX.read(buf,{type:"array"});
+      init2(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""}));
+      statusEl.innerText=`✅ ${type} cargado correctamente`;
+      statusEl.style.color="var(--ok-green)";
+    })
+    .catch(()=>{
+      statusEl.innerText=`⚠️ No se pudo cargar PRODUCCION ${type}.xlsx`;
+      statusEl.style.color="var(--neg)";
+    });
+}
+
+// ─── Carga manual de archivo ──────────────────────────────────────────────────
+document.getElementById('fileInput2').onchange = e => {
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const wb=XLSX.read(new Uint8Array(ev.target.result),{type:"array"});
+    init2(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""}));
+    document.getElementById('loadStatus2').innerText="✅ Archivo cargado";
+  };
+  r.readAsArrayBuffer(f);
+};
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function init2(data){
+  rawData2 = data.map(d=>({
+    ingreso:  num2(d["Imp.Neto a Comisionar"]),
+    Año:      String(d["Año inserción"]||"").trim(),
+    Mes:      MONTHS2.find(m=>m.startsWith(String(d["Mes inserción"]).trim().substring(0,2)))||"",
+    Site:     String(d["Publicación"]||"").trim().toLowerCase(),
+    Product:  toTC(String(d["Producto"]||"").trim()),
+    Sector:   cleanSec(String(d["Sector"]||"")),
+    Area:     toTC(String(d["ÁREAS"]||"").trim()),
+    Anunciante: String(d["Anunciante"]||"SIN ANUNCIANTE").trim().toUpperCase(),
+    Marca:    toTC(String(d["Marca"]||"").trim()),
+    Familia:  toTC(String(d["Familia"]||"").trim())
+  })).filter(d=>d.Año!=="");
+
+  // Anunciantes ordenados por volumen SOLO del Excel cargado (año base seleccionado o todos)
+  const advSums={};
+  rawData2.forEach(d=>{ advSums[d.Anunciante]=(advSums[d.Anunciante]||0)+d.ingreso; });
+  const sortedAdvs=Object.keys(advSums).sort((a,b)=>advSums[b]-advSums[a]);
+  document.getElementById('fAnunciante2').innerHTML =
+    "<option>Todos</option>"+sortedAdvs.map(v=>`<option>${v}</option>`).join("");
+
+  // Sites
+  const sites=[...new Set(rawData2.map(d=>d.Site).filter(Boolean))].sort();
+  document.getElementById('fSite2').innerHTML =
+    "<option>Todos</option>"+sites.map(v=>`<option>${v}</option>`).join("");
+
+  // Sector
+  const secs=[...new Set(rawData2.map(d=>d.Sector).filter(Boolean))].sort();
+  document.getElementById('fSector2').innerHTML =
+    "<option>Todos</option>"+secs.map(v=>`<option>${v}</option>`).join("");
+
+  // Producto
+  const prods=[...new Set(rawData2.map(d=>d.Product).filter(Boolean))].sort();
+  document.getElementById('fProduct2').innerHTML =
+    "<option>Todos</option>"+prods.map(v=>`<option>${v}</option>`).join("");
+
+  // Años
+  const years=[...new Set(rawData2.map(d=>d.Año))].sort().reverse();
+  document.getElementById('fYear2a').innerHTML = "<option>Todos</option>"+years.map(y=>`<option>${y}</option>`).join("");
+  document.getElementById('fYear2b').innerHTML = "<option>Sin comparar</option>"+years.map(y=>`<option>${y}</option>`).join("");
+
+  // Meses checkboxes
+  document.getElementById('monthsBase2').innerHTML = MONTHS2.map(m=>
+    `<label><input type="checkbox" value="${m}" onchange="render2()"> ${m.slice(3)}</label>`).join("");
+  document.getElementById('monthsComp2').innerHTML = MONTHS2.map(m=>
+    `<label><input type="checkbox" value="${m}" onchange="render2()"> ${m.slice(3)}</label>`).join("");
+
+  // Áreas checkboxes
+  const areas2 = [...new Set(rawData2.map(d=>d.Area).filter(Boolean))].sort();
+  document.getElementById('fAreaGroup2').innerHTML = areas2.map(a=>
+    `<label><input type="checkbox" value="${a}" onchange="render2()"> ${a}</label>`
+  ).join('');
+
+  // Listeners
+  ['fSite2','fAnunciante2','fYear2a','fYear2b','fSector2','fProduct2'].forEach(id=>{
+    document.getElementById(id).onchange = render2;
+  });
+
+  // Mostrar bloques
+  ['topFilters2','areaFilterBlock2','yearFilters2','totalBlock2','advGrid2','advGridBest2'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='block';
+  });
+  document.getElementById('statsBlock2').style.display='flex';
+
+  render2();
+}
+
+// ─── Filtrado ─────────────────────────────────────────────────────────────────
+function getFiltered2(y, months){
+  const site  = document.getElementById('fSite2').value.toLowerCase();
+  const adv   = document.getElementById('fAnunciante2').value.toUpperCase();
+  const sec   = document.getElementById('fSector2').value.toLowerCase();
+  const prod  = document.getElementById('fProduct2').value.toLowerCase();
+  const selAreas = Array.from(document.getElementById('fAreaGroup2').querySelectorAll('input:checked')).map(c=>c.value);
+
+  return rawData2.filter(d=>
+    (y==="Todos" || d.Año===y) &&
+    (adv==="TODOS" || d.Anunciante===adv) &&
+    (site==="todos" || d.Site===site) &&
+    (sec==="todos" || d.Sector.toLowerCase()===sec) &&
+    (prod==="todos" || d.Product.toLowerCase()===prod) &&
+    (selAreas.length===0 || selAreas.includes(d.Area)) &&
+    (months.length===0 || months.includes(d.Mes))
+  );
+}
+
+// ─── Render principal ─────────────────────────────────────────────────────────
+function render2(){
+  const y1  = document.getElementById('fYear2a').value;
+  const y2  = document.getElementById('fYear2b').value;
+  const adv = document.getElementById('fAnunciante2').value.toUpperCase();
+  const m1  = Array.from(document.getElementById('monthsBase2').querySelectorAll('input:checked')).map(c=>c.value);
+  const m2  = Array.from(document.getElementById('monthsComp2').querySelectorAll('input:checked')).map(c=>c.value);
+
+  const d1 = getFiltered2(y1, m1);
+  const d2 = y2!=="Sin comparar" ? getFiltered2(y2, m2) : [];
+
+  const res1 = calcNetting2(d1);
+  const res2 = calcNetting2(d2);
+
+  // ── Totales ──
+  document.getElementById('totalYear2a').textContent  = fmtC(res1.total);
+  document.getElementById('totalYear2b').textContent  = y2!=="Sin comparar" ? fmtC(res2.total) : "-";
+  const dt = (y2!=="Sin comparar" && res2.total) ? Math.round(((res1.total/res2.total)-1)*100) : 0;
+  const dpEl = document.getElementById('diffPercent2');
+  dpEl.textContent  = y2!=="Sin comparar" ? (dt>0?"+":"")+dt+"%" : "-";
+  dpEl.className = "value"+(dt<0?" negative":"");
+
+  // ── Stats bar ──
+  document.getElementById('totalStatsBase2').textContent = fmtC(res1.total);
+  document.getElementById('linesStatsBase2').textContent = fmtI(res1.lines);
+  document.getElementById('avgStatsBase2').textContent   = fmtC(res1.avg);
+
+  if(y2!=="Sin comparar"){
+    document.getElementById('totalStatsComp2').textContent = fmtC(res2.total);
+    document.getElementById('linesStatsComp2').textContent = fmtI(res2.lines);
+    document.getElementById('avgStatsComp2').textContent   = fmtC(res2.avg);
+    const dAvg = res2.avg>0 ? Math.round(((res1.avg/res2.avg)-1)*100) : 0;
+    const dAvgEl = document.getElementById('diffAvgStats2');
+    dAvgEl.textContent  = (dAvg>0?"+":"")+dAvg+"%";
+    dAvgEl.className    = "value"+(dAvg<0?" negative":"");
+  }
+
+  // ── Grid de anunciantes ──
+  renderAdvGrid(d1, d2, adv, y2);
+
+  // ── Bloque detalle de marcas (solo si hay anunciante seleccionado) ──
+  renderDetailBlock2(d1, d2, adv, y1, y2);
+}
+
+// ─── Grid de anunciantes ──────────────────────────────────────────────────────
+function renderAdvGrid(d1, d2, advFilter, y2){
+  const hasComp = y2 !== "Sin comparar";
+
+  // Agrupar por anunciante
+  const mapAdv1 = new Map(), mapAdv2 = new Map();
+  d1.forEach(d=>{ if(!mapAdv1.has(d.Anunciante)) mapAdv1.set(d.Anunciante,[]); mapAdv1.get(d.Anunciante).push(d); });
+  d2.forEach(d=>{ if(!mapAdv2.has(d.Anunciante)) mapAdv2.set(d.Anunciante,[]); mapAdv2.get(d.Anunciante).push(d); });
+
+  const totalD1 = d1.reduce((a,b)=>a+b.ingreso,0);
+  const totalD2 = d2.reduce((a,b)=>a+b.ingreso,0);
+
+  // ── Bloque único cuando hay anunciante seleccionado ──
+  if(advFilter !== "TODOS"){
+    // Mostrar solo en primer bloque, ocultar segundo
+    document.getElementById('advGrid2').style.display = 'block';
+    document.getElementById('advGridTitle2').textContent = `📊 ${advFilter}`;
+    document.getElementById('advGridSubtitle2').style.display = 'none';
+    document.getElementById('advGridBest2').style.display = 'none';
+
+    const rows1 = mapAdv1.get(advFilter)||[];
+    const rows2 = mapAdv2.get(advFilter)||[];
+    const container = document.getElementById('advGridInner2');
+    if(rows1.length === 0 && rows2.length === 0){
+      container.innerHTML = '<div class="empty-state">Sin datos para los filtros seleccionados</div>';
+    } else {
+      container.innerHTML = buildAdvCard(advFilter, rows1, rows2, totalD1, totalD2, hasComp);
+    }
+    return;
+  }
+
+  // ── Modo TODOS: dos bloques diferenciados ──
+  document.getElementById('advGridSubtitle2').style.display = 'block';
+
+  // Calcular sumas por anunciante en ambos años
+  const sumComp = {}, sumBase = {};
+  mapAdv2.forEach((rows,k)=>{ sumComp[k] = rows.reduce((a,b)=>a+b.ingreso,0); });
+  mapAdv1.forEach((rows,k)=>{ sumBase[k]  = rows.reduce((a,b)=>a+b.ingreso,0); });
+
+  // ── BLOQUE PERDIDOS: top 20 del año comparado con variación negativa en base ──
+  const containerLost = document.getElementById('advGridInner2');
+
+  if(!hasComp){
+    // Sin comparación: mostrar top 10 del base (comportamiento original)
+    document.getElementById('advGridTitle2').textContent = '📊 Información por Anunciante';
+    document.getElementById('advGridSubtitle2').style.display = 'none';
+    document.getElementById('advGridBest2').style.display = 'none';
+
+    const top10 = Object.keys(sumBase).sort((a,b)=>sumBase[b]-sumBase[a]).slice(0,10);
+    containerLost.innerHTML = top10.map(adv=>{
+      return buildAdvCard(adv, mapAdv1.get(adv)||[], [], totalD1, totalD2, false);
+    }).join("") || '<div class="empty-state">Sin datos para los filtros seleccionados</div>';
+    document.getElementById('advGrid2').style.display = 'block';
+    return;
+  }
+
+  // Con comparación: lógica de perdidos y ganados
+  document.getElementById('advGridTitle2').textContent = '📉 Anunciantes perdidos vs año anterior';
+
+  // Top 20 del año comparado → filtra solo los que tienen variación negativa en base
+  const top20comp = Object.keys(sumComp).sort((a,b)=>sumComp[b]-sumComp[a]).slice(0,20);
+  const lostNames = top20comp.filter(adv=>{
+    const base = sumBase[adv] || 0;
+    const comp = sumComp[adv];
+    return base < comp; // caída: base < comparado
+  });
+
+  if(lostNames.length === 0){
+    containerLost.innerHTML = '<div class="empty-state">Ninguno de los 20 mayores anunciantes del año anterior muestra caída en el año base.</div>';
+  } else {
+    // Ordenar por mayor pérdida absoluta
+    lostNames.sort((a,b)=> (sumBase[a]-sumComp[a]) - (sumBase[b]-sumComp[b]));
+    containerLost.innerHTML = lostNames.map(adv=>
+      buildAdvCard(adv, mapAdv1.get(adv)||[], mapAdv2.get(adv)||[], totalD1, totalD2, true)
+    ).join("");
+  }
+  document.getElementById('advGrid2').style.display = 'block';
+
+  // ── BLOQUE MEJOR COMPORTAMIENTO: top 10 con mayor variación positiva ──
+  const containerBest = document.getElementById('advGridBestInner2');
+
+  // Solo anunciantes presentes en ambos años con variación positiva
+  const gainers = Object.keys(sumBase).filter(adv=>{
+    const comp = sumComp[adv] || 0;
+    return comp > 0 && sumBase[adv] > comp;
+  });
+
+  if(gainers.length === 0){
+    containerBest.innerHTML = '<div class="empty-state">Ningún anunciante muestra crecimiento respecto al año de comparación.</div>';
+  } else {
+    // Ordenar por mayor ganancia absoluta en €
+    gainers.sort((a,b)=> (sumBase[b]-sumComp[b]) - (sumBase[a]-sumComp[a]));
+    const top10gain = gainers.slice(0, 10);
+    containerBest.innerHTML = top10gain.map(adv=>
+      buildAdvCard(adv, mapAdv1.get(adv)||[], mapAdv2.get(adv)||[], totalD1, totalD2, true)
+    ).join("");
+  }
+  document.getElementById('advGridBest2').style.display = 'block';
+}
+
+// ─── Tarjeta de anunciante ────────────────────────────────────────────────────
+function buildAdvCard(advName, rows1, rows2, totalD1, totalD2, hasComp){
+  const sum1 = rows1.reduce((a,b)=>a+b.ingreso,0);
+  const sum2 = rows2.reduce((a,b)=>a+b.ingreso,0);
+  const pctVsTotal = totalD1>0 ? ((sum1/totalD1)*100).toFixed(1) : 0;
+
+  // % vs año comparación
+  let pctComp = null;
+  if(hasComp && sum2>0) pctComp = Math.round(((sum1/sum2)-1)*100);
+
+  const diff = sum1 - sum2;
+  const diffSign = diff >= 0 ? '+' : '';
+  const diffLabel = diff >= 0 ? 'Ganancia' : 'Pérdida';
+  const headerComp = hasComp
+    ? `<span class="comp-badge">vs <span class="comp-amount">${fmtC(sum2)}</span>
+       ${pctComp!==null ? `<span class="adv-pct ${pctComp>=0?'pos':'neg'}">${pctComp>0?'+':''}${pctComp}%</span>` : ''}
+       </span>
+       ${sum2>0 ? `<div class="adv-diff-line ${diff>=0?'pos':'neg'}">${diffLabel}: <strong>${diffSign}${fmtC(diff)}</strong></div>` : ''}`
+    : '';
+
+  // ── Áreas ──
+  const areasMap={};
+  rows1.forEach(d=>{ const k=d.Area||"Sin área"; areasMap[k]=(areasMap[k]||0)+d.ingreso; });
+  const areasArr = Object.entries(areasMap).sort((a,b)=>b[1]-a[1]);
+  const maxArea = areasArr[0]?.[1]||1;
+  const areasHTML = areasArr.map(([area,amt])=>{
+    const pct = sum1>0 ? ((amt/sum1)*100).toFixed(1) : 0;
+    const barW = Math.round((amt/maxArea)*100);
+    return `<div class="bar-row">
+      <div class="bar-label" title="${area}">${area}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${barW}%;background:#fb923c;"></div></div>
+      <div class="bar-amount">${fmtC(amt)}</div>
+      <div class="bar-pct" style="color:#fb923c;">${pct}%</div>
+    </div>`;
+  }).join("");
+
+  // ── Familias ──
+  const famMap = {};
+  rows1.forEach(d=>{
+    const fam = d.Familia||"Sin familia";
+    if(!famMap[fam]) famMap[fam]={ sum:0, marcas:new Set(), prods:{} };
+    famMap[fam].sum += d.ingreso;
+    famMap[fam].marcas.add(d.Marca||"Sin marca");
+    const pk=d.Product||"Sin producto";
+    famMap[fam].prods[pk] = (famMap[fam].prods[pk]||0)+d.ingreso;
+  });
+  const famArr = Object.entries(famMap).sort((a,b)=>b[1].sum-a[1].sum);
+
+  const famHTML = famArr.map(([fam, info])=>{
+    const color = FAM_COLORS2[fam]||FAM_COLOR_DEFAULT;
+    const pctFam = sum1>0 ? ((info.sum/sum1)*100).toFixed(1) : 0;
+
+    // Marcas chips
+    const marcasChips = [...info.marcas].filter(m=>m&&m!=="Sin marca")
+      .sort().map(m=>`<span class="marca-chip">${m}</span>`).join("");
+
+    // Productos con barra y alerta de tarifa
+    const prodsArr = Object.entries(info.prods).sort((a,b)=>b[1]-a[1]);
+    const maxProd = prodsArr[0]?.[1]||1;
+    const prodsHTML = prodsArr.map(([prod,amt])=>{
+      const pPct = info.sum>0 ? ((amt/info.sum)*100).toFixed(1) : 0;
+      const barW = Math.round((amt/maxProd)*100);
+
+      // Alerta de tarifa (solo aplica a ciertas familias/productos)
+      let alertHTML = '';
+      const pLow = prod.toLowerCase();
+      const siteId = limpSite(rows1.find(r=>r.Product===prod&&r.Familia===fam)?.Site||'');
+      const avgProd = rows1.filter(r=>r.Product===prod&&r.Familia===fam).reduce((a,b)=>a+b.ingreso,0) /
+                      Math.max(1, rows1.filter(r=>r.Product===prod&&r.Familia===fam).length);
+      if(pLow==="branded content video" && REF_VIDEO[siteId] && avgProd < REF_VIDEO[siteId]){
+        alertHTML=` <span title="Por debajo de tarifa (${fmtC(REF_VIDEO[siteId])})" style="color:#f87171;font-size:0.85em;">⚠️</span>`;
+      } else if(["branded content","branded content sindicated","curated"].includes(pLow) && REF_STANDARD[siteId] && avgProd < REF_STANDARD[siteId]){
+        alertHTML=` <span title="Por debajo de tarifa (${fmtC(REF_STANDARD[siteId])})" style="color:#f87171;font-size:0.85em;">⚠️</span>`;
+      }
+
+      return `<div class="prod-row">
+        <div class="prod-pct-bar"><div class="prod-pct-fill" style="width:${barW}%;background:${color};"></div></div>
+        <div class="prod-name">${prod}${alertHTML}</div>
+        <div class="prod-amount">${fmtC(amt)}</div>
+        <span style="font-size:0.77em;color:#64748b;margin-left:4px;">${pPct}%</span>
+      </div>`;
+    }).join("");
+
+    const famId = `fam-${advName.replace(/\W/g,'_')}-${fam.replace(/\W/g,'_')}`;
+    return `
+    <div class="familia-block">
+      <div class="familia-header" onclick="toggleFam('${famId}')">
+        <div class="familia-dot" style="background:${color};box-shadow:0 0 6px ${color};"></div>
+        <div class="familia-label">${fam}</div>
+        <div class="familia-sum">${fmtC(info.sum)}</div>
+        <div class="familia-pct-total">&nbsp;(${pctFam}%)</div>
+        <span class="familia-toggle" id="toggle-${famId}">▼</span>
+      </div>
+      <div class="familia-body" id="${famId}" style="display:none;">
+        ${marcasChips ? `<div style="margin-bottom:8px;">${marcasChips}</div>` : ''}
+        ${prodsHTML}
+      </div>
+    </div>`;
+  }).join("");
+
+  return `
+  <div class="adv-card">
+    <div class="adv-header">
+      <div class="adv-name">${advName}</div>
+      <div>
+        <div class="adv-total">${fmtC(sum1)}</div>
+        <div style="font-size:0.78em;color:#64748b;text-align:right;">${pctVsTotal}% del total</div>
+        ${headerComp}
+      </div>
+    </div>
+
+    ${areasArr.length>0 ? `
+    <div class="adv-section">
+      <span class="adv-section-title title-area">Áreas</span>
+      ${areasHTML}
+    </div>` : ''}
+
+    <div class="adv-section">
+      <span class="adv-section-title title-familia">Familias · Marcas · Productos</span>
+      ${famHTML}
+    </div>
+
+    <div class="adv-legend">
+      ℹ️ <strong>Cómo leer esta tarjeta:</strong>
+      El importe principal es la <strong>facturación total del año base</strong> con los filtros aplicados.
+      ${hasComp ? 'El importe en amarillo es el del <strong>año de comparación</strong>, y el badge verde/rojo es la <strong>variación % interanual</strong>.' : ''}
+      El <strong>% del total</strong> (cabecera) indica el peso de este anunciante sobre todos los anunciantes visibles.
+      En <strong>Áreas</strong>: la barra y el % muestran el peso de cada área sobre el total de este anunciante.
+      En <strong>Familias</strong>: el % entre paréntesis es el peso de esa familia sobre el total del anunciante.
+      En los <strong>Productos</strong>: la barra es proporcional al producto con mayor importe dentro de esa familia, y el % es su peso sobre el total de la familia.
+      ${hasComp ? '⚠️ El icono de alerta indica que el presupuesto medio está <strong>por debajo de la tarifa de referencia</strong> para ese site y producto.' : ''}
+    </div>
+  </div>`;
+}
+
+// ─── Toggle acordeón familia ───────────────────────────────────────────────────
+function toggleFam(id){
+  const el  = document.getElementById(id);
+  const tog = document.getElementById('toggle-'+id);
+  if(!el) return;
+  const open = el.style.display!=='none';
+  el.style.display  = open ? 'none' : 'block';
+  if(tog) tog.textContent = open ? '▼' : '▲';
+}
+
+// ─── Agrupar datos por Marca con breakdown completo (todas las familias) ──────
+function groupBrands2(data){
+  const map = new Map();
+  data.forEach(d => {
+    const marca = d.Marca || "Sin marca";
+    if(!map.has(marca)) map.set(marca, { sum: 0, items: [] });
+    const entry = map.get(marca);
+    entry.sum += d.ingreso;
+    entry.items.push(d);
+  });
+
+  return Array.from(map.entries()).map(([label, info]) => {
+    // Breakdown: agrupado por Familia + Producto + Site
+    const subGroups = {};
+    info.items.forEach(item => {
+      const pName = item.Product || "Sin producto";
+      const fName = item.Familia || "Sin familia";
+      const sLimpio = limpSite(item.Site);
+      const subKey = `${fName}||${pName}||${sLimpio}`;
+      if(!subGroups[subKey]) subGroups[subKey] = { sum:0, count:0, siteLimpio:sLimpio, productName:pName, familia:fName };
+      subGroups[subKey].sum += item.ingreso;
+      subGroups[subKey].count++;
+    });
+
+    const breakdown = Object.entries(subGroups).map(([, val]) => ({
+      text: `${val.productName} — <i>${val.siteLimpio}</i>`,
+      count: val.count,
+      avg: val.sum / val.count,
+      siteId: val.siteLimpio,
+      productName: val.productName,
+      familia: val.familia
+    })).sort((a,b) => a.familia.localeCompare(b.familia) || a.productName.localeCompare(b.productName));
+
+    return { label, sum: info.sum, breakdown };
+  }).sort((a,b) => b.sum - a.sum);
+}
+
+// ─── Renderizar bloque detalle de marcas ──────────────────────────────────────
+function renderDetailBlock2(d1, d2, advName, y1, y2){
+  const hasComp = y2 !== "Sin comparar";
+  const detailEl = document.getElementById('detailBlock2');
+
+  if(advName === "TODOS"){
+    detailEl.style.display = 'none';
+    return;
+  }
+
+  detailEl.style.display = 'block';
+  document.getElementById('detailAdvName2').textContent = advName;
+  document.getElementById('detailColHeaderBase2').textContent = `Año base: ${y1}`;
+
+  const compHeader = document.getElementById('detailColHeaderComp2');
+
+  const brands1 = groupBrands2(d1);
+  const brands2 = groupBrands2(d2);
+  const map1 = new Map(brands1.map(b=>[b.label, b]));
+  const map2 = new Map(brands2.map(b=>[b.label, b]));
+
+  const mirrorContainer  = document.getElementById('detailMirrorRows2');
+  const fallbackContainer = document.getElementById('detailColsFallback2');
+
+  if(!hasComp){
+    // Sin comparación: ocultar header comp y mirror, mostrar fallback simple
+    compHeader.style.display = 'none';
+    mirrorContainer.innerHTML = '';
+    mirrorContainer.style.display = 'none';
+    fallbackContainer.style.display = 'block';
+    document.getElementById('detailBrandsBase2').innerHTML =
+      brands1.map(b => buildBrandItem2(b, null, false)).join('') ||
+      '<div class="detail-empty">Sin datos para el año base</div>';
+    document.getElementById('detailBrandsComp2').innerHTML = '';
+    return;
+  }
+
+  // Con comparación
+  compHeader.style.display = 'block';
+  compHeader.textContent = `Año comparación: ${y2}`;
+  fallbackContainer.style.display = 'none';
+  mirrorContainer.style.display = 'block';
+
+  const baseLabels     = brands1.map(b => b.label);
+  const compOnlyLabels = brands2.map(b => b.label).filter(l => !map1.has(l));
+  const allLabels      = [...baseLabels, ...compOnlyLabels];
+
+  mirrorContainer.innerHTML = allLabels.map(label => {
+    const b1 = map1.get(label) || null;
+    const b2 = map2.get(label) || null;
+
+    const cellBase = b1 ? buildBrandItem2(b1, b2, true) : buildBrandGap(label);
+    const cellComp = b2 ? buildBrandItem2(b2, null, false) : buildBrandGap(label);
+
+    return `<div class="mirror-row">
+      <div class="mirror-cell">${cellBase}</div>
+      <div class="mirror-cell">${cellComp}</div>
+    </div>`;
+  }).join('') || '<div class="detail-empty">Sin datos</div>';
+}
+
+
+// --- Hueco vacío para mantener la alineación espejo ---
+function buildBrandGap(label){
+  // Celda vacía alineada: misma clase brand-item, sin contenido visible
+  return `<div class="brand-item brand-gap" style="opacity:0;pointer-events:none;user-select:none;" aria-hidden="true">
+    <div class="brand-name-row"><span>${label}</span><span class="brand-total">—</span></div>
+  </div>`;
+}
+
+function buildBrandItem2(brandBase, brandComp, showPct){
+  const sum = brandBase.sum;
+  let pctHTML = '';
+  if(showPct && brandComp && brandComp.sum > 0){
+    const pct = Math.round(((sum / brandComp.sum) - 1) * 100);
+    pctHTML = `<span class="brand-pct-badge ${pct>=0?'pos':'neg'}">${pct>0?'+':''}${pct}%</span>`;
+  }
+
+  const breakdown = brandBase.breakdown.map(sub => {
+    const color = FAM_COLORS2[sub.familia] || FAM_COLOR_DEFAULT;
+
+    // Alerta de tarifa
+    let alertIcon = '';
+    const pLow = sub.productName.toLowerCase();
+    if(pLow === "branded content video" && REF_VIDEO[sub.siteId] && sub.avg < REF_VIDEO[sub.siteId]){
+      alertIcon = `<span title="Por debajo de tarifa (${fmtC(REF_VIDEO[sub.siteId])})" style="color:#f87171;">⚠️</span> `;
+    } else if(["branded content","branded content sindicated","curated"].includes(pLow) && REF_STANDARD[sub.siteId] && sub.avg < REF_STANDARD[sub.siteId]){
+      alertIcon = `<span title="Por debajo de tarifa (${fmtC(REF_STANDARD[sub.siteId])})" style="color:#f87171;">⚠️</span> `;
+    }
+    const alertStyle = alertIcon ? 'background:rgba(248,113,113,0.15);border:1px solid #f87171;' : '';
+
+    return `<div class="brand-sub" style="border-color:${color};">
+      <div class="brand-sub-inner" style="color:${color};${alertStyle}">
+        <span class="brand-sub-family">${sub.familia}:</span>
+        ${alertIcon}${sub.text}
+        <span style="opacity:0.7;">(${sub.count} activ.)</span>
+        — ${fmtC(sub.avg)} <small style="opacity:0.7;font-style:italic;">(presu. medio)</small>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="brand-item">
+    <div class="brand-name-row">
+      <span>${brandBase.label}</span>
+      <span class="brand-total">${fmtC(sum)}</span>
+      ${pctHTML}
+    </div>
+    ${breakdown}
+  </div>`;
+}
+
+(function(){
+  const nav = document.querySelector('.hn-bar');
+  if (!nav) return;
+  const active = nav.dataset.active;
+  const link = nav.querySelector(`[data-id="${active}"]`);
+  if (link) link.classList.add('hn-active');
+})();
+
+
+</script>
+</body>
+</html>

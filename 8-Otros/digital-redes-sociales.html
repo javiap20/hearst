@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGITAL - Facturación Redes Sociales</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+<style>
+:root{
+ --card:#111827;
+ --text:#e5e7eb;
+ --base:#38bdf8;
+ --comp:#f59e0b;
+ --neg:#f87171;
+ --diffColor:#6ee7b7;
+ --ok-green: #34d399;
+ --totalBg:#1e40af;
+ --siteBg:#fef3c7;
+ --productoBg:#dbeafe;
+ --sectorBg:#fbcfe8;
+ --comercialBg:#d1fae5;
+ --areaBg:#fcd5ce;
+ --print-color: #db2777;
+ --base-color: #38bdf8;
+}
+body{
+ margin:0;
+ font-family:Inter,Arial,sans-serif;
+ background:linear-gradient(180deg,#020617,#0f172a);
+ color:var(--text);
+}
+.nav-menu {
+  background: #111827;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-menu a { color: #fff; margin: 0 10px; text-decoration: none; font-size: .9em; opacity: 0.8; }
+.nav-menu .active { opacity: 1; font-weight: bold; border-bottom: 2px solid var(--base-color); padding-bottom: 5px; }
+
+h1 {
+ text-align: center;
+ font-size: 1.5rem;
+ margin: 20px 0;
+}
+
+.container{ max-width:1500px; margin:auto; padding:0 20px 20px 20px; }
+.card{
+ background:rgba(17,24,39,.9);
+ border-radius:14px;
+ padding:18px;
+ margin-bottom:20px;
+ border: 1px solid #1f2937;
+}
+
+.label-style { font-size: 0.95em; font-weight: bold; margin-bottom: 8px; display: block; }
+
+.filters select, input[type=file]{
+ background:#1f2933;
+ color:var(--text);
+ border:1px solid #374151;
+ padding:8px 10px;
+ border-radius:8px;
+ width: 100%;
+ box-sizing: border-box;
+}
+
+#loadStatus {
+ margin-top: 10px;
+ font-weight: 600;
+ font-size: 0.85em;
+}
+
+.filters label{ font-weight:600; margin-right:6px; display:block; margin-top:10px; }
+.filtersRow{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+
+.filtersRow div select{ width:220px; font-weight:600; }
+
+#fSite{ background:var(--siteBg); color:#111; }
+#fSector{ background:var(--sectorBg); color:#111; }
+#fComercial{ background:var(--comercialBg); color:#111; }
+
+.checkboxGroup{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.checkboxGroup label{ font-size: 0.78em; font-weight:400; color: #cbd5e1; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.checkboxGroup label:hover { color: #ffffff; }
+.checkboxGroup input[type=checkbox] { accent-color: #38bdf8; }
+
+.totalBlock{ background:var(--totalBg); padding:15px; border-radius:12px; margin-top:10px; }
+.totalValues{ display:flex; justify-content:space-around; font-size:18px; }
+.totalValues div{ text-align:center; }
+.totalValues .value{ font-size:22px; font-weight:700; display: block; margin-top: 5px; }
+
+#diffPercent.negative { color: var(--neg); }
+
+.statsBlock{ display:flex; justify-content:center; border-radius:12px; margin:20px 0; gap:10px; flex-wrap:nowrap; }
+.subBlock{ border-radius:12px; padding:20px; display:flex; align-items:center; justify-content:center; color: #111; }
+.statsBase{ flex:1; background:var(--comp); }
+.statsDiff{ flex:0 0 300px; background:var(--diffColor); text-align: center; }
+.statsComp{ flex:1; background:var(--base); }
+
+.statsValues{ display:flex; justify-content:center; font-size:15px; gap:20px; flex-wrap:wrap; }
+.statsValues div{ text-align:center; }
+.statsValues .value{ font-size:18px; font-weight:700; display: block; margin-top: 5px; }
+
+.statsDiff .value.negative{ color:var(--neg); }
+.labelBase{ color:#f59e0b; font-weight:700; }
+.labelComp{ color:#38bdf8; font-weight:700; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 10px; color: var(--text); }
+th { text-align: center; padding: 12px; border-bottom: 2px solid #374151; color: #9ca3af; font-size: 0.85em; }
+td { padding: 10px; border-bottom: 1px solid #1f2937; text-align: center; }
+
+.pos { color: var(--ok-green); font-weight: bold; }
+.neg { color: var(--neg); font-weight: bold; }
+
+#advertiserBlock { max-width: 1400px; margin: 20px auto; }
+.col-yellow { color: var(--comp); font-weight: bold; }
+.col-blue { color: var(--base); font-weight: bold; }
+.border-divider { border-right: 3px solid #4b5563 !important; }
+
+.row-total-sum { background: #1e3a8a !important; }
+.row-total-sum td { border-bottom: 2px solid var(--base); font-size: 1.05em; }
+</style>
+</head>
+
+<body>
+
+<nav class="nav-menu">
+    <a href="digital-datos-graficos.html" style="color: var(--base-color); font-weight: bold; margin-right: 10px; opacity: 1;">DIGITAL:</a>
+    <a href="digital-totales-familas-productos.html">Productos</a>
+    <a href="digital-display.html">Display (s2i)</a>
+    <a href="digital-display-dashboard.html">Display (adserver)</a>
+    <a href="digital-redes-sociales.html" class="active">RRSS</a>
+    <a href="index.html" style="margin-left: 20px; border-left: 1px solid #4b5563; padding-left: 20px;">🏠 Home</a>
+</nav>
+
+<h1>DIGITAL - Facturación Redes Sociales</h1>
+
+<div class="container">
+
+<div class="card">
+ <label class="label-style">Cargar datos (Excel):</label>
+ <input type="file" id="fileInput" accept=".json,.xlsx">
+ <div id="loadStatus">Esperando archivo...</div>
+</div>
+
+<div id="filters" class="card filters" style="display:none">
+ <div class="filtersRow">
+  <div><label class="labelBase">Año base</label><select id="fYear"></select><div class="checkboxGroup" id="monthsBase"></div></div>
+  <div><label class="labelComp">Año comparación</label><select id="fYear2"></select><div class="checkboxGroup" id="monthsComp"></div></div>
+ </div>
+</div>
+
+<div id="siteBlock" class="card filters" style="display:none">
+ <div class="filtersRow">
+
+  <div><label>Site</label><select id="fSite"></select></div>
+  <div><label>Sector</label><select id="fSector"></select></div>
+  <div><label>Comercial</label><select id="fComercial"></select></div>
+
+  <div><label>Familia Social Network</label>
+  <div class="checkboxGroup" id="fProduct"></div></div>
+
+  <div><label>Área</label>
+  <div class="checkboxGroup" id="fArea"></div></div>
+
+ </div>
+</div>
+
+<div id="totalBlock" class="card" style="display:none">
+ <div class="totalBlock">
+  <div class="totalValues">
+   <div>Año base<span id="totalYear1" class="value">0€</span></div>
+   <div>Año comparación<span id="totalYear2" class="value">-</span></div>
+   <div>% Diferencia<span id="diffPercent" class="value">-</span></div>
+  </div>
+ </div>
+</div>
+
+<div id="statsBlock" class="statsBlock" style="display:none">
+ <div class="subBlock statsBase">
+  <div class="statsValues">
+   <div>Fact. Año Base<span id="totalStatsBase" class="value">0€</span></div>
+   <div>Nº líneas<span id="linesStatsBase" class="value">0</span></div>
+   <div>Presup. medio<span id="avgStatsBase" class="value">0€</span></div>
+  </div>
+ </div>
+
+ <div class="subBlock statsDiff">
+  <div class="statsValues">
+   <div>% Crec. Presup. Medio
+    <span id="diffAvgStats" class="value" style="font-size:1.8em; display:block; margin-top:5px;">-</span>
+   </div>
+  </div>
+ </div>
+
+ <div class="subBlock statsComp">
+  <div class="statsValues">
+   <div>Fact. Año Comparación<span id="totalStatsComp" class="value">-</span></div>
+   <div>Nº líneas<span id="linesStatsComp" class="value">-</span></div>
+   <div>Presup. medio<span id="avgStatsComp" class="value">-</span></div>
+  </div>
+ </div>
+</div>
+
+<div id="advertiserBlock" class="card" style="display:none">
+ <h2 style="text-align:center;">Ingresos por Anunciante</h2>
+ <table id="tableAdvertiser">
+  <thead>
+   <tr>
+    <th>Marca</th>
+    <th id="thFactBase">Fact. Año Base</th>
+    <th id="thFactComp">Fact. Año Selección</th>
+    <th class="border-divider">% Desv. Fact.</th>
+    <th id="thAvgBase">Presu. Medio Año Base</th>
+    <th id="thAvgComp">Presu. Medio Año Selección</th>
+    <th>% Desv. Presu.</th>
+   </tr>
+  </thead>
+  <tbody id="tbodyAdvertiser"></tbody>
+ </table>
+</div>
+
+</div> <!-- container -->
+
+<script>
+// ---------------------------------------------
+//  LÓGICA JS COMPLETA (incluye tus cambios)
+// ---------------------------------------------
+const MONTHS=["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio","07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+let rawData=[];
+const FAMILIA_TARGET = "SOCIAL NETWORKS";
+const excelUrl = "https://javiap20.github.io/datos-en-excel/PRODUCCION DIGITAL.xlsx";
+
+fileInput.onchange = e => {
+ const f = e.target.files[0];
+ if(!f) return;
+ const r = new FileReader();
+
+ r.onload = ev => {
+  try {
+   const ext = f.name.split(".").pop().toLowerCase();
+   if (ext === "json") {
+    init(JSON.parse(ev.target.result));
+   } else {
+    if (typeof XLSX === 'undefined') {
+     throw new Error("La librería de Excel no ha cargado.");
+    }
+    const data = new Uint8Array(ev.target.result);
+    const wb = XLSX.read(data, {type:"array"});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    init(XLSX.utils.sheet_to_json(ws, { defval: "" }));
+   }
+   const status = document.getElementById("loadStatus");
+   status.innerText = "✅ Archivo cargado";
+   status.style.color = "var(--ok-green)";
+  } catch (err) {
+   const status = document.getElementById("loadStatus");
+   status.innerText = "❌ Error: " + err.message;
+   status.style.color = "var(--neg)";
+  }
+ };
+
+ if (f.name.endsWith("json")) r.readAsText(f);
+ else r.readAsArrayBuffer(f);
+};
+
+// Carga automática al abrir la página
+fetch(excelUrl)
+ .then(r => r.arrayBuffer())
+ .then(buf => {
+  const wb = XLSX.read(new Uint8Array(buf), {type:"array"});
+  init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""}));
+  const status = document.getElementById("loadStatus");
+  status.innerText = "✅ Datos cargados automáticamente";
+  status.style.color = "var(--ok-green)";
+ })
+ .catch(() => {
+  document.getElementById("loadStatus").innerText = "⚠️ No se pudo cargar automáticamente. Carga el archivo manualmente.";
+ });
+
+function normalizeText(s){
+ if(!s) return "";
+ return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim().replace(/\s+/g," ");
+}
+
+function normalizeMonth(m){
+ if(!m) return "";
+ const n = String(m).trim().substring(0,2);
+ return MONTHS.find(x=>x.startsWith(n)) || "";
+}
+
+function num(v){
+ if(v==null) return 0;
+ if(typeof v === 'number') return v;
+ const s = String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".");
+ const n = Number(s);
+ return Number.isFinite(n) ? n : 0;
+}
+
+const currencyFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function formatCurrency(n){
+ const val = Math.round(Number(n) || 0);
+ return (Number.isFinite(val) ? currencyFormatter.format(val) : '0') + '€';
+}
+
+const integerFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true, maximumFractionDigits: 0 });
+function formatInteger(n){
+ const val = Number(n || 0);
+ return Number.isFinite(val) ? integerFormatter.format(val) : '0';
+}
+
+function init(data){
+ rawData = data.map(d => ({
+  ingreso: num(d["Imp.Neto a Comisionar"]),
+  Año: normalizeText(d["Año inserción"]),
+  Mes: normalizeMonth(d["Mes inserción"]),
+  Site: normalizeText(d["Publicación"]),
+  Familia: normalizeText(d["Familia"]),
+  Producto: normalizeText(d["Producto"]),
+  Marca: normalizeText(d["Marca"]),
+  Sector: normalizeText(d["Sector"]),
+  Comercial:normalizeText(d["Comercial"]),
+  Area: normalizeText(d["ÁREAS"])
+ })).filter(d => d.Año !== "");
+
+ const formatLabel = (val, type) => {
+  if(!val) return "";
+  let s = String(val).toLowerCase().trim();
+  if (type === 'site') return s;
+  if (type === 'sector') s = s.replace(/[*0-9]/g, '').trim();
+  return s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+ };
+
+ const populate = (id, arr, type) => {
+  const s = document.getElementById(id);
+  let cleanArr = arr.filter(v => v && v !== "" && !v.toString().toLowerCase().includes("error"));
+  const formattedOptions = [...new Set(cleanArr)].map(v => formatLabel(v, type)).sort();
+  s.innerHTML = `<option value="TODOS">Todos</option>` + formattedOptions.map(v=>`<option>${v}</option>`).join("");
+ };
+
+ const populateCheckboxes = (id, arr, type) => {
+  const container = document.getElementById(id);
+  // Guardar los valores actualmente marcados
+  const checked = new Set(Array.from(container.querySelectorAll("input:checked")).map(i => i.value));
+  let cleanArr = arr.filter(v => v && v !== "" && !v.toString().toLowerCase().includes("error"));
+  const formattedOptions = [...new Set(cleanArr)].map(v => formatLabel(v, type)).sort();
+  container.innerHTML = formattedOptions.map(v =>
+   `<label><input type="checkbox" value="${v}" ${checked.has(v) ? "checked" : ""} onchange="render()"> ${v}</label>`
+  ).join("");
+ };
+
+ window._populateCheckboxes = populateCheckboxes;
+
+ populate("fSite", rawData.map(d=>d.Site), 'site');
+ populate("fSector", rawData.map(d=>d.Sector), 'sector');
+ populate("fComercial", rawData.map(d=>d.Comercial), 'capitalize');
+ populateCheckboxes("fArea", rawData.map(d=>d.Area), 'capitalize');
+
+ const productosSocial = rawData.filter(d => d.Familia === FAMILIA_TARGET).map(d => d.Producto);
+ populateCheckboxes("fProduct", productosSocial, 'capitalize');
+
+ const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+ fYear.innerHTML = `<option value="TODOS">Todos</option>` + years.map(y=>`<option>${y}</option>`).join("");
+ fYear2.innerHTML = "<option>Sin comparar</option>" + years.map(y=>`<option>${y}</option>`).join("");
+
+ document.getElementById("monthsBase").innerHTML =
+  MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+
+ document.getElementById("monthsComp").innerHTML =
+  MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+
+ [fSite,fSector,fYear,fYear2,fComercial].forEach(e=>e.onchange=render);
+
+ ["siteBlock","filters","totalBlock","statsBlock", "advertiserBlock"].forEach(id=>document.getElementById(id).style.display="block");
+ document.getElementById("statsBlock").style.display="flex";
+
+ render();
+}
+
+function getSelectedMonths(id){
+ const sel = Array.from(document.getElementById(id).querySelectorAll("input:checked")).map(i=>i.value);
+ return sel.length ? sel : MONTHS;
+}
+
+function countLinesWithNetting(data) {
+ let totalFact = 0;
+ let pool = [];
+
+ data.forEach(d => {
+  totalFact += d.ingreso;
+  if (d.ingreso !== 0) pool.push(d.ingreso);
+ });
+
+ let finalLines = [];
+ pool.sort((a, b) => Math.abs(a) - Math.abs(b));
+
+ while (pool.length > 0) {
+  let current = pool.shift();
+  let counterpartIndex = pool.findIndex(v => v === -current);
+  if (counterpartIndex !== -1) {
+   pool.splice(counterpartIndex, 1);
+  } else {
+   if (current > 0) finalLines.push(current);
+  }
+ }
+
+ return { total: totalFact, count: finalLines.length };
+}
+
+function render(){
+ const site = fSite.value.toUpperCase();
+ const sect = fSector.value.toUpperCase();
+ const y1 = fYear.value.toUpperCase();
+ const y2 = fYear2.value.toUpperCase();
+ const com = fComercial.value.toUpperCase();
+
+ // Actualizar checkboxes de Familia y Área según ambos años seleccionados
+ const dataForYear = rawData.filter(d =>
+  (y1 === "TODOS" || d.Año === y1) ||
+  (y2 !== "SIN COMPARAR" && d.Año === y2)
+ );
+ const productosSocial = dataForYear.filter(d => d.Familia === FAMILIA_TARGET).map(d => d.Producto);
+ const areas = dataForYear.map(d => d.Area);
+ window._populateCheckboxes("fProduct", productosSocial, 'capitalize');
+ window._populateCheckboxes("fArea", areas, 'capitalize');
+
+ // ✅ MULTISELECCIÓN POR CHECKBOX
+ const prod = Array.from(document.querySelectorAll("#fProduct input:checked")).map(i => normalizeText(i.value));
+ const area = Array.from(document.querySelectorAll("#fArea input:checked")).map(i => normalizeText(i.value));
+
+ const m1 = getSelectedMonths("monthsBase");
+ const m2 = getSelectedMonths("monthsComp");
+
+ const filter = (y, months) => rawData.filter(d =>
+  (y === "TODOS" || d.Año === y) &&
+  months.includes(d.Mes) &&
+  (site === "TODOS" || d.Site === site) &&
+  ((prod.length === 0 || prod.includes("TODOS") || prod.includes(d.Producto))) &&
+  (d.Familia === FAMILIA_TARGET) &&
+  (sect === "TODOS" || d.Sector === sect) &&
+  (com === "TODOS" || d.Comercial === com) &&
+  ((area.length === 0 || area.includes("TODOS") || area.includes(d.Area)))
+);
+
+ const d1 = filter(y1, m1);
+ const d2 = (fYear2.value!=="Sin comparar") ? filter(y2, m2) : [];
+
+ const res1 = countLinesWithNetting(d1);
+ const res2 = countLinesWithNetting(d2);
+
+ const sBase = { total: res1.total, lines: res1.count, avg: res1.count ? res1.total / res1.count : 0 };
+ const sComp = { total: res2.total, lines: res2.count, avg: res2.count ? res2.total / res2.count : 0 };
+
+ totalYear1.textContent = formatCurrency(sBase.total);
+ totalStatsBase.textContent = formatCurrency(sBase.total);
+ linesStatsBase.textContent = formatInteger(sBase.lines);
+ avgStatsBase.textContent = formatCurrency(sBase.avg);
+
+ if(fYear2.value!=="Sin comparar"){
+  totalYear2.textContent = formatCurrency(sComp.total);
+  totalStatsComp.textContent = formatCurrency(sComp.total);
+  linesStatsComp.textContent = formatInteger(sComp.lines);
+  avgStatsComp.textContent = formatCurrency(sComp.avg);
+
+  const dPct = sComp.total ? Math.round((sBase.total/sComp.total - 1)*100) : 0;
+  diffPercent.textContent = (dPct>0?"+":"") + dPct + "%";
+  diffPercent.className = "value" + (dPct < 0 ? " negative" : "");
+
+  const aPct = sComp.avg ? Math.round((sBase.avg/sComp.avg - 1)*100) : 0;
+  diffAvgStats.textContent = (aPct>0?"+":"") + aPct + "%";
+  diffAvgStats.style.color = aPct < 0 ? "var(--neg)" : "#111";
+
+ } else {
+  totalYear2.textContent = "-";
+  totalStatsComp.textContent = "-";
+  linesStatsComp.textContent = "-";
+  avgStatsComp.textContent = "-";
+  diffPercent.textContent = "-";
+  diffAvgStats.textContent = "-";
+ }
+
+ thFactBase.textContent = `Fact. ${fYear.value}`;
+ thFactComp.textContent = `Fact. ${fYear2.value === "Sin comparar" ? "Selección" : fYear2.value}`;
+ thAvgBase.textContent = `Presu. Medio ${fYear.value}`;
+ thAvgComp.textContent = `Presu. Medio ${fYear2.value === "Sin comparar" ? "Selección" : fYear2.value}`;
+
+ const brands = [...new Set([...d1.map(d=>d.Marca), ...d2.map(d=>d.Marca)])];
+
+ let tableData = brands.map(brand => {
+  const dataBrand1 = d1.filter(d => d.Marca === brand);
+  const dataBrand2 = d2.filter(d => d.Marca === brand);
+
+  const r1 = countLinesWithNetting(dataBrand1);
+  const r2 = countLinesWithNetting(dataBrand2);
+
+  return { brand, st1: { sum: r1.total, count: r1.count }, st2: { sum: r2.total, count: r2.count } };
+ }).filter(item => item.st1.sum !== 0 || item.st2.sum !== 0);
+
+ tableData.sort((a,b) => b.st2.sum - a.st2.sum);
+
+ const tbody = document.getElementById("tbodyAdvertiser");
+ tbody.innerHTML = "";
+
+ let rowsHtml = "";
+
+ tableData.forEach(item => {
+  const { brand, st1, st2 } = item;
+  const avg1 = st1.count ? (st1.sum / st1.count) : 0;
+  const avg2 = st2.count ? (st2.sum / st2.count) : 0;
+
+  let dFactText = "-", dFactClass = "";
+
+  if (st2.sum > 0 && st1.sum > 0) {
+   const pctF = Math.round(((st1.sum / st2.sum) - 1) * 100);
+   dFactText = (pctF>0?"+":"") + pctF + "%";
+   dFactClass = pctF>=0 ? "pos" : "neg";
+  } else if (st2.sum > 0 && st1.sum === 0) {
+   dFactText = "PERDIDO";
+   dFactClass = "neg";
+  } else if (st2.sum === 0 && st1.sum > 0) {
+   dFactText = "NUEVO";
+   dFactClass = "pos";
+  }
+
+  let dAvgText = "-", dAvgClass = "";
+  if (avg1 > 0 && avg2 > 0) {
+   const pctA = Math.round(((avg1 / avg2) - 1) * 100);
+   dAvgText = (pctA>0?"+":"") + pctA + "%";
+   dAvgClass = pctA>=0 ? "pos" : "neg";
+  }
+
+  rowsHtml += `
+   <tr>
+    <td>${brand}</td>
+    <td class="col-yellow">${formatCurrency(st1.sum)}</td>
+    <td class="col-blue">${fYear2.value==="Sin comparar"?"-":formatCurrency(st2.sum)}</td>
+    <td class="${dFactClass} border-divider" style="font-weight:bold">${dFactText}</td>
+    <td class="col-yellow">${formatCurrency(avg1)}</td>
+    <td class="col-blue">${fYear2.value==="Sin comparar"?"-":formatCurrency(avg2)}</td>
+    <td class="${dAvgClass}">${dAvgText}</td>
+   </tr>`;
+ });
+
+ const totalRow = `
+ <tr class="row-total-sum">
+  <td style="font-weight:bold; color:white;">TOTAL SUMATORIO</td>
+  <td class="col-yellow">${formatCurrency(sBase.total)}</td>
+  <td class="col-blue">${fYear2.value==="Sin comparar"?"-":formatCurrency(sComp.total)}</td>
+  <td class="${(sComp.total && sBase.total/sComp.total-1 >= 0 ? 'pos':'neg')} border-divider">
+   ${ (sComp.total ? Math.round((sBase.total/sComp.total-1)*100)+'%' : '-') }
+  </td>
+  <td class="col-yellow">${formatCurrency(sBase.avg)}</td>
+  <td class="col-blue">${fYear2.value==="Sin comparar"?"-":formatCurrency(sComp.avg)}</td>
+  <td class="${(sComp.avg && sBase.avg/sComp.avg-1 >= 0 ? 'pos':'neg')}">
+   ${ (sComp.avg ? Math.round((sBase.avg/sComp.avg-1)*100)+'%' : '-') }
+  </td>
+ </tr>`;
+
+ tbody.innerHTML = totalRow + rowsHtml;
+}
+
+</script>
+</body>
+</html>

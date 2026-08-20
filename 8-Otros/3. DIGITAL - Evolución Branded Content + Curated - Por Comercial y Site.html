@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGITAL - Seguimiento Branded Content</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --card:#111827;
+  --text:#e5e7eb;
+  --base:#38bdf8;  
+  --comp:#f59e0b;  
+  --neg:#f87171;   
+  --ok-green: #34d399;
+  --input-bg: #1f2933;
+}
+
+body{
+  margin:0;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  background:linear-gradient(180deg,#020617,#0f172a);
+  color:var(--text);
+  padding-top: 20px;
+}
+
+h1 { text-align: center; font-size: 1.6rem; margin-bottom: 30px; color: #fff; }
+.container{ max-width:1400px; margin:auto; padding:0 20px; }
+
+.card{
+  background:rgba(17,24,39,.9); border-radius:14px;
+  padding:20px; margin-bottom:20px; border: 1px solid #1f2937;
+}
+
+.filter-row { display: flex; align-items: center; gap: 20px; margin-bottom: 15px; }
+.year-selector { min-width: 160px; }
+.year-selector label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+.year-selector select { background: var(--input-bg); color: var(--text); border: 1px solid #374151; padding: 10px; border-radius: 8px; width: 100%; outline: none; cursor: pointer; }
+
+.checkboxGroup { display: flex; flex-wrap: nowrap; gap: 12px; align-items: center; padding-top: 20px; }
+.checkboxGroup label { font-size: 0.85em; display: flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; color: #94a3b8; }
+
+.prod-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+.prod-table th { text-align: center; padding: 10px; background: #0b1220; color: #94a3b8; font-size: 0.65em; text-transform: uppercase; border-bottom: 2px solid #1f2937; }
+.prod-table td { padding: 12px 5px; border-bottom: 1px solid #1f2937; font-size: 0.82em; text-align: center; word-wrap: break-word; }
+
+.val-bad { color: var(--neg) !important; font-weight: bold; }
+.val-good { color: var(--ok-green) !important; font-weight: bold; }
+
+.section-divider { border-top: 2px dashed #374151; margin: 40px 0 25px; position: relative; }
+.section-divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #0b1220; padding: 0 20px; color: #94a3b8; font-size: 0.9em; font-weight: bold; }
+
+/* ESTILOS IA DINÁMICA */
+.ia-section-title { color: #d8b4fe; font-size: 1.4rem; margin-bottom: 20px; font-weight: bold; }
+.site-analysis-card { background: #fff; color: #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 5px solid #a855f7; }
+.site-name-header { color: #7c3aed; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; text-transform: uppercase; }
+.site-legend { font-size: 0.85rem; margin-bottom: 15px; color: #64748b; line-height: 1.4; }
+.pill-container { display: flex; flex-wrap: wrap; gap: 10px; }
+.com-pill { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; color: #1e293b; }
+.perc-neg { color: #ef4444; font-weight: bold; }
+.perc-pos { color: #10b981; font-weight: bold; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>DIGITAL - Seguimiento Branded Content</h1>
+
+  <div class="card">
+    <label style="display:block; margin-bottom:10px; font-weight:bold; color:#94a3b8;">Cargar reporte excel:</label>
+    <input type="file" id="fileInput" accept=".xlsx" style="color: #94a3b8;">
+    <div id="loadStatus" style="margin-top:10px; font-size:0.9em; color:#94a3b8;">Esperando archivo...</div>
+  </div>
+
+  <div id="filters" class="card" style="display:none">
+    <div class="filter-row">
+        <div class="year-selector"><label style="color:var(--comp);">Año base</label><select id="fYear"></select></div>
+        <div class="checkboxGroup" id="monthsBase"></div>
+    </div>
+    <div class="filter-row" style="margin-top:15px; padding-top:15px; border-top:1px solid #374151;">
+        <div class="year-selector"><label style="color:#f472b6;">Producto</label>
+        <select id="fProduct" onchange="render()">
+            <option value="Branded Content">Branded Content</option>
+            <option value="Branded Content video">Branded Content video</option>
+            <option value="Branded Content Sindicated">Branded Content Sindicado</option>
+            <option value="Curated">Curated</option>
+        </select></div>
+    </div>
+  </div>
+
+  <div id="mainContent" style="display:none">
+    <div class="section-divider"><span>P. MEDIO POR CABECERA</span></div>
+    
+    <div class="card">
+        <table class="prod-table">
+            <thead>
+                <tr>
+                    <th style="width:140px">Comercial</th>
+                    <th>Elle</th><th>Cosmo</th><th>Bazaar</th><th>Esquire</th><th>Fotogr.</th><th>Elle Decor</th><th>MH</th><th>WH</th><th>R.World</th><th>C&D</th><th>D10</th>
+                </tr>
+            </thead>
+            <tbody id="cBodyPubAvg"></tbody>
+        </table>
+    </div>
+
+    <div class="section-divider"><span>IA: RESUMEN DE COMERCIALES POR PRESUPUESTOS Y SITES</span></div>
+    <div id="iaAnalysisContainer"></div>
+  </div>
+</div>
+
+<script>
+const MONTHS=["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio","07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+
+const SITES_CONFIG = [
+    { name: "Elle", key: "ELLE.COM", goalNormal: 9000, goalVideo: 12000 },
+    { name: "Cosmopolitan", key: "COSMOPOLITAN", goalNormal: 7500, goalVideo: 10400 },
+    { name: "Harper's Bazaar", key: "HARPERSBAZAAR", goalNormal: 7500, goalVideo: 10400 },
+    { name: "Esquire", key: "ESQUIRE.COM", goalNormal: 7500, goalVideo: 10400 },
+    { name: "Fotogramas", key: "FOTOGRAMAS", goalNormal: 6000, goalVideo: 8400 },
+    { name: "Elle Decor", key: "ELLEDECOR", goalNormal: 5250, goalVideo: 7600 },
+    { name: "Men's Health", key: "MENSHEALTH", goalNormal: 6000, goalVideo: 8400 },
+    { name: "Women's Health", key: "WOMENSHEALTH", goalNormal: 6000, goalVideo: 8400 },
+    { name: "Runner's World", key: "RUNNERSWORLD", goalNormal: 5250, goalVideo: 7600 },
+    { name: "Car & Driver", key: "CARANDDRIVER", goalNormal: 5250, goalVideo: 7600 },
+    { name: "Diez Minutos", key: "DIEZMINUTOS", goalNormal: 5250, goalVideo: 7600 }
+];
+
+let rawData=[];
+
+const num = (v) => {
+  if(v==null) return 0;
+  if(typeof v === 'number') return v;
+  let s = String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+};
+
+fileInput.onchange = e => {
+  const f = e.target.files[0];
+  const r = new FileReader();
+  r.onload = ev => {
+    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:"array"});
+    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+    const findCol = (row, target) => Object.keys(row).find(k => k === target) || Object.keys(row).find(k => k.toUpperCase().includes(target.toUpperCase())) || null;
+
+    if (json.length > 0) {
+        const cP = findCol(json[0], "Publicación");
+        const cC = findCol(json[0], "Comercial");
+        rawData = json.map(d => ({
+          ingreso: num(d["Imp.Neto a Comisionar"]),
+          Año: String(d["Año inserción"] || "").trim(),
+          Mes: MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+          Product: String(d["Producto"] || "").trim(),
+          Anunciante: String(d["Anunciante"] || "SIN ANUNCIANTE").trim().toUpperCase(),
+          Publicacion: cP ? String(d[cP]).trim().toUpperCase() : "OTRA",
+          Comercial: cC ? String(d[cC]).trim().toUpperCase() : "SIN COMERCIAL"
+        })).filter(d => d.Año !== "");
+    }
+    const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+    fYear.innerHTML = years.map(y=>`<option value='${y}'>${y}</option>`).join("");
+    document.getElementById("monthsBase").innerHTML = MONTHS.map(m => `<label><input type="checkbox" value="${m}" onchange="render()"> ${m.split(" ")[1]}</label>`).join("");
+    fYear.onchange = render;
+    document.getElementById("filters").style.display = "block";
+    document.getElementById("mainContent").style.display = "block";
+    document.getElementById("loadStatus").innerText = "✅ Datos listos";
+    render();
+  };
+  r.readAsArrayBuffer(f);
+};
+
+function calcNetting(data) {
+    const totalFact = data.reduce((acc, b) => acc + b.ingreso, 0);
+    const groups = {};
+    data.forEach(d => { if (!groups[d.Anunciante]) groups[d.Anunciante] = []; groups[d.Anunciante].push(d.ingreso); });
+    let lines = 0;
+    Object.values(groups).forEach(pool => {
+        pool.sort((a, b) => Math.abs(a) - Math.abs(b));
+        while (pool.length > 0) {
+            let cur = pool.shift();
+            let idx = pool.findIndex(v => v === -cur);
+            if (idx !== -1) pool.splice(idx, 1);
+            else if (cur > 0) lines++;
+        }
+    });
+    return { total: totalFact, lines };
+}
+
+function render(){
+  const y1 = fYear.value;
+  const prodF = document.getElementById("fProduct").value;
+  const isVideo = prodF === "Branded Content video";
+  const m1 = Array.from(document.getElementById("monthsBase").querySelectorAll("input:checked")).map(c => c.value);
+  
+  const comList = [...new Set(rawData.map(d=>d.Comercial))].filter(c => c !== "" && c !== "SIN COMERCIAL");
+  
+  // Procesar datos para tabla e IA
+  const results = comList.map(v => {
+      const dBase = rawData.filter(d => d.Año === y1 && d.Comercial === v && (m1.length === 0 || m1.includes(d.Mes)) && (d.Product === prodF));
+      
+      const getAvg = (p) => {
+          const rows = dBase.filter(d => d.Publicacion.includes(p));
+          const n = calcNetting(rows);
+          return n.lines ? n.total/n.lines : 0;
+      };
+
+      return { 
+          name: v, 
+          show: dBase.length > 0,
+          total: dBase.reduce((acc,d) => acc+d.ingreso, 0),
+          avgs: SITES_CONFIG.reduce((acc, site) => {
+              acc[site.key] = getAvg(site.key);
+              return acc;
+          }, {})
+      };
+  }).filter(r => r.show).sort((a,b) => b.total - a.total);
+
+  // Render Tabla
+  cBodyPubAvg.innerHTML = results.map(r => {
+      let html = `<tr><td style="text-align:left; font-weight:bold">${r.name}</td>`;
+      SITES_CONFIG.forEach(site => {
+          const val = r.avgs[site.key];
+          const goal = isVideo ? site.goalVideo : site.goalNormal;
+          if(val === 0) html += `<td>-</td>`;
+          else {
+              const cls = val >= goal ? "val-good" : "val-bad";
+              html += `<td class="${cls}">${Math.round(val).toLocaleString('de-DE')}€</td>`;
+          }
+      });
+      return html + "</tr>";
+  }).join("");
+
+  // Render IA Dinámica
+  let iaHtml = "";
+  SITES_CONFIG.forEach(site => {
+      const goal = isVideo ? site.goalVideo : site.goalNormal;
+      const comsForSite = results.map(r => {
+          const avg = r.avgs[site.key];
+          if(avg === 0) return null;
+          const diff = ((avg / goal) - 1) * 100;
+          return { name: r.name, avg, diff };
+      }).filter(x => x !== null)
+      .sort((a,b) => a.diff - b.diff); // Ordenar de mayor problema (más negativo) a éxito
+
+      if(comsForSite.length > 0) {
+          iaHtml += `
+          <div class="site-analysis-card">
+              <div class="site-name-header">${site.name} (OBJETIVO: ${goal.toLocaleString('de-DE')}€)</div>
+              <div class="site-legend">
+                  <strong>En positivo:</strong> Rendimiento comercial por encima del ticket medio mínimo.<br>
+                  <strong>En negativo:</strong> Desviaciones que requieren revisión de la estrategia de precios.
+              </div>
+              <div class="pill-container">
+                  ${comsForSite.map(c => `
+                      <div class="com-pill">
+                          ${c.name}: <span class="${c.diff >= 0 ? 'perc-pos' : 'perc-bad'}">${Math.round(c.avg).toLocaleString('de-DE')}€</span> 
+                          (<span class="${c.diff >= 0 ? 'perc-pos' : 'perc-neg'}">${c.diff > 0 ? '+' : ''}${c.diff.toFixed(1)}%</span>)
+                      </div>
+                  `).join("")}
+              </div>
+          </div>`;
+      }
+  });
+  document.getElementById("iaAnalysisContainer").innerHTML = iaHtml;
+}
+
+// --- BLOQUE DE CARGA AUTOMÁTICA ADAPTADO PARA SEGUIMIENTO BC ---
+window.addEventListener('load', () => {
+    const nombreArchivo = "https://javiap20.github.io/datos-en-excel/PRODUCCION DIGITAL.xlsx"; 
+
+    fetch(nombreArchivo)
+        .then(res => {
+            if (!res.ok) throw new Error();
+            return res.arrayBuffer();
+        })
+        .then(data => {
+            const wb = XLSX.read(new Uint8Array(data), {type: "array"});
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+            
+            // Función auxiliar para encontrar columnas (reutilizada de tu código original)
+            const findCol = (row, target) => Object.keys(row).find(k => k === target) || Object.keys(row).find(k => k.toUpperCase().includes(target.toUpperCase())) || null;
+
+            if (json.length > 0) {
+                const cP = findCol(json[0], "Publicación");
+                const cC = findCol(json[0], "Comercial");
+
+                rawData = json.map(d => ({
+                    ingreso: num(d["Imp.Neto a Comisionar"]),
+                    Año: String(d["Año inserción"] || "").trim(),
+                    Mes: MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+                    Product: String(d["Producto"] || "").trim(),
+                    Anunciante: String(d["Anunciante"] || "SIN ANUNCIANTE").trim().toUpperCase(),
+                    Publicacion: cP ? String(d[cP]).trim().toUpperCase() : "OTRA",
+                    Comercial: cC ? String(d[cC]).trim().toUpperCase() : "SIN COMERCIAL"
+                })).filter(d => d.Año !== "");
+
+                // Inicialización de selectores
+                const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+                fYear.innerHTML = years.map(y=>`<option value='${y}'>${y}</option>`).join("");
+                
+                // Pintar los meses
+                document.getElementById("monthsBase").innerHTML = MONTHS.map(m => `<label><input type="checkbox" value="${m}" onchange="render()"> ${m.split(" ")[1]}</label>`).join("");
+                
+                // Activar eventos y mostrar contenido
+                fYear.onchange = render;
+                document.getElementById("filters").style.display = "block";
+                document.getElementById("mainContent").style.display = "block";
+                document.getElementById("loadStatus").innerText = "✅ Reporte BC cargado automáticamente";
+                document.getElementById("loadStatus").style.color = "var(--ok-green)";
+                
+                render();
+            }
+        })
+        .catch(() => {
+            document.getElementById("loadStatus").innerText = "⚠️ Carga automática no disponible. Use el botón superior.";
+        });
+});
+
+
+</script>
+</body>
+</html>

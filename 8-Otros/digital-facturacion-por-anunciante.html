@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGITAL - Ingresos por Anunciante</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --card:#111827;
+  --text:#e5e7eb;
+  --base:#38bdf8;      /* Azul */
+  --comp:#f59e0b;      /* Amarillo */
+  
+  --neg:#f87171;
+  --diffColor:#6ee7b7;
+  --ok-green:#34d399;
+  --totalBg:#1e40af;
+  --siteBg:#fef3c7; 
+  --productoBg:#dbeafe; 
+  --sectorBg:#fbcfe8;
+  --comercialBg:#d1fae5; 
+  --areaBg:#fcd5ce; 
+  --anuncianteBg:#e9d5ff;
+  --print-color: #db2777;
+  --evento-color: #34d399;
+  --base-color: var(--base);
+  
+  /* NUEVO COLOR PARA TÍTULOS DE RESUMEN (Verde Esmeralda) */
+  --title-summary: #d946ef; 
+  
+  --title-mes:var(--title-summary);
+  --title-site:var(--title-summary);
+  --title-producto:var(--title-summary);
+  --title-comercial:var(--title-summary);
+  --title-marca:var(--title-summary);
+  --bullet-size: 1.1rem;
+  --bullet-indent: 22px;
+  --summary-bg:#111827;
+  --summary-border:#4b5563;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: linear-gradient(180deg,#020617,#0f172a);
+  color: var(--text);
+  overflow-y: scroll;
+}
+
+.nav-menu {
+  background: #111827;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-menu a {
+  color: #fff;
+  margin: 0 10px;
+  text-decoration: none;
+  font-size: .9em;
+  opacity: 0.8;
+}
+.nav-menu .active { opacity: 1; font-weight: bold; border-bottom: 2px solid var(--base-color); padding-bottom: 5px; }
+
+h1 { text-align: center; font-size: 1.5rem; margin: 20px 0; }
+.container{ max-width:1500px; margin:auto; padding:20px; }
+.card{ background:rgba(17,24,39,.9); border-radius:14px; padding:18px; margin-bottom:20px; border: 1px solid #1f2937; }
+.label-style { font-size: 0.95em; font-weight: bold; margin-bottom: 8px; display: block; }
+
+.filters select, input[type=file]{
+  background:#1f2933; color:var(--text); border:1px solid #374151; padding:8px 10px; border-radius:8px; width: 100%; box-sizing: border-box;
+}
+
+#loadStatus { margin-top: 10px; font-weight: 600; font-size: 0.85em; }
+.filters label{ font-weight:600; margin-right:6px; display:block; margin-top:10px; }
+.filtersRow{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+.filtersRow div select{ width:220px; font-weight:600; }
+
+#fSite{ background:var(--siteBg); color:#111; }
+#fProduct{ background:var(--productoBg); color:#111; }
+#fSector{ background:var(--sectorBg); color:#111; }
+#fComercial{ background:var(--comercialBg); color:#111; }
+#fArea{ background:var(--areaBg); color:#111; }
+#fAnunciante{ background:var(--anuncianteBg); color:#111; }
+
+.checkboxGroup{ display:flex; flex-wrap:wrap; gap:10px; margin-top:5px; }
+.checkboxGroup label{ font-size: 0.85em; font-weight:400; color: #cbd5e1; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+.totalBlock{ background:var(--totalBg); padding:15px; border-radius:12px; margin-top:10px; }
+.totalValues{ display:flex; justify-content:space-around; font-size:18px; }
+.totalValues div{text-align:center;}
+.totalValues .value{ font-size:22px; font-weight:700; display: block; margin-top: 5px; }
+#diffPercent.negative{ color:var(--neg); }
+
+.statsBlock{ display:flex; justify-content:center; border-radius:12px; margin:20px 0; gap:10px; flex-wrap:wrap; }
+.subBlock{ border-radius:12px; padding:20px; display:flex; align-items:center; justify-content:center; }
+.statsBase{ flex:0 0 450px; background:var(--base); color:#111; }
+.statsDiff{ flex:0 0 300px; background:var(--diffColor); color:#111; }
+.statsComp{ flex:0 0 450px; background:var(--comp); color:#111; }
+
+.statsValues{ display:flex; justify-content:center; font-size:16px; gap:18px; flex-wrap:wrap; }
+.statsValues div{text-align:center;}
+.statsValues .value{ font-size:18px; font-weight:700; display:block; margin-top:5px; }
+.statsDiff .value.negative{ color:var(--neg); }
+
+.summaryCard{ border:1px dashed var(--summary-border); background:var(--summary-bg); border-radius:12px; padding:18px; color:#cbd5e1; }
+.summaryCard h2{ margin:0 0 14px 0; font-size:1.15em; color:#fff; }
+.summaryGrid{ display:grid; grid-template-columns:repeat(2,minmax(280px,1fr)); gap:18px; }
+
+.summaryHeader:nth-child(1) { color: var(--base); border-color: var(--base); }
+.summaryHeader:nth-child(2) { color: var(--comp); border-color: var(--comp); }
+.summaryHeader{ font-weight:800; border:1px solid #1f2937; border-radius:10px; padding:10px 12px; background:rgba(17,24,39,0.6); }
+
+.summarySection{ background:rgba(2,6,23,0.35); border:1px solid rgba(75,85,99,0.5); border-radius:12px; padding:12px; }
+.summaryTitle{ font-weight:800; margin:4px 0 10px 0; }
+.summaryTitle.mes{ color:var(--title-mes); }
+.summaryTitle.site{ color:var(--title-site); }
+.summaryTitle.producto{ color:var(--title-producto); }
+.summaryTitle.comercial{ color:var(--title-comercial); }
+.summaryTitle.marca{ color:var(--title-marca); }
+
+.itemList{ list-style:none; padding:0; margin:0; }
+.itemList li{ position:relative; padding-left: var(--bullet-indent); margin:8px 0; color:#e5e7eb; font-weight:400; line-height:1.35; min-height: 1.5rem; }
+.itemList li::before{ content:"✔"; font-size:var(--bullet-size); position:absolute; left:0; top:0.1rem; }
+.itemList li.empty-item::before { content: ""; }
+.itemList li.empty-item { color: transparent; }
+.itemList .amount{ font-variant-numeric: tabular-nums; font-weight: 700;}
+.itemList .pct.neg{ color:var(--neg); }
+.itemList .pct.pos{ color:var(--ok-green); }
+
+/* Estilo para el botón de ver más */
+.btn-more {
+  background: transparent;
+  border: 1px solid var(--title-summary);
+  color: var(--title-summary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin-top: 10px;
+  width: 100%;
+  transition: all 0.2s;
+}
+.btn-more:hover { background: var(--title-summary); color: #000; }
+</style>
+</head>
+
+<body>
+
+<nav class="nav-menu">
+    <span style="color: #38bdf8; font-weight: bold; margin-right: 10px; opacity: 1;">DIGITAL:</span>
+    <a href="digital-datos-graficos.html">Datos</a>
+    <a href="digital-facturacion-desglosada.html">Desglose</a>
+    <a href="digital-facturacion-por-anunciante.html" class="active">Anunciantes</a>
+    <a href="digital-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="digital-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--print-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1;">PRINT:</span>
+    <a href="print-datos-graficos.html">Datos</a>
+    <a href="print-facturacion-desglosada.html">Desglose</a>
+    <a href="print-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="print-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="print-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--evento-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1; font-size: 0.95em;">EVENTOS:</span>
+    <a href="eventos-datos-graficos.html">Datos</a>
+    <a href="eventos-facturacion-desglosada.html">Desglose</a>
+    <a href="eventos-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="eventos-facturacion-por-anunciante-y-marca.html">Marcas</a>
+
+
+    
+    <a href="index.html" style="margin-left: 20px; border-left: 1px solid #4b5563; padding-left: 20px;">🏠 Home</a>
+</nav>
+
+<h1>DIGITAL - Ingresos por Anunciante</h1>
+
+<div class="container">
+  <div class="card">
+    <label class="label-style">Cargar datos (Excel):</label>
+    <input type="file" id="fileInput" accept=".json,.xlsx">
+    <div id="loadStatus">Esperando archivo...</div>
+  </div>
+
+<div id="filters" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div>
+        <label class="labelBase" style="color:var(--base);">Año base</label>
+        <select id="fYear"></select>
+        <div class="checkboxGroup" id="monthsBase"></div>
+      </div>
+      <div>
+        <label class="labelComp" style="color:var(--comp);">Año comparación</label>
+        <select id="fYear2"></select>
+        <div class="checkboxGroup" id="monthsComp"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="advBlock" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div><label>Anunciante (Por Volumen)</label><select id="fAnunciante"></select></div>
+    </div>
+  </div>
+
+  <div id="siteBlock" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div><label>Site</label><select id="fSite"></select></div>
+      <div><label>Producto</label><select id="fProduct"></select></div>
+      <div><label>Sector</label><select id="fSector"></select></div>
+      <div><label>Comercial</label><select id="fComercial"></select></div>
+      <div><label>Área</label><select id="fArea"></select></div>
+    </div>
+  </div>
+
+  <div id="totalBlock" class="card" style="display:none">
+    <div class="totalBlock">
+      <div class="totalValues">
+        <div>Año base<div id="totalYear1" class="value">0€</div></div>
+        <div>Año comparación<div id="totalYear2" class="value">-</div></div>
+        <div>% diferencia<div id="diffPercent" class="value">-</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="statsBlock" class="statsBlock" style="display:none">
+      <div class="subBlock statsBase">
+        <div class="statsValues">
+          <div>Fact. Año Base<div id="totalStatsBase" class="value">0€</div></div>
+          <div>Nº líneas<div id="linesStatsBase" class="value">0</div></div>
+          <div>Presupuesto medio<div id="avgStatsBase" class="value">0€</div></div>
+        </div>
+      </div>
+      <div class="subBlock statsDiff">
+        <div class="statsValues">
+          <div>% Crec. Presup. Medio<div id="diffAvgStats" class="value">0%</div></div>
+        </div>
+      </div>
+      <div class="subBlock statsComp">
+        <div class="statsValues">
+          <div>Fact. Año Comparación<div id="totalStatsComp" class="value">-</div></div>
+          <div>Nº líneas<div id="linesStatsComp" class="value">0</div></div>
+          <div>Presupuesto medio<div id="avgStatsComp" class="value">-</div></div>
+        </div>
+      </div>
+  </div>
+
+  <div id="advSummaryCard" class="summaryCard" style="display:none">
+    <h2>Resumen por anunciante</h2>
+    <div class="summaryGrid">
+      <div class="summaryHeader">Año base: <span id="summaryYearBase">—</span></div>
+      <div class="summaryHeader">Año comparación: <span id="summaryYearComp">—</span></div>
+      
+      <div class="summarySection">
+        <div class="summaryTitle marca">Marcas con las que ha entrado...</div>
+        <ul id="advBrandsBase" class="itemList marca"></ul>
+        <button id="btnMoreBrands" class="btn-more" style="display:none" onclick="loadMoreBrands()">Cargar más marcas</button>
+      </div>
+      <div class="summarySection">
+        <div class="summaryTitle marca">Marcas con las que ha entrado...</div>
+        <ul id="advBrandsComp" class="itemList marca"></ul>
+        </div>
+      
+      <div class="summarySection"><div class="summaryTitle mes">Mes</div><ul id="advMonthsBase" class="itemList mes"></ul></div>
+      <div class="summarySection"><div class="summaryTitle mes">Mes</div><ul id="advMonthsComp" class="itemList mes"></ul></div>
+      <div class="summarySection"><div class="summaryTitle site">Site</div><ul id="advSitesBase" class="itemList site"></ul></div>
+      <div class="summarySection"><div class="summaryTitle site">Site</div><ul id="advSitesComp" class="itemList site"></ul></div>
+      <div class="summarySection"><div class="summaryTitle producto">Producto</div><ul id="advProductsBase" class="itemList producto"></ul></div>
+      <div class="summarySection"><div class="summaryTitle producto">Producto</div><ul id="advProductsComp" class="itemList producto"></ul></div>
+      <div class="summarySection"><div class="summaryTitle comercial">Comercial</div><ul id="advSalesBase" class="itemList comercial"></ul></div>
+      <div class="summarySection"><div class="summaryTitle comercial">Comercial</div><ul id="advSalesComp" class="itemList comercial"></ul></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const excelUrl = "https://javiap20.github.io/datos-en-excel/PRODUCCION DIGITAL.xlsx";
+const PAGE_SIZE = 25;
+let currentBrandsPage = 1;
+let lastBrandsBase = [], lastBrandsComp = [];
+
+window.addEventListener("DOMContentLoaded", () => {
+  const statusEl = document.getElementById("loadStatus");
+  if (statusEl) statusEl.innerText = "Cargando archivo https://javiap20.github.io/datos-en-excel/PRODUCCION DIGITAL.xlsx…";
+  fetch(excelUrl).then(resp => {
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return resp.arrayBuffer();
+  }).then(buf => {
+    const wb = XLSX.read(buf, { type: "array" });
+    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+    init(json);
+    if (statusEl) { statusEl.innerText = "✅ Archivo cargado automáticamente"; statusEl.style.color = "var(--ok-green)"; }
+  }).catch(err => {
+    console.error("Auto-carga fallida:", err);
+    if (statusEl) { statusEl.innerText = "⚠️ No se pudo cargar automáticamente."; statusEl.style.color = "var(--neg)"; }
+  });
+});
+
+const MONTHS = ["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio","07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+let rawData = [];
+
+function toTitleCase(str) { if(!str) return ""; return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); }
+function cleanSector(str) { if(!str) return ""; let s = str.replace(/^[0-9* ]+/, ""); return toTitleCase(s); }
+function num(v){ if(v==null) return 0; if(typeof v === 'number') return v; const s = String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,"."); const n = Number(s); return Number.isFinite(n) ? n : 0; }
+const currencyFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function formatCurrency(n){ return currencyFormatter.format(Math.round(n||0))+'€'; }
+const integerFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true, maximumFractionDigits: 0 });
+function formatInteger(n){ return integerFormatter.format(Math.round(n||0)); }
+
+fileInput.onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, {type:"array"});
+      init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }));
+    } catch(err) { console.error(err); }
+  };
+  r.readAsArrayBuffer(f);
+};
+
+function init(data){
+  rawData = data.map(d => ({
+    ingreso: num(d["Imp.Neto a Comisionar"]),
+    Año: String(d["Año inserción"] || "").trim(),
+    Mes: MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+    Site: String(d["Publicación"] || "").trim().toLowerCase(),
+    Product: toTitleCase(String(d["Producto"] || "").trim()),
+    Sector: cleanSector(String(d["Sector"] || "")),
+    Comercial: toTitleCase(String(d["Comercial"] || "").trim()),
+    Area: toTitleCase(String(d["ÁREAS"] || "").trim()),
+    Anunciante: String(d["Anunciante"] || "SIN ANUNCIANTE").trim().toUpperCase(),
+    Marca: toTitleCase(String(d["Marca"] || "").trim())
+  })).filter(d => d.Año !== "");
+
+  const populate = (id, arr) => {
+    document.getElementById(id).innerHTML = "<option>Todos</option>" + [...new Set(arr.filter(Boolean))].sort().map(v=>`<option>${v}</option>`).join("");
+  };
+
+  const advSums = {};
+  rawData.forEach(d => { if(d.Anunciante) advSums[d.Anunciante] = (advSums[d.Anunciante] || 0) + d.ingreso; });
+  const sortedAdvs = Object.keys(advSums).sort((a,b) => advSums[b] - advSums[a]);
+  fAnunciante.innerHTML = "<option>Todos</option>" + sortedAdvs.map(v => `<option>${v}</option>`).join("");
+
+  populate("fSite", rawData.map(d=>d.Site));
+  populate("fProduct", rawData.map(d=>d.Product));
+  populate("fSector", rawData.map(d=>d.Sector));
+  populate("fComercial", rawData.map(d=>d.Comercial));
+  populate("fArea", rawData.map(d=>d.Area));
+  
+  const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+  fYear.innerHTML = "<option>Todos</option>" + years.map(y=>`<option>${y}</option>`).join("");
+  fYear2.innerHTML = "<option>Sin comparar</option>" + years.map(y=>`<option>${y}</option>`).join("");
+
+  document.getElementById("monthsBase").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+  document.getElementById("monthsComp").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+
+  [fAnunciante,fSite,fProduct,fSector,fYear,fYear2,fComercial,fArea].forEach(el=>el.onchange=render);
+  ["advBlock","siteBlock","filters","totalBlock","advSummaryCard"].forEach(id=>document.getElementById(id).style.display="block");
+  document.getElementById("statsBlock").style.display="flex";
+  render();
+}
+
+function calcNetting(data) {
+    const totalFact = data.reduce((acc, b) => acc + b.ingreso, 0);
+    const groups = {};
+    data.forEach(d => { if (!groups[d.Anunciante]) groups[d.Anunciante] = []; groups[d.Anunciante].push(d.ingreso); });
+    let lines = 0;
+    Object.values(groups).forEach(pool => {
+        let filteredPool = pool.filter(v => v !== 0).sort((a, b) => Math.abs(a) - Math.abs(b));
+        while (filteredPool.length > 0) {
+            let cur = filteredPool.shift();
+            let idx = filteredPool.findIndex(v => v === -cur);
+            if (idx !== -1) filteredPool.splice(idx, 1);
+            else if (cur > 0) lines++;
+        }
+    });
+    return { total: totalFact, lines, avg: lines ? totalFact / lines : 0 };
+}
+
+function groupSumGeneric(data, keyField) {
+  const map = new Map();
+  data.forEach(d => { const k = d[keyField] || "Desconocido"; map.set(k, (map.get(k) || 0) + d.ingreso); });
+  return Array.from(map.entries()).map(([label, sum]) => ({ label, sum })).sort((a,b) => b.sum - a.sum);
+}
+
+function groupSumMonths(data) {
+  const map = new Map();
+  data.forEach(d => { if(!d.Mes) return; map.set(d.Mes, (map.get(d.Mes) || 0) + d.ingreso); });
+  return MONTHS.map(m => ({ label: m.slice(3), sum: map.get(m) || 0 })).filter(x => x.sum !== 0);
+}
+
+function fillMirrorLists(idBase, idComp, itemsBase, itemsComp, isMonth = false, isBrand = false) {
+  const ulBase = document.getElementById(idBase);
+  const ulComp = document.getElementById(idComp);
+  
+  if(!isBrand) { ulBase.innerHTML = ""; ulComp.innerHTML = ""; }
+
+  if (!itemsBase.length && !itemsComp.length) {
+    if(!isBrand) { ulBase.innerHTML = "<li>—</li>"; ulComp.innerHTML = "<li>—</li>"; }
+    return;
+  }
+
+  let allLabels;
+  if(isMonth) allLabels = MONTHS.map(m => m.slice(3));
+  else allLabels = [...new Set([...itemsBase.map(i => i.label), ...itemsComp.map(i => i.label)])];
+
+  // Si es marca, aplicamos paginación
+  let labelsToRender = allLabels;
+  if(isBrand) {
+    const start = (currentBrandsPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    labelsToRender = allLabels.slice(start, end);
+    const btn = document.getElementById('btnMoreBrands');
+    btn.style.display = end < allLabels.length ? "block" : "none";
+  }
+
+  labelsToRender.forEach(label => {
+    const dataBase = itemsBase.find(i => i.label === label);
+    const dataComp = itemsComp.find(i => i.label === label);
+    if(!isMonth && !dataBase && !dataComp) return;
+
+    const liB = document.createElement('li');
+    if (dataBase) {
+      let content = `${dataBase.label} — <span class="amount">${formatCurrency(dataBase.sum)}</span>`;
+      if (dataComp && dataComp.sum > 0) {
+        const pct = Math.round(((dataBase.sum / dataComp.sum) - 1) * 100);
+        content += ` — <span class="pct ${pct < 0 ? 'neg' : 'pos'}">${pct > 0 ? '+' : ''}${pct}%</span>`;
+      }
+      liB.innerHTML = content;
+    } else { liB.className = "empty-item"; liB.innerHTML = `${label} — 0€`; }
+    ulBase.appendChild(liB);
+
+    const liC = document.createElement('li');
+    if (dataComp) liC.innerHTML = `${dataComp.label} — <span class="amount">${formatCurrency(dataComp.sum)}</span>`;
+    else { liC.className = "empty-item"; liC.innerHTML = `${label} — 0€`; }
+    ulComp.appendChild(liC);
+  });
+}
+
+function loadMoreBrands() {
+  currentBrandsPage++;
+  fillMirrorLists('advBrandsBase', 'advBrandsComp', lastBrandsBase, lastBrandsComp, false, true);
+}
+
+function render(){
+  const site = fSite.value.toLowerCase(), prod = fProduct.value.toLowerCase(), sec = fSector.value.toLowerCase(), 
+        y1 = fYear.value, y2 = fYear2.value, com = fComercial.value.toLowerCase(), 
+        area = fArea.value.toLowerCase(), adv = fAnunciante.value.toUpperCase();
+  
+  const m1 = Array.from(document.getElementById("monthsBase").querySelectorAll("input:checked")).map(c=>c.value);
+  const m2 = Array.from(document.getElementById("monthsComp").querySelectorAll("input:checked")).map(c=>c.value);
+
+  const filter = (y, months) => rawData.filter(d =>
+    (y==="Todos" || d.Año===y) &&
+    (adv==="TODOS" || d.Anunciante===adv) &&
+    (site==="todos" || d.Site===site) &&
+    (prod==="todos" || d.Product.toLowerCase()===prod) &&
+    (sec==="todos" || d.Sector.toLowerCase()===sec) &&
+    (com==="todos" || d.Comercial.toLowerCase()===com) &&
+    (area==="todos" || d.Area.toLowerCase()===area) &&
+    (months.length === 0 || months.includes(d.Mes))
+  );
+
+  const d1 = filter(y1, m1);
+  const d2 = y2!=="Sin comparar" ? filter(y2, m2) : [];
+  const res1 = calcNetting(d1);
+  const res2 = calcNetting(d2);
+
+  totalYear1.textContent = formatCurrency(res1.total);
+  totalYear2.textContent = y2!=="Sin comparar" ? formatCurrency(res2.total) : "-";
+  const dt=(y2!=="Sin comparar" && res2.total)?Math.round(((res1.total/res2.total)-1)*100):0;
+  diffPercent.textContent = y2!=="Sin comparar" ? (dt > 0 ? "+" : "") + dt + "%" : "-";
+  diffPercent.className = "value"+(dt<0?" negative":"");
+
+  totalStatsBase.textContent=formatCurrency(res1.total);
+  linesStatsBase.textContent=formatInteger(res1.lines);
+  avgStatsBase.textContent=formatCurrency(res1.avg);
+
+  if(y2!=="Sin comparar"){
+    totalStatsComp.textContent=formatCurrency(res2.total);
+    linesStatsComp.textContent=formatInteger(res2.lines);
+    avgStatsComp.textContent=formatCurrency(res2.avg);
+    const diffAvg=res2.avg>0?Math.round(((res1.avg / res2.avg) - 1) * 100) : 0;
+    diffAvgStats.textContent=(diffAvg>0?'+':'')+diffAvg+"%";
+    diffAvgStats.className="value"+(diffAvg<0?" negative":"");
+  }
+
+  document.getElementById('summaryYearBase').textContent = y1;
+  document.getElementById('summaryYearComp').textContent = y2;
+
+  // Reset marcas
+  currentBrandsPage = 1;
+  document.getElementById('advBrandsBase').innerHTML = "";
+  document.getElementById('advBrandsComp').innerHTML = "";
+  lastBrandsBase = groupSumGeneric(d1, 'Marca');
+  lastBrandsComp = groupSumGeneric(d2, 'Marca');
+
+  fillMirrorLists('advBrandsBase', 'advBrandsComp', lastBrandsBase, lastBrandsComp, false, true);
+  fillMirrorLists('advMonthsBase', 'advMonthsComp', groupSumMonths(d1), groupSumMonths(d2), true);
+  fillMirrorLists('advSitesBase', 'advSitesComp', groupSumGeneric(d1, 'Site'), groupSumGeneric(d2, 'Site'));
+  fillMirrorLists('advProductsBase', 'advProductsComp', groupSumGeneric(d1, 'Product'), groupSumGeneric(d2, 'Product'));
+  fillMirrorLists('advSalesBase', 'advSalesComp', groupSumGeneric(d1, 'Comercial'), groupSumGeneric(d2, 'Comercial'));
+}
+</script>
+</body>
+</html>

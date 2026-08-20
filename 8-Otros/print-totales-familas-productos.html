@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DIGITAL - Productos Seleccionados</title>
+
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --card:#111827;
+  --card-soft:#1f2933;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --bc-color:#38bdf8;
+  --curated-color:#f59e0b;
+  --social-color:#10b981;
+  --display-color:#8b5cf6;
+  --program-directo:#f97316;
+  --video-color:#8b5cf6;
+  --down:#f87171;
+  --ok-green: #34d399;
+  --comercial-color:#a78bfa;
+  --site-color:#f43f5e;
+  --area-color:#fbbf24;
+  --evento-color: #34d399;
+  --totales-color:#06b6d4;
+  --comercial-bg-light:#efe9ff;
+  --site-bg-light:#ffe6ea;
+  --area-bg-light:#fff6d9;
+  
+  /* COLORES DE NAVEGACIÓN */
+  --print-color: #db2777;
+  --base-color: #38bdf8; /* Azul Digital */
+
+  /* VARIABLES DE CONTROL DE AÑOS - Único sitio para cambiar colores de años */
+  --year-base-color: #38bdf8;  /* Antes --comp-color original */
+  --year-comp-color: #f59e0b;  /* Antes --base-color original */
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: linear-gradient(180deg,#020617,#0f172a);
+  color: var(--text);
+  overflow-y: scroll;
+}
+
+.nav-menu {
+  background: #111827;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-menu a {
+  color: #fff;
+  margin: 0 10px;
+  text-decoration: none;
+  font-size: .9em;
+  opacity: 0.8;
+}
+.nav-menu .active { opacity: 1; font-weight: bold; border-bottom: 2px solid var(--base-color); padding-bottom: 5px; }
+
+h1 {
+    text-align: center;
+    font-size: 1.5rem;
+    margin: 20px 0;
+}
+
+.container{ max-width:1500px; margin:auto; padding:10px; }
+
+.card{
+  background:rgba(17,24,39,.85);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:20px;
+  border: 1px solid #1f2937;
+}
+
+.upload-label { 
+    display: block; 
+    font-weight: bold; 
+    margin-bottom: 12px; 
+    font-size: 0.95em;
+}
+
+.file-input-wrapper {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+}
+
+#fileInput {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    width: 100%;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+#loadStatus {
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.filters select,input[type=file]{
+  background:var(--card-soft);
+  color:var(--text);
+  border:1px solid #1f2937;
+  padding:8px 10px;
+  border-radius:8px;
+  margin-bottom: 10px;
+}
+
+.months-container{ display:flex; flex-wrap:wrap; gap:10px; margin-top:5px; }
+.months-container label{ display:flex; align-items:center; gap:5px; font-size: 0.9em; cursor:pointer; }
+
+.inline-filters{ display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+.inline-filter { display:inline-flex; align-items:center; gap:10px; }
+.inline-filter .label{ font-weight:700; }
+.inline-filter select{ color:#111; font-weight:700; border-radius:10px; padding:8px 10px; }
+
+.inline-filter.comercial .label{ color:var(--comercial-color); }
+.inline-filter.comercial select{ background:var(--comercial-bg-light); border:1px solid #cbb6ff; }
+.inline-filter.site .label{ color:var(--site-color); }
+.inline-filter.site select{ background:var(--site-bg-light); border:1px solid #ffb3bf; }
+.inline-filter.area .label{ color:var(--area-color); }
+.inline-filter.area select{ background:var(--area-bg-light); border:1px solid #f5d77a; }
+
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px;
+  margin-bottom:20px;
+}
+.kpi{
+  text-align:center;
+  padding:18px;
+  background:linear-gradient(160deg,#020617,#111827);
+  border-radius:12px;
+  border: 1px solid #1f2937;
+}
+.kpi h2{ margin:0; font-size:1.6em; color:var(--bc-color); }
+.kpi p{ margin:6px 0 0; color:var(--muted); font-size: 0.9em; }
+.kpi span.pct{ display:block; margin-top:4px; font-size:0.9em; font-weight:600; }
+
+.section-title{ grid-column: 1 / -1; text-align:left; font-weight:700; font-size:1.1em; color: #fff; margin-top:15px; border-left: 4px solid #374151; padding-left: 10px; }
+</style>
+</head>
+
+<body>
+
+<nav class="nav-menu">
+    <span style="color: #38bdf8; font-weight: bold; margin-right: 10px; opacity: 1;">DIGITAL:</span>
+    <a href="digital-datos-graficos.html">Datos</a>
+    <a href="digital-facturacion-desglosada.html">Desglose</a>
+    <a href="digital-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="digital-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="digital-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--print-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1;">PRINT:</span>
+    <a href="print-datos-graficos.html">Datos</a>
+    <a href="print-facturacion-desglosada.html">Desglose</a>
+    <a href="print-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="print-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="print-totales-familas-productos.html"  class="active">Productos</a>
+
+    <span style="color: var(--evento-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1; font-size: 0.95em;">EVENTOS:</span>
+    <a href="eventos-datos-graficos.html">Datos</a>
+    <a href="eventos-facturacion-desglosada.html">Desglose</a>
+    <a href="eventos-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="eventos-facturacion-por-anunciante-y-marca.html">Marcas</a>
+
+
+    
+    <a href="index.html" style="margin-left: 20px; border-left: 1px solid #4b5563; padding-left: 20px;">🏠 Home</a>
+</nav>
+
+
+<h1>DIGITAL - Productos Seleccionados</h1>
+
+<div class="container">
+  <div class="card">
+    <label class="upload-label">Cargar datos (Excel):</label>
+    <div class="file-input-wrapper">
+        <input type="file" id="fileInput" accept=".json,.xlsx">
+    </div>
+    <div id="loadStatus">Esperando archivo...</div>
+  </div>
+  <div id="filters" class="card filters" style="display:none">
+    <span style="color:var(--year-base-color); font-weight:700;">Año base</span> <select id="fYear"></select><br>
+    <div id="monthContainer1" class="months-container"></div><br>
+    <span style="color:var(--year-comp-color); font-weight:700;">Año comparación</span> <select id="fYear2"></select><br>
+    <div id="monthContainer2" class="months-container"></div>
+  </div>
+
+  <div id="inlineFiltersCard" class="card filters" style="display:none">
+    <div class="inline-filters">
+      <div class="inline-filter comercial"><span class="label">Comercial</span><select id="fComercial"></select></div>
+      <div class="inline-filter site"><span class="label">Revista</span><select id="fSite"></select></div>
+      <div class="inline-filter area"><span class="label">Área</span><select id="fArea"></select></div>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpisTotals"></div>
+  <div class="kpis" id="kpisRows"></div>
+</div>
+
+<script>
+const excelUrl = "https://javiap20.github.io/datos-en-excel/PRODUCCION PRINT.xlsx";
+
+window.addEventListener("DOMContentLoaded", () => {
+  const statusEl = document.getElementById("loadStatus");
+  if (statusEl) statusEl.innerText = "Cargando archivo https://javiap20.github.io/datos-en-excel/PRODUCCION PRINT.xlsx…";
+
+  fetch(excelUrl)
+    .then(resp => {
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return resp.arrayBuffer();
+    })
+    .then(buf => {
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      init(json);
+      if (statusEl) {
+        statusEl.innerText = "✅ Archivo cargado automáticamente";
+        statusEl.style.color = "var(--ok-green)";
+      }
+    })
+    .catch(err => {
+      console.error("Auto-carga fallida:", err);
+      if (statusEl) {
+        statusEl.innerText = "⚠️ No se pudo cargar automáticamente. Selecciona el Excel manualmente.";
+        statusEl.style.color = "var(--down)";
+      }
+    });
+});
+</script>
+
+<script>
+let rawData=[];
+
+const currencyFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function formatCurrency(n){
+  const val = Math.round(Number(n) || 0);
+  return (Number.isFinite(val) ? currencyFormatter.format(val) : '0') + '€';
+}
+
+fileInput.onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const ext = f.name.split(".").pop().toLowerCase();
+      if(ext==="json") {
+        init(JSON.parse(ev.target.result));
+      } else {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, {type:"array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        init(XLSX.utils.sheet_to_json(ws, { defval: "" }));
+      }
+      document.getElementById("loadStatus").innerHTML = "✅ Archivo cargado";
+      document.getElementById("loadStatus").style.color = "var(--ok-green)";
+    } catch (err) {
+      document.getElementById("loadStatus").innerText = "❌ Error: " + err.message;
+      document.getElementById("loadStatus").style.color = "var(--down)";
+    }
+  };
+  if (f.name.endsWith("json")) r.readAsText(f);
+  else r.readAsArrayBuffer(f);
+};
+
+function num(v){
+  if(v==null) return 0;
+  if(typeof v === 'number') return v;
+  const s = String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function formatLabel(val, type) {
+    if(!val) return "";
+    let s = String(val).toLowerCase().trim();
+    if (type === 'site') return s;
+    return s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+function init(data){
+  rawData = data.map(d => ({
+    ingreso:    num(d["Imp.Neto a Comisionar"]),
+    Año:        String(d["Año inserción"] || "").trim(),
+    Mes:        String(d["Mes inserción"] || "").trim(),
+    Site:       String(d["Publicación"] || "SIN REVISTA").trim().toUpperCase(),
+    Area:       String(d["ÁREAS"] || "SIN ÁREA").trim().toUpperCase(),
+    Familia:    String(d["Familia"] || "SIN FAMILIA").trim().toUpperCase(),
+    Comercial:  String(d["Comercial"] || "SIN COMERCIAL").trim().toUpperCase(),
+    Producto:   String(d["Producto"] || "").trim().toUpperCase(),
+    Anunciante: String(d["Anunciante"] || "SIN ANUNCIANTE").trim().toUpperCase()
+  })).filter(d => d.Año !== "");
+
+  const years = [...new Set(rawData.map(d=>d.Año))].sort((a,b)=>b-a);
+  const months = [...new Set(rawData.map(d=>d.Mes))].sort((a,b)=>a.localeCompare(b));
+  
+  fYear.innerHTML="<option>Todos</option>"+years.map(y=>`<option>${y}</option>`).join("");
+  fYear2.innerHTML="<option>Sin comparar</option>"+years.map(y=>`<option>${y}</option>`).join("");
+  
+  const populate = (id, key, type) => {
+      const sel = document.getElementById(id);
+      const uniqueVals = [...new Set(rawData.map(d => d[key]))].filter(v => v && !v.includes("ERROR"));
+      sel.innerHTML = "<option>Todos</option>" + 
+          uniqueVals.map(v => `<option value="${v}">${formatLabel(v, type)}</option>`).sort().join("");
+  };
+
+  populate("fComercial", "Comercial", "capitalize");
+  populate("fSite", "Site", "revista");
+  populate("fArea", "Area", "area");
+
+  createMonthCheckboxes("monthContainer1", months);
+  createMonthCheckboxes("monthContainer2", months);
+
+  [fYear, fYear2, fComercial, fSite, fArea].forEach(s => s.onchange = render);
+  document.getElementById("filters").style.display="block"; 
+  document.getElementById("inlineFiltersCard").style.display="block";
+  render();
+}
+
+function createMonthCheckboxes(id, months){
+  const c=document.getElementById(id); c.innerHTML="";
+  months.forEach(m=>{
+    if(!m) return;
+    const l=document.createElement("label");
+    const i=document.createElement("input"); i.type="checkbox"; i.value=m; i.onchange=render;
+    l.appendChild(i); l.appendChild(document.createTextNode(m.replace(/^\d{2}\s/, ""))); c.appendChild(l);
+  });
+}
+
+function filteredBy(year, months, com, site, area){
+  return rawData.filter(d=> 
+    (year==="Todos" || d.Año===year) &&
+    (months.length===0 || months.includes(d.Mes)) &&
+    (com==="Todos" || d.Comercial===com) &&
+    (site==="Todos" || d.Site===site) &&
+    (area==="Todos" || d.Area===area)
+  );
+}
+
+function kpi(container,title,value,pct="",colorVar=null){
+  const h2C = colorVar ? `style="color:var(${colorVar})"` : "";
+  container.innerHTML+=`<div class="kpi"><h2 ${h2C}>${formatCurrency(value)}</h2><p>${title}</p>${pct}</div>`;
+}
+
+function calcNetting(data) {
+    const totalFact = data.reduce((acc, b) => acc + b.ingreso, 0);
+    const groups = {};
+    
+    data.forEach(d => {
+        if (!groups[d.Anunciante]) groups[d.Anunciante] = [];
+        groups[d.Anunciante].push(d.ingreso);
+    });
+
+    let finalLinesCount = 0;
+    
+    Object.values(groups).forEach(pool => {
+        let sortedPool = pool.filter(v => v !== 0).sort((a, b) => Math.abs(a) - Math.abs(b));
+        while (sortedPool.length > 0) {
+            let current = sortedPool.shift();
+            let counterpartIndex = sortedPool.findIndex(v => v === -current);
+            if (counterpartIndex !== -1) {
+                sortedPool.splice(counterpartIndex, 1);
+            } else if (current > 0) {
+                finalLinesCount++;
+            }
+        }
+    });
+
+    return { total: totalFact, lines: finalLinesCount, avg: finalLinesCount ? (totalFact / finalLinesCount) : 0 };
+}
+
+function render(){
+  const y1=fYear.value, m1=Array.from(document.getElementById("monthContainer1").querySelectorAll("input:checked")).map(i=>i.value);
+  const y2=fYear2.value, m2=Array.from(document.getElementById("monthContainer2").querySelectorAll("input:checked")).map(i=>i.value);
+  const c=fComercial.value, s=fSite.value, a=fArea.value;
+
+  const d1=filteredBy(y1,m1,c,s,a), d2=(y2!=="Sin comparar")?filteredBy(y2,m2,c,s,a):[];
+  const resT1 = calcNetting(d1), resT2 = calcNetting(d2);
+
+  let pctT=""; 
+  if(resT2.total !== 0){ 
+    const df=(resT1.total - resT2.total) / Math.abs(resT2.total) * 100; 
+    pctT=`<span class="pct" style="color:${df>=0?'#6ee7b7':'#f87171'}">${df>=0?'+':''}${df.toFixed(0)}%</span>`; 
+  }
+
+  kpisTotals.innerHTML=""; kpisRows.innerHTML="";
+  kpi(kpisTotals,`Total ${y1}`,resT1.total,pctT,"--totales-color");
+  if(y2!=="Sin comparar") kpi(kpisTotals,`Total ${y2}`,resT2.total,"","--totales-color");
+
+const blocks=[
+    {name:"CONVENCIONAL", displayName: "<br><br>FAMILIA: CONVENCIONAL", type:"Familia", color:"--bc-color"},
+    {name:"CONTRAPORTADA", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES PREFERENTES: CONTRAPORTADA", type:"Producto", color:"--bc-color"},
+    {name:"1ª DOBLE PAGINA", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES PREFERENTES: 1ª DOBLE PAGINA", type:"Producto", color:"--bc-color"},
+    {name:"2ª DOBLE PAGINA", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES PREFERENTES: 2ª DOBLE PAGINA", type:"Producto", color:"--bc-color"},
+    {name:"3ª DOBLE PAGINA", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES PREFERENTES: 3ª DOBLE PAGINA", type:"Producto", color:"--bc-color"},
+    {name:"1ª PAGINA IMPAR", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES PREFERENTES: 1ª PAGINA IMPAR", type:"Producto", color:"--bc-color"},
+    {name:"2ª PAGINA IMPAR", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES PREFERENTES: 2ª PAGINA IMPAR", type:"Producto", color:"--bc-color"},
+    {name:"3ª PAGINA IMPAR", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES PREFERENTES: 3ª PAGINA IMPAR", type:"Producto", color:"--bc-color"},
+    {name:"1ª PAGINA PAR", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES PREFERENTES: 1ª PAGINA PAR", type:"Producto", color:"--bc-color"},
+    {name:"1 PAGINA", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES ESTÁNDAR: 1 PAGINA", type:"Producto", color:"--bc-color"},
+    {name:"DOBLE PAGINA", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSICIONES ESTÁNDAR: DOBLE PAGINA", type:"Producto", color:"--bc-color"},
+
+
+
+    {name:"CURATED", displayName: "<br><br>CURATED", type:"Familia", color:"--social-color"},
+
+
+
+    {name:"ELEMENTOS ESPECIALES", displayName: "FAMILIA ELEMENTOS ESPECIALES", displayName: "<br><br>FAMILIA: ELEMENTOS ESPECIALES", type:"Familia", color:"--curated-color"},
+    {name:"ENCARTE", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENCARTE", type:"Producto", color:"--curated-color"},
+    {name:"PRODUCTO EN PORTADA", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PRODUCTO EN PORTADA", type:"Producto", color:"--curated-color"},
+    {name:"SACHETTE", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SACHETTE", type:"Producto", color:"--curated-color"},
+
+
+
+    {name:"SPONSORSHIP", displayName: "FAMILIA SPONSORSHIP", displayName: "<br><br>FAMILIA: SPONSORSHIP", type:"Familia", color:"--display-color"},
+    {name:"DOBLE PAGINA BRANDED", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DOBLE PAGINA BRANDED", type:"Producto", color:"--display-color"},
+    {name:"PAGINA BRANDED", displayName: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAGINA BRANDED", type:"Producto", color:"--display-color"}
+  ];
+
+
+  blocks.forEach(b=>{
+    const filterF = (d) => {
+        const valorData = b.type === "Producto" ? d.Producto : d.Familia;
+        return Array.isArray(b.name) ? b.name.includes(valorData) : valorData === b.name;
+    };
+    const r1=d1.filter(filterF), r2=d2.filter(filterF);
+    const resB1 = calcNetting(r1), resB2 = calcNetting(r2);
+
+    if (resB1.total === 0 && resB2.total === 0) return;
+
+    const divT=document.createElement("div"); divT.className="section-title"; divT.innerHTML=b.displayName || b.name; kpisRows.appendChild(divT);
+    let pS="", pA="";
+    if(resB2.total !== 0){ 
+      const d=(resB1.total - resB2.total) / Math.abs(resB2.total) * 100; 
+      pS=`<span class="pct" style="color:${d>=0?'#6ee7b7':'#f87171'}">${d>=0?'+':''}${d.toFixed(0)}%</span>`; 
+    }
+    if(resB2.avg > 0){ 
+      const d=(resB1.avg - resB2.avg) / resB2.avg * 100; 
+      pA=`<span class="pct" style="color:${d>=0?'#6ee7b7':'#f87171'}">${d>=0?'+':''}${d.toFixed(0)}%</span>`; 
+    }
+    kpi(kpisRows,`Total ${y1}`,resB1.total,pS,b.color);
+    if(y2!=="Sin comparar") kpi(kpisRows,`Total ${y2}`,resB2.total,"",b.color);
+    kpi(kpisRows,`Presu Medio ${y1}`,resB1.avg,pA,b.color);
+    if(y2!=="Sin comparar") kpi(kpisRows,`Presu Medio ${y2}`,resB2.avg,"",b.color);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DISPLAY - Análisis de CPMs medios en Programática</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --card:#111827; --text:#e5e7eb; --base:#38bdf8; --comp:#f59e0b; --neg:#f87171;
+  --ok-green:#34d399; --totalBg:#1e40af; --base-color: #38bdf8; --diffColor:#f1f5f9;
+  --header-grad: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+  --select-bg: #1e3a8a; 
+  --text-pos: #34d399; /* Verde positivo */
+  --text-neg: #f87171; /* Rojo negativo */
+}
+body { margin: 0; font-family: 'Inter', Arial, sans-serif; background: linear-gradient(180deg,#020617,#0f172a); color: var(--text); overflow-y: scroll; }
+.nav-menu { background: #111827; padding: 15px; text-align: center; border-bottom: 1px solid #374151; position: sticky; top: 0; z-index: 1000; height: 55px; display: flex; align-items: center; justify-content: center; }
+.nav-menu a { color: #fff; margin: 0 10px; text-decoration: none; font-size: .9em; opacity: 0.8; }
+.nav-menu .active { opacity: 1; font-weight: bold; border-bottom: 2px solid var(--base-color); padding-bottom: 5px; }
+h1 { text-align: center; font-size: 1.5rem; margin: 20px 0; }
+.container{ max-width:1500px; margin:auto; padding:20px; }
+.card{ background:rgba(17,24,39,.9); border-radius:14px; padding:18px; margin-bottom:20px; border: 1px solid #1f2937; }
+.label-style { font-size: 0.95em; font-weight: bold; margin-bottom: 8px; display: block; }
+
+/* BLOQUES SUPERIORES */
+.totalBlock{ background:var(--totalBg); padding:20px; border-radius:12px; margin-bottom:20px; }
+.totalValues{ display:flex; justify-content:space-around; font-size:18px; text-align: center; }
+.totalValues .value{ font-size:24px; font-weight:800; display: block; margin-top: 8px; color: #fff; }
+
+.statsBlock{ display:flex; justify-content:center; border-radius:12px; margin:20px 0; gap:15px; flex-wrap:nowrap; }
+.subBlock{ border-radius:15px; padding:20px; flex: 1; min-width: 250px; }
+.statsBase{ background:var(--comp); color:#000; }
+.statsDiff{ background:var(--diffColor); color:#000; max-width: 300px; flex: 0.6; }
+.statsComp{ background:var(--base); color:#000; }
+.statsValues{ display:flex; justify-content:space-around; font-size:14px; gap:10px; text-align: center; font-weight: 500; }
+.statsValues .value{ font-size:20px; font-weight:800; display:block; margin-top:8px; }
+
+.pos-val { color: var(--text-pos) !important; }
+.neg-val { color: var(--text-neg) !important; }
+
+/* FILTROS */
+.filters select, input[type=file]{ background: var(--select-bg); color: #fff; border:1px solid #3b82f6; padding:8px 10px; border-radius:8px; width: 100%; box-sizing: border-box; }
+.filtersRow{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+.filtersRow div select{ width:220px; font-weight:600; }
+.checkboxGroup{ display:flex; flex-wrap:wrap; gap:10px; margin-top:5px; }
+.checkboxGroup label{ font-size: 0.85em; font-weight:400; color: #cbd5e1; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+.full-filter-block { margin-top: 20px; padding-top: 15px; border-top: 1px solid #374151; }
+
+/* TABLAS */
+.compact-container { max-width: 1250px; margin: 30px auto; padding: 0 20px; }
+.new-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #111827; border-radius: 12px; overflow: hidden; border: 1px solid #334155; margin-bottom: 10px; }
+.new-table th { background: var(--header-grad); color: #cbd5e1; padding: 12px; text-align: center; font-size: 0.8rem; text-transform: uppercase; border-bottom: 2px solid #1e293b; }
+.new-table td { padding: 10px; border-bottom: 1px solid #1e293b; font-size: 0.9rem; text-align: center; color: #f1f5f9; }
+.new-table tr:hover { background: #1e293b; }
+.total-row { background: #0f172a !important; font-weight: 800; color: var(--base-color); }
+.total-row td { border-top: 2px solid var(--base-color); color: var(--base-color) !important; }
+.table-note { padding: 12px; font-size: 0.8rem; color: #94a3b8; font-style: italic; background: #111827; border-top: 1px solid #334155; }
+
+.diff-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
+.diff-pos { color: #065f46; background: #a7f3d0; }
+.diff-neg { color: #991b1b; background: #fecaca; }
+.diff-num-small { font-size: 0.75rem; opacity: 0.8; font-weight: 400; }
+.pub-name { font-weight: 600; color: var(--base-color); text-align: center !important; }
+.msg-info { text-align: center; padding: 40px; color: var(--base); font-style: italic; }
+
+.table-header-select { width: 320px; padding: 6px; border-radius: 5px; background: var(--select-bg); color: white; border: 1px solid #3b82f6; font-weight: bold; }
+
+/* Estilo Matriz */
+.matrix-wrapper { overflow-x: auto; margin-top: 10px; }
+.matrix-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.matrix-table th, .matrix-table td { border: 1px solid #334155; padding: 8px; text-align: center; }
+.matrix-table th { background: #1e293b; color: #94a3b8; }
+.matrix-table .row-label { text-align: center; background: #0f172a; font-weight: bold; color: #fff; position: sticky; left: 0; }
+.cpm-high { color: var(--ok-green); font-weight: bold; }
+.cpm-low { color: var(--neg); font-weight: bold; }
+
+/* Chart Styling */
+.chart-container { padding: 20px; background: #111827; height: 400px; }
+</style>
+</head>
+<body>
+
+<nav class="nav-menu">
+    <a href="digital-datos-graficos.html" style="color: var(--base-color); font-weight: bold; margin-right: 10px; opacity: 1;">DIGITAL:</a>
+    <a href="digital-totales-familas-productos.html">Productos</a>
+    <a href="digital-display.html">Display (s2i)</a>
+    <a href="digital-display-dashboard.html" class="active">Display (adserver)</a>
+    <a href="digital-redes-sociales.html">RRSS</a>
+    <a href="index.html" style="margin-left: 20px; border-left: 1px solid #4b5563; padding-left: 20px;">🏠 Home</a>
+</nav>
+
+
+<h1>DISPLAY - Análisis de CPMs medios en Programática</h1>
+
+<div class="container">
+    <div class="card">
+        <label class="label-style">Cargar datos (Excel):</label>
+        <input type="file" id="fileInput" accept=".xlsx">
+        <div id="loadStatus">Esperando archivo...</div>
+    </div>
+
+    <div id="filters" class="card" style="display:none">
+        <div class="filtersRow">
+            <div><label style="color:var(--comp)">Año base</label><select id="fYear"></select><div class="checkboxGroup" id="monthsBase"></div></div>
+            <div><label style="color:var(--base)">Año comparación</label><select id="fYear2"></select><div class="checkboxGroup" id="monthsComp"></div></div>
+        </div>
+        
+        <div class="full-filter-block">
+            <label class="label-style" style="color: #34d399">Formato (Filtro General)</label>
+            <select id="fFormato" style="max-width: 460px;">
+                <option value="">-- Todos los Formatos --</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="resultsWrapper" style="display:none">
+        <div class="totalBlock">
+            <div class="totalValues">
+                <div>Año base<div id="totalYear1" class="value">0 €</div></div>
+                <div>Año comparación<div id="totalYear2" class="value">-</div></div>
+                <div>% diferencia<div id="diffPercent" class="value">-</div></div>
+            </div>
+        </div>
+        
+        <div class="statsBlock">
+            <div class="subBlock statsBase">
+                <div class="statsValues">
+                    <div>Fact. Año Base<div id="totalStatsBase" class="value">0 €</div></div>
+                    <div>Nº líneas<div id="linesStatsBase" class="value">0</div></div>
+                    <div>Presupuesto medio<div id="avgStatsBase" class="value">0 €</div></div>
+                </div>
+            </div>
+            <div class="subBlock statsDiff">
+                <div class="statsValues" style="justify-content: center;">
+                    <div>% Crec. Presup. Medio<div id="diffAvgStats" class="value">0%</div></div>
+                </div>
+            </div>
+            <div class="subBlock statsComp">
+                <div class="statsValues">
+                    <div>Fact. Año Comparación<div id="totalStatsComp" class="value">-</div></div>
+                    <div>Nº líneas<div id="linesStatsComp" class="value">0</div></div>
+                    <div>Presupuesto medio<div id="avgStatsComp" class="value">-</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="compact-container">
+        <div id="newTableBlock" class="card" style="display:none; padding: 0;">
+            <div style="background: var(--header-grad); padding: 12px; border-bottom: 1px solid #334155;"><h3 style="margin:0; text-align: center;">RENDIMIENTO POR PUBLICACIÓN</h3></div>
+            <div id="pubContent"></div>
+            <div class="table-note">
+                <strong>Nota:</strong> En la columna "Vs Year Comp.", el % indica el crecimiento o decrecimiento del CPM del año base frente al de comparación. La cifra entre paréntesis muestra la diferencia absoluta en euros (€) entre el CPM del año base y el año comparado.
+            </div>
+        </div>
+    </div>
+
+    <div class="compact-container">
+        <div id="chartBlock" class="card" style="display:none; padding: 0;">
+            <div style="background: var(--header-grad); padding: 12px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; padding-inline: 20px;">
+                <h3 style="margin:0;">EVOLUCIÓN MENSUAL DEL CPM</h3>
+                <select id="fChartFilter" class="table-header-select"></select>
+            </div>
+            <div class="chart-container">
+                <canvas id="cpmChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="compact-container">
+        <div id="secTableBlock" class="card" style="display:none; padding: 0;">
+            <div style="background: var(--header-grad); padding: 12px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; padding-inline: 20px;">
+                <h3 style="margin:0;">DETALLE POR SECCIÓN</h3>
+                <select id="fPubFilter" class="table-header-select"></select>
+            </div>
+            <div id="secContent"></div>
+            <div class="table-note">
+                <strong>Nota:</strong> En la columna "Vs Year Comp.", el % indica el crecimiento o decrecimiento del CPM del año base frente al de comparación. La cifra entre paréntesis muestra la diferencia absoluta en euros (€) entre el CPM del año base y el año comparado.
+            </div>
+        </div>
+    </div>
+
+    <div class="compact-container">
+        <div id="posTableBlock" class="card" style="display:none; padding: 0;">
+            <div style="background: var(--header-grad); padding: 12px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; padding-inline: 20px;">
+                <h3 style="margin:0;">DETALLE POR POSICIÓN</h3>
+                <select id="fPosFilter" class="table-header-select"></select>
+            </div>
+            <div id="posContent"></div>
+            <div class="table-note">
+                <strong>Nota:</strong> En la columna "Vs Year Comp.", el % indica el crecimiento o decrecimiento del CPM del año base frente al de comparación. La cifra entre paréntesis muestra la diferencia absoluta en euros (€) entre el CPM del año base y el año comparado.
+            </div>
+        </div>
+    </div>
+
+    <div class="compact-container">
+        <div id="matrixBlock" class="card" style="display:none; padding: 0;">
+            <div style="background: var(--header-grad); padding: 12px; border-bottom: 1px solid #334155;"><h3 style="margin:0; text-align: center;">CPMs MEDIOS: PUBLICACIÓN vs POSICIÓN</h3></div>
+            <div class="matrix-wrapper" id="matrixContent"></div>
+            <div class="table-note">
+                <strong>Nota:</strong> Los valores en <strong>verde</strong> identifican CPMs por publicación que superan el promedio global de su posición. En <strong>rojo</strong>, aquellos rendimientos que se sitúan por debajo de dicha media.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let rawData = [];
+let cpmChartInstance = null;
+const excelUrls = [
+    "https://javiap20.github.io/datos-en-excel/Informe Adserver año actual.xlsx",
+    "https://javiap20.github.io/datos-en-excel/Informe Adserver año anterior.xlsx"
+];
+
+const MONTHS_CONFIG = [
+    { id: "01", en: "January", matches: ["enero", "january", "01"] },
+    { id: "02", en: "February", matches: ["febrero", "february", "02"] },
+    { id: "03", en: "March", matches: ["marzo", "march", "03"] },
+    { id: "04", en: "April", matches: ["abril", "april", "04"] },
+    { id: "05", en: "May", matches: ["mayo", "may", "05"] },
+    { id: "06", en: "June", matches: ["junio", "june", "06"] },
+    { id: "07", en: "July", matches: ["julio", "july", "07"] },
+    { id: "08", en: "August", matches: ["agosto", "august", "08"] },
+    { id: "09", en: "September", matches: ["septiembre", "september", "09"] },
+    { id: "10", en: "October", matches: ["octubre", "october", "10"] },
+    { id: "11", en: "November", matches: ["noviembre", "november", "11"] },
+    { id: "12", en: "December", matches: ["diciembre", "december", "12"] }
+];
+
+function formatThousands(n) {
+    if (n === null || n === undefined || isNaN(n)) return "0";
+    let parts = Math.round(n).toString().split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return parts.join(",");
+}
+
+function formatDecimals(n) {
+    if (n === null || n === undefined || isNaN(n)) return "0,00";
+    let fixed = Number(n).toFixed(2).replace(".", ",");
+    let parts = fixed.split(",");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return parts.join(",");
+}
+
+const fmtCur = n => formatThousands(n) + " €";
+const fmtInt = n => formatThousands(n);
+const fmtDec = n => formatDecimals(n);
+
+function num(v){
+    if(!v) return 0;
+    if(typeof v === 'number') return v;
+    let s = String(v).replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".").replace("€","");
+    return isNaN(parseFloat(s)) ? 0 : parseFloat(s);
+}
+
+fileInput.onchange = e => {
+    const f = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), {type:"array"});
+        init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""}));
+    };
+    reader.readAsArrayBuffer(f);
+};
+
+// Carga automática de los dos archivos al abrir la página
+const statusEl = document.getElementById("loadStatus");
+statusEl.textContent = "⏳ Cargando datos...";
+
+Promise.all(excelUrls.map(url =>
+    fetch(url)
+        .then(r => r.arrayBuffer())
+        .then(buf => {
+            const wb = XLSX.read(new Uint8Array(buf), {type:"array"});
+            return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""});
+        })
+))
+.then(datasets => {
+    const combined = datasets.flat();
+    init(combined);
+    statusEl.textContent = "✅ Datos cargados automáticamente";
+})
+.catch(() => {
+    statusEl.textContent = "⚠️ No se pudo cargar automáticamente. Carga el archivo manualmente.";
+});
+
+function init(data){
+    rawData = data.map(d => {
+        const mesCelda = String(d["Mes inserción"] || "").toLowerCase();
+        const mesObj = MONTHS_CONFIG.find(m => m.matches.some(v => mesCelda.includes(v)));
+        return {
+            ingreso: num(d["Imp.Neto a Comisionar"]),
+            impresiones: num(d["Impresiones"]),
+            Año: String(d["Año inserción"] || "").trim(),
+            Mes: mesObj ? mesObj.en : "Unknown",
+            Publicacion: String(d["Publicación"] || "").replace("HMIES | ", "").trim(),
+            Seccion: String(d["Sección"] || "Sin Sección").trim(),
+            Posicion: String(d["Posición"] || "Sin Posición").trim(),
+            Formato: String(d["Formato"] || "Sin Formato").trim() // Nueva columna
+        };
+    }).filter(d => d.Año !== "");
+
+    const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+    fYear.innerHTML = "<option value=''>Select Year...</option>" + years.map(y=>`<option>${y}</option>`).join("");
+    fYear2.innerHTML = "<option value=''>No comparison</option>" + years.map(y=>`<option>${y}</option>`).join("");
+    
+    // Poblar Filtro Formato
+    const formatos = [...new Set(rawData.map(d=>d.Formato))].sort();
+    fFormato.innerHTML = "<option value=''>-- Todos los Formatos --</option>" + formatos.map(f=>`<option value="${f}">${f}</option>`).join("");
+
+    const pubs = [...new Set(rawData.map(d=>d.Publicacion))].sort();
+    fPubFilter.innerHTML = "<option value=''>Select publication for sections...</option>" + pubs.map(p=>`<option>${p}</option>`).join("");
+    fPosFilter.innerHTML = "<option value=''>-- All Publications --</option>" + pubs.map(p=>`<option>${p}</option>`).join("");
+    fChartFilter.innerHTML = "<option value=''>-- Global CPM (All Sites) --</option>" + pubs.map(p=>`<option>${p}</option>`).join("");
+
+    const mesesHTML = MONTHS_CONFIG.map(m=>`<label><input type="checkbox" value="${m.en}" onchange="render()"> ${m.en}</label>`).join("");
+    document.getElementById("monthsBase").innerHTML = mesesHTML;
+    document.getElementById("monthsComp").innerHTML = mesesHTML;
+
+    [fYear, fYear2, fPubFilter, fPosFilter, fChartFilter, fFormato].forEach(el => el.onchange = render);
+    ["filters","resultsWrapper","newTableBlock","secTableBlock","posTableBlock","matrixBlock", "chartBlock"].forEach(id => document.getElementById(id).style.display="block");
+    render();
+    document.getElementById("loadStatus").innerText = "✅ File loaded";
+}
+
+function calcNetting(data) {
+    let total = 0, lines = 0;
+    data.forEach(d => { total += d.ingreso; if(d.ingreso > 0) lines++; });
+    return { total, lines, avg: lines ? total / lines : 0 };
+}
+
+function render(){
+    const y1 = fYear.value;
+    const y2 = fYear2.value;
+    const selFormato = fFormato.value;
+    const selPubSec = fPubFilter.value;
+    const selPubPos = fPosFilter.value;
+    const selPubChart = fChartFilter.value;
+
+    if(!y1) return;
+
+    const m1 = Array.from(document.querySelectorAll("#monthsBase input:checked")).map(i=>i.value);
+    const m2 = Array.from(document.querySelectorAll("#monthsComp input:checked")).map(i=>i.value);
+    
+    // Aplicamos filtro de año, meses y FORMATO
+    const filter = (y, ms) => rawData.filter(d => 
+        d.Año === y && 
+        (ms.length === 0 || ms.includes(d.Mes)) &&
+        (selFormato === "" || d.Formato === selFormato)
+    );
+
+    const d1 = filter(y1, m1);
+    const res1 = calcNetting(d1);
+
+    totalYear1.textContent = fmtCur(res1.total);
+    totalStatsBase.textContent = fmtCur(res1.total);
+    linesStatsBase.textContent = fmtInt(res1.lines);
+    avgStatsBase.textContent = fmtCur(res1.avg);
+
+    diffPercent.className = "value";
+    diffAvgStats.className = "value";
+
+    let d2 = [];
+    if(y2) {
+        d2 = filter(y2, m2);
+        const res2 = calcNetting(d2);
+        totalYear2.textContent = fmtCur(res2.total);
+        totalStatsComp.textContent = fmtCur(res2.total);
+        linesStatsComp.textContent = fmtInt(res2.lines);
+        avgStatsComp.textContent = fmtCur(res2.avg);
+        
+        let diff = res2.total ? Math.round(((res1.total/res2.total)-1)*100) : 0;
+        diffPercent.textContent = (diff>0?"+":"") + fmtInt(diff) + "%";
+        diffPercent.classList.add(diff >= 0 ? "pos-val" : "neg-val");
+
+        let diffAvg = res2.avg ? Math.round(((res1.avg/res2.avg)-1)*100) : 0;
+        diffAvgStats.textContent = (diffAvg>0?"+":"") + fmtInt(diffAvg) + "%";
+        diffAvgStats.classList.add(diffAvg >= 0 ? "pos-val" : "neg-val");
+    } else {
+        totalYear2.textContent = "-";
+        totalStatsComp.textContent = "-";
+        linesStatsComp.textContent = "0";
+        avgStatsComp.textContent = "-";
+        diffPercent.textContent = "-";
+        diffAvgStats.textContent = "0%";
+    }
+
+    renderTable(d1, d2, "Publicacion", pubContent);
+    
+    if(selPubSec) {
+        renderTable(d1.filter(d => d.Publicacion === selPubSec), d2.filter(d => d.Publicacion === selPubSec), "Seccion", secContent);
+    } else {
+        secContent.innerHTML = "<div class='msg-info'>Choose a publication to see sections.</div>";
+    }
+
+    const posD1 = selPubPos ? d1.filter(d => d.Publicacion === selPubPos) : d1;
+    const posD2 = selPubPos ? d2.filter(d => d.Publicacion === selPubPos) : d2;
+    renderTable(posD1, posD2, "Posicion", posContent);
+
+    renderMatrix(d1);
+    updateChart(y1, y2, selPubChart, selFormato);
+}
+
+function renderTable(data1, data2, key, container) {
+    const sum1 = {}, sum2 = {};
+    let gT1 = 0, gI1 = 0, gT2 = 0, gI2 = 0;
+    data1.forEach(d => {
+        if(!sum1[d[key]]) sum1[d[key]] = { ingreso: 0, imps: 0 };
+        sum1[d[key]].ingreso += d.ingreso; sum1[d[key]].imps += d.impresiones;
+        gT1 += d.ingreso; gI1 += d.impresiones;
+    });
+    data2.forEach(d => {
+        if(!sum2[d[key]]) sum2[d[key]] = { ingreso: 0, imps: 0 };
+        sum2[d[key]].ingreso += d.ingreso; sum2[d[key]].imps += d.impresiones;
+        gT2 += d.ingreso; gI2 += d.impresiones;
+    });
+
+    let displayKey = key === "Seccion" ? "Sección" : (key === "Posicion" ? "Posición" : "Publicación");
+    let html = `<table class="new-table"><thead><tr><th style="text-align:center;">${displayKey}</th><th>Imp. Neto</th><th>Impresiones</th><th>CPM</th><th>Vs Year Comp.</th></tr></thead><tbody>`;
+
+    Object.keys(sum1).sort().forEach(label => {
+        const i1 = sum1[label], i2 = sum2[label] || { ingreso: 0, imps: 0 };
+        const cpm1 = i1.imps > 0 ? (i1.ingreso/i1.imps)*1000 : 0;
+        const cpm2 = i2.imps > 0 ? (i2.ingreso/i2.imps)*1000 : 0;
+        let disc = "-";
+        if(cpm2 > 0) {
+            const p = Math.round(((cpm1/cpm2)-1)*100);
+            disc = `<div class="diff-badge ${p>=0?'diff-pos':'diff-neg'}">${p>0?'+':''}${fmtInt(p)}% <span class="diff-num-small">(${fmtDec(cpm1-cpm2)} €)</span></div>`;
+        }
+        html += `<tr><td class="pub-name">${label}</td><td>${fmtCur(i1.ingreso)}</td><td>${fmtInt(i1.imps)}</td><td style="font-weight:700;">${fmtDec(cpm1)} €</td><td>${disc}</td></tr>`;
+    });
+    const tcpm1 = gI1 > 0 ? (gT1/gI1)*1000 : 0;
+    const tcpm2 = gI2 > 0 ? (gT2/gI2)*1000 : 0;
+    let tDisc = "-";
+    if(tcpm2 > 0) {
+        const tp = Math.round(((tcpm1/tcpm2)-1)*100);
+        tDisc = `<div class="diff-badge ${tp>=0?'diff-pos':'diff-neg'}">${tp>0?'+':''}${fmtInt(tp)}% <span class="diff-num-small">(${fmtDec(tcpm1-tcpm2)} €)</span></div>`;
+    }
+    html += `</tbody><tfoot><tr class="total-row"><td class="pub-name">TOTAL</td><td>${fmtCur(gT1)}</td><td>${fmtInt(gI1)}</td><td>${fmtDec(tcpm1)} €</td><td>${tDisc}</td></tr></tfoot></table>`;
+    container.innerHTML = html;
+}
+
+function updateChart(y1, y2, pub, formato) {
+    const ctx = document.getElementById('cpmChart').getContext('2d');
+    const getMonthlyData = (year, filterPub) => {
+        return MONTHS_CONFIG.map(m => {
+            const subset = rawData.filter(d => 
+                d.Año === year && 
+                d.Mes === m.en && 
+                (!filterPub || d.Publicacion === filterPub) &&
+                (formato === "" || d.Formato === formato)
+            );
+            let ing = 0, imps = 0;
+            subset.forEach(s => { ing += s.ingreso; imps += s.impresiones; });
+            return imps > 0 ? (ing / imps) * 1000 : null;
+        });
+    };
+
+    const data1 = getMonthlyData(y1, pub);
+    const datasets = [{
+        label: `CPM Base Year (${y1})`,
+        data: data1,
+        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+        fill: true,
+        tension: 0.3
+    }];
+
+    if(y2) {
+        datasets.push({
+            label: `CPM Comp. Year (${y2})`,
+            data: getMonthlyData(y2, pub),
+            borderColor: '#f59e0b',
+            backgroundColor: 'transparent',
+            borderDash: [5, 5],
+            tension: 0.3
+        });
+    }
+
+    if(cpmChartInstance) cpmChartInstance.destroy();
+    cpmChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels: MONTHS_CONFIG.map(m => m.en), datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#fff' } } },
+            scales: {
+                y: { ticks: { color: '#94a3b8', callback: v => v + '€' }, grid: { color: '#1f2937' } },
+                x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderMatrix(data) {
+    const matrix = {};
+    const pubs = new Set();
+    const poss = new Set();
+    const posTotals = {};
+    data.forEach(d => {
+        pubs.add(d.Publicacion); poss.add(d.Posicion);
+        if(!matrix[d.Publicacion]) matrix[d.Publicacion] = {};
+        if(!matrix[d.Publicacion][d.Posicion]) matrix[d.Publicacion][d.Posicion] = { ing: 0, imps: 0 };
+        matrix[d.Publicacion][d.Posicion].ing += d.ingreso;
+        matrix[d.Publicacion][d.Posicion].imps += d.impresiones;
+        if(!posTotals[d.Posicion]) posTotals[d.Posicion] = { ing: 0, imps: 0 };
+        posTotals[d.Posicion].ing += d.ingreso; posTotals[d.Posicion].imps += d.impresiones;
+    });
+    const sortedPubs = Array.from(pubs).sort();
+    const sortedPoss = Array.from(poss).sort();
+    let html = `<table class="matrix-table"><thead><tr><th class="row-label" style="color:var(--base-color)">Pub. / Pos.</th>`;
+    sortedPoss.forEach(p => html += `<th>${p}</th>`);
+    html += `</tr></thead><tbody>`;
+    sortedPubs.forEach(pb => {
+        html += `<tr><td class="row-label">${pb}</td>`;
+        sortedPoss.forEach(ps => {
+            const cell = matrix[pb][ps];
+            if(cell && cell.imps > 0) {
+                const cpm = (cell.ing / cell.imps) * 1000;
+                const posAvg = (posTotals[ps].ing / posTotals[ps].imps) * 1000;
+                html += `<td class="${cpm >= posAvg ? 'cpm-high' : 'cpm-low'}">${fmtDec(cpm)} €</td>`;
+            } else html += `<td>-</td>`;
+        });
+        html += `</tr>`;
+    });
+    html += `<tr class="total-row"><td class="row-label" style="color:var(--base-color)">AVG POS.</td>`;
+    sortedPoss.forEach(ps => {
+        const avg = (posTotals[ps].ing / posTotals[ps].imps) * 1000;
+        html += `<td>${fmtDec(avg)} €</td>`;
+    });
+    html += `</tr></tbody></table>`;
+    document.getElementById("matrixContent").innerHTML = html;
+}
+</script>
+</body>
+</html>

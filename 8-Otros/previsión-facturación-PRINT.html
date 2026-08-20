@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRINT - Previsiones</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --card:#111827;
+  --text:#e5e7eb;
+  --base:#38bdf8; 
+  --neg:#f87171;
+  --ok-green: #34d399;
+  --fucsia: #f472b6; 
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: linear-gradient(180deg,#020617,#0f172a);
+  color: var(--text);
+  padding: 20px;
+}
+
+.container{ max-width:1150px; margin:auto; }
+
+.card{
+  background:rgba(17,24,39,.9); border-radius:14px; padding:20px; margin-bottom:25px; border: 1px solid #1f2937;
+}
+
+h1 { text-align: center; color: var(--text); margin-bottom: 30px; font-size: 1.8rem; border-bottom: 1px solid #374151; padding-bottom: 15px; }
+h2 { font-size: 1.1rem; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; text-align: center; color: var(--fucsia); }
+
+.filtersRow { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px;}
+.filtersRow div { flex: 1; min-width: 200px; }
+
+select, input[type=file] {
+  background:#1f2933; color:var(--text); border:1px solid #374151; padding:8px; border-radius:8px; width: 100%; margin-top: 8px;
+}
+
+label { font-size: 0.85em; font-weight: 600; color: #9ca3af; }
+
+.forecast-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 10px; }
+.forecast-table th { color: #94a3b8; font-size: 0.75em; padding: 10px; border-bottom: 2px solid #374151; text-align: center; }
+.forecast-table td { padding: 12px 10px; text-align: center; font-size: 1.1rem; border-bottom: 1px solid #1f2937; font-weight: 700; }
+.row-label { text-align: left !important; color: #9ca3af; font-size: 0.8rem; width: 22%; font-weight: normal; }
+
+.diff-money { display: block; font-size: 0.75rem; font-weight: normal; margin-top: 4px; opacity: 0.9; }
+
+.val-blue { color: var(--base); }
+.val-white { color: #fff; }
+.negative { color: var(--neg) !important; }
+.positive { color: var(--ok-green) !important; }
+
+.breakdown-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+.breakdown-table th { background: #1f2937; padding: 10px; text-align: center; color: var(--fucsia); border-bottom: 1px solid #374151; }
+.breakdown-table td { padding: 8px 10px; border-bottom: 1px solid #1f2937; text-align: center; }
+.breakdown-table td:first-child { text-align: left; font-weight: bold; color: #cbd5e1; }
+
+.row-total { background: #1e293b; font-weight: bold; border-top: 2px solid var(--fucsia); }
+.row-total td { color: #fff !important; font-size: 0.95rem; padding: 12px 10px; }
+
+.info-ciclo { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: -20px; margin-bottom: 20px; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>ANÁLISIS DE PREVISIÓN PRINT</h1>
+  <div id="cicloInfo" class="info-ciclo"></div>
+
+  <div class="card">
+    <label>Cargar archivo de facturación (Excel/JSON):</label>
+    <input type="file" id="fileInput" accept=".json,.xlsx">
+    <div id="loadStatus" style="margin-top:8px; font-size:0.8em; color: #6b7280;">Esperando datos...</div>
+  </div>
+
+  <div id="filterBlock" class="card" style="display:none">
+    <div class="filtersRow">
+      <div><label>Año de Análisis</label><select id="fYear"></select></div>
+      <div><label>Año de Comparación</label><select id="fYear2"></select></div>
+    </div>
+  </div>
+
+  <div id="scenariosWrapper"></div>
+</div>
+
+<script>
+const MONTHS=["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio","07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+
+let rawData=[];
+const num = v => {
+  if(v==null) return 0;
+  if(typeof v === 'number') return v;
+  let s = String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".");
+  return Number.isFinite(Number(s)) ? Number(s) : 0;
+};
+const fmt = n => new Intl.NumberFormat('es-ES', { useGrouping: true, maximumFractionDigits: 0 }).format(Math.round(n)) + '€';
+
+// LÓGICA DE CICLO 20-19
+function getProgresoCiclo(fechaActual) {
+    const hoy = new Date(fechaActual);
+    const dia = hoy.getDate();
+    let inicioCiclo, finCiclo;
+
+    if (dia >= 20) {
+        // Estamos en la primera parte del ciclo (ej: 22 de enero pertenece al ciclo Enero que empezó el 20 de Enero)
+        inicioCiclo = new Date(hoy.getFullYear(), hoy.getMonth(), 20);
+        finCiclo = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 19);
+    } else {
+        // Estamos en la segunda parte del ciclo (ej: 5 de enero pertenece al ciclo Enero que empezó el 20 de Diciembre)
+        inicioCiclo = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 20);
+        finCiclo = new Date(hoy.getFullYear(), hoy.getMonth(), 19);
+    }
+
+    const totalDiasCiclo = (finCiclo - inicioCiclo) / (1000 * 60 * 60 * 24) + 1;
+    const diasTranscurridos = (hoy - inicioCiclo) / (1000 * 60 * 60 * 24) + 1;
+    
+    return {
+        porcentaje: diasTranscurridos / totalDiasCiclo,
+        diasTranscurridos: Math.floor(diasTranscurridos),
+        totalDiasCiclo: Math.floor(totalDiasCiclo),
+        texto: `Ciclo actual: del ${inicioCiclo.toLocaleDateString()} al ${finCiclo.toLocaleDateString()}`
+    };
+}
+
+fileInput.onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const data = f.name.endsWith("json") ? JSON.parse(ev.target.result) : XLSX.utils.sheet_to_json(XLSX.read(new Uint8Array(ev.target.result), {type:"array"}).Sheets[XLSX.read(new Uint8Array(ev.target.result), {type:"array"}).SheetNames[0]], { defval: "" });
+    rawData = data.map(d => ({ 
+        ingreso: num(d["Imp.Neto a Comisionar"]), 
+        Año: String(d["Año inserción"] || "").trim(), 
+        Mes: MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+        Site: String(d["Publicación"] || "SIN SITE").trim()
+    })).filter(d => d.Año !== "");
+    const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+    fYear.innerHTML = years.map(y=>`<option ${y==='2026'?'selected':''}>${y}</option>`).join("");
+    fYear2.innerHTML = years.map(y=>`<option ${y==='2025'?'selected':''}>${y}</option>`).join("");
+    fYear.onchange = fYear2.onchange = render;
+    document.getElementById("filterBlock").style.display = "block";
+    render();
+  };
+  f.name.endsWith("json") ? r.readAsText(f) : r.readAsArrayBuffer(f);
+};
+
+function render() {
+  const yB = fYear.value; const yC = fYear2.value;
+  const hoy = new Date();
+  const infoCiclo = getProgresoCiclo(hoy);
+  document.getElementById("cicloInfo").innerText = infoCiclo.texto + ` (${infoCiclo.diasTranscurridos} de ${infoCiclo.totalDiasCiclo} días)`;
+
+  const mesIdx = hoy.getMonth();
+  const mesS = MONTHS[mesIdx];
+  
+  const dBase = rawData.filter(d => d.Año === yB);
+  const dComp = rawData.filter(d => d.Año === yC);
+  const wrapper = document.getElementById("scenariosWrapper");
+  wrapper.innerHTML = "";
+
+  const escenarios = [
+    { inc: 1, showSites: true },
+    { inc: 2, showSites: false },
+    { inc: 3.5, showSites: false }
+  ];
+
+  escenarios.forEach(esc => {
+    const rMes = dBase.filter(d => d.Mes === mesS).reduce((a, b) => a + b.ingreso, 0);
+    
+    // Proyección Lineal basada en el progreso del ciclo 20-19
+    const pLinM = rMes / infoCiclo.porcentaje;
+    
+    const compM = dComp.filter(d => d.Mes === mesS).reduce((a, b) => a + b.ingreso, 0);
+    // En el caso de Print sin programática, el proyectado ajustado simplemente sigue la tendencia histórica vs el año pasado
+    const pAjuM = pLinM * (1 + (esc.inc - 1)/100); 
+
+    const diffM_perc = compM ? ((pAjuM / compM) - 1) * 100 : 0;
+    const diffM_cash = pAjuM - compM;
+
+    let rA = 0, pA = 0, cA = 0;
+    MONTHS.forEach((m, idx) => {
+      const b = dBase.filter(d => d.Mes === m).reduce((a, b) => a + b.ingreso, 0);
+      const c = dComp.filter(d => d.Mes === m).reduce((a, b) => a + b.ingreso, 0);
+      cA += c;
+      if (idx < mesIdx) { rA += b; pA += b; }
+      else if (idx === mesIdx) { rA += b; pA += pAjuM; }
+      else { pA += (c * (1 + esc.inc/100)); }
+    });
+    const diffA_perc = cA ? ((pA / cA) - 1) * 100 : 0;
+    const diffA_cash = pA - cA;
+
+    let html = `
+      <div class="card">
+        <h2>Estimación de Cierre de Negocio (${esc.inc}%)</h2>
+        <table class="forecast-table">
+          <thead>
+            <tr><th>Concepto</th><th>Real a Fecha</th><th>Proy. LINEAL (Ciclo 20-19)</th><th>vs. Año Anterior</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-label">MES ACTUAL (${mesS.split(" ")[1].toUpperCase()})</td>
+              <td class="val-white">${fmt(rMes)}</td>
+              <td class="val-blue">${fmt(pLinM)}</td>
+              <td class="${diffM_perc >= 0 ? 'positive' : 'negative'}">
+                ${(diffM_perc > 0 ? "+" : "") + diffM_perc.toFixed(1)}%
+                <span class="diff-money">(${fmt(diffM_cash)})</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="row-label">TOTAL AÑO (PROY.)</td>
+              <td class="val-white">${fmt(rA)}</td>
+              <td class="val-blue">${fmt(pA)}</td>
+              <td class="${diffA_perc >= 0 ? 'positive' : 'negative'}">
+                ${(diffA_perc > 0 ? "+" : "") + diffA_perc.toFixed(1)}%
+                <span class="diff-money">(${fmt(diffA_cash)})</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+
+    if (esc.showSites) {
+      const sites = [...new Set(rawData.map(d => d.Site))].sort();
+      let sRealT = 0, sPLinT = 0, sCompT = 0;
+      let sitesHtml = `
+        <div class="card" style="border-top: 2px solid var(--fucsia); background: rgba(15, 23, 42, 0.95);">
+          <h2>Desglose por Publicación (${mesS.split(" ")[1].toUpperCase()}) - Escenario 1%</h2>
+          <table class="breakdown-table">
+            <thead>
+              <tr><th>Site</th><th>Real</th><th>Proy. Lineal</th><th>vs. Hist</th></tr>
+            </thead>
+            <tbody>`;
+      
+      sites.forEach(s => {
+        const rS = dBase.filter(d => d.Mes === mesS && d.Site === s).reduce((a,b)=>a+b.ingreso,0);
+        if (rS === 0) return;
+        const pLS = rS / infoCiclo.porcentaje;
+        const cS = dComp.filter(d => d.Mes === mesS && d.Site === s).reduce((a,b)=>a+b.ingreso,0);
+        sRealT += rS; sPLinT += pLS; sCompT += cS;
+
+        const dS_p = cS ? ((pLS/cS)-1)*100 : 0;
+        const dS_c = pLS - cS;
+
+        sitesHtml += `
+          <tr>
+            <td>${s}</td>
+            <td>${fmt(rS)}</td>
+            <td class="val-blue">${fmt(pLS)}</td>
+            <td class="${dS_p >= 0 ? 'positive' : 'negative'}">
+              ${(dS_p > 0 ? "+" : "") + dS_p.toFixed(1)}% <span style="font-size:0.7rem; opacity:0.8">(${fmt(dS_c)})</span>
+            </td>
+          </tr>`;
+      });
+
+      const totalD_p = sCompT ? ((sPLinT/sCompT)-1)*100 : 0;
+      const totalD_c = sPLinT - sCompT;
+
+      sitesHtml += `
+            <tr class="row-total">
+              <td style="text-align:left">TOTAL SUMATORIO</td>
+              <td>${fmt(sRealT)}</td>
+              <td>${fmt(sPLinT)}</td>
+              <td>
+                ${(totalD_p > 0 ? "+" : "") + totalD_p.toFixed(1)}% <span style="font-size:0.75rem">(${fmt(totalD_c)})</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+      html += sitesHtml;
+    }
+    wrapper.innerHTML += html;
+  });
+}
+
+// --- BLOQUE DE CARGA AUTOMÁTICA ADAPTADO PARA PRINT (CICLO 20-19) ---
+window.addEventListener('load', () => {
+    const nombreArchivo = "https://javiap20.github.io/datos-en-excel/PRODUCCION PRINT.xlsx"; // O "https://javiap20.github.io/datos-en-excel/PRODUCCION PRINT.xlsx" si usas otro archivo
+
+    fetch(nombreArchivo)
+        .then(res => {
+            if (!res.ok) throw new Error();
+            return res.arrayBuffer();
+        })
+        .then(data => {
+            const wb = XLSX.read(new Uint8Array(data), {type: "array"});
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+            
+            if (json.length > 0) {
+                // Mapeo específico para el reporte de PRINT
+                rawData = json.map(d => ({ 
+                    ingreso: num(d["Imp.Neto a Comisionar"]), 
+                    Año: String(d["Año inserción"] || "").trim(), 
+                    Mes: MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+                    Site: String(d["Publicación"] || "SIN SITE").trim()
+                })).filter(d => d.Año !== "");
+
+                // Inicialización de filtros con años dinámicos
+                const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+                fYear.innerHTML = years.map(y=>`<option ${y==='2026'?'selected':''}>${y}</option>`).join("");
+                fYear2.innerHTML = years.map(y=>`<option ${y==='2025'?'selected':''}>${y}</option>`).join("");
+                
+                fYear.onchange = fYear2.onchange = render;
+                
+                // Mostrar bloque de filtros y aviso de éxito
+                document.getElementById("filterBlock").style.display = "block";
+                document.getElementById("loadStatus").innerText = "✅ Reporte PRINT cargado automáticamente";
+                document.getElementById("loadStatus").style.color = "var(--ok-green)";
+                
+                render();
+            }
+        })
+        .catch(() => {
+            document.getElementById("loadStatus").innerText = "⚠️ Carga automática no disponible. Sube el archivo manualmente.";
+        });
+});
+
+</script>
+</body>
+</html>

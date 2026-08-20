@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRINT - Evolución de los Ingresos</title>
+
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --card:#111827;
+  --text:#e5e7eb;
+
+  --print-color: #db2777;
+  --evento-color: #34d399;
+  --bc-color: #38bdf8;
+
+  --nav-digital: #38bdf8;
+  --fucsia: #db2777;
+  
+  --color-anio-base: #38bdf8; 
+  --color-anio-comp: #f59e0b; 
+  --familiaBg: #fce7f3; /* Rosa clarito para el fondo de familias */
+
+  --neg:#f87171;   
+  --diffColor:#6ee7b7; 
+  --ok-green: #34d399; 
+  --totalBg:#1e40af;
+
+  --revistaBg:#fef3c7; 
+  --productoBg:#dbeafe; 
+  --sectorBg:#fbcfe8;
+  --comercialBg:#d1fae5; 
+  --areaBg:#fcd5ce; 
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: linear-gradient(180deg,#020617,#0f172a);
+  color: var(--text);
+  overflow-y: scroll;
+}
+
+.nav-menu {
+  background: #111827;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-menu a {
+  color: #fff;
+  margin: 0 10px;
+  text-decoration: none;
+  font-size: .9em;
+  opacity: 0.8;
+}
+.nav-menu a:hover { opacity: 1; color: var(--color-anio-base); }
+.nav-menu .active { font-weight: bold; border-bottom: 2px solid var(--color-anio-base); opacity: 1; padding-bottom: 5px; }
+
+h1{ text-align:center; margin:20px 0; font-size: 1.5em; }
+
+.container{ max-width:1500px; margin:auto; padding:20px; }
+.card{
+  background:rgba(17,24,39,.9);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:20px;
+  border: 1px solid #1f2937;
+}
+
+.upload-label { 
+    display: block; 
+    font-weight: bold; 
+    margin-bottom: 12px; 
+    font-size: 0.95em;
+}
+.file-input-wrapper {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+}
+#fileInput {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    width: 100%;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+/* ESTILO PARA EL BLOQUE DE FAMILIAS */
+.family-container {
+    background: var(--familiaBg) !important;
+    border: 1px solid var(--print-color) !important;
+}
+.family-container label {
+    color: #111 !important;
+    font-size: 0.85em !important;
+    font-weight: 600 !important;
+    background: rgba(255,255,255,0.6);
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.filters select,input[type=file]{
+  background:#1f2933;
+  color:var(--text);
+  border:1px solid #1f2937;
+  padding:8px 10px;
+  border-radius:8px;
+  margin-right:14px;
+}
+.filters label{ font-weight:600; margin-right:6px; display:block; margin-top:10px; }
+
+.filtersRow{
+  display:flex;
+  gap:20px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
+.filtersRow div select{
+  width:220px; 
+  font-weight:600;
+}
+
+#fSite{ background:var(--revistaBg); color:#111; }
+#fProduct{ background:var(--productoBg); color:#111; }
+#fSector{ background:var(--sectorBg); color:#111; }
+#fComercial{ background:var(--comercialBg); color:#111; }
+#fArea{ background:var(--areaBg); color:#111; }
+
+.checkboxGroup{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:5px;
+}
+.checkboxGroup label{ font-weight:400; font-size: 0.85em; cursor: pointer; }
+
+.totalBlock{
+  background:var(--totalBg);
+  padding:15px;
+  border-radius:12px;
+  margin-top:10px;
+}
+.totalValues{
+  display:flex;
+  justify-content:space-around;
+  font-size:18px;
+}
+.totalValues div{text-align:center;}
+.totalValues .value{ font-size:22px; font-weight:700; display: block; margin-top: 5px; }
+#diffPercent.negative { color: var(--neg); }
+
+.statsBlock{
+  display:flex;
+  justify-content:center;
+  border-radius:12px;
+  margin:20px 0;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.subBlock{
+  border-radius:12px;
+  padding:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#111;
+}
+.statsBase{ flex:0 0 450px; background:var(--color-anio-base); }
+.statsDiff{ flex:0 0 300px; background:var(--diffColor); text-align:center; }
+.statsComp{ flex:0 0 450px; background:var(--color-anio-comp); }
+
+.statsValues{
+  display:flex;
+  justify-content:center;
+  font-size:16px;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.statsValues div{text-align:center;}
+.statsValues .value{ font-size:18px; font-weight:700; display:block; margin-top:5px; }
+.statsDiff .value.negative{ color:var(--neg); }
+.statsDiff div:first-child{ font-weight:700; }
+
+.labelBase{ color: var(--color-anio-base); font-weight:700; }
+.labelComp{ color: var(--color-anio-comp); font-weight:700; }
+
+.grid{
+display: grid;
+grid-template-columns: 1fr;
+gap: 20px;
+}
+.chart{ height:420px; width: 100%; }
+.card h2{ margin-top:0; margin-bottom:10px; }
+
+.sites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+.mini-chart-card {
+    background: rgba(17,24,39,0.8);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid #374151;
+}
+.mini-chart-card h3 {
+    font-size: 0.85rem;
+    margin: 0 0 10px 0;
+    text-align: center;
+    color: var(--color-anio-base);
+    font-weight: normal;
+}
+.mini-chart { height: 220px; }
+</style>
+</head>
+
+<body>
+
+<nav class="nav-menu">
+    <span style="color: #38bdf8; font-weight: bold; margin-right: 10px; opacity: 1;">DIGITAL:</span>
+    <a href="digital-datos-graficos.html">Datos</a>
+    <a href="digital-facturacion-desglosada.html">Desglose</a>
+    <a href="digital-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="digital-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="digital-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--print-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1;">PRINT:</span>
+    <a href="print-datos-graficos.html">Datos</a>
+    <a href="print-facturacion-desglosada.html" class="active">Desglose</a>
+    <a href="print-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="print-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="print-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--evento-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1; font-size: 0.95em;">EVENTOS:</span>
+    <a href="eventos-datos-graficos.html">Datos</a>
+    <a href="eventos-facturacion-desglosada.html">Desglose</a>
+    <a href="eventos-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="eventos-facturacion-por-anunciante-y-marca.html">Marcas</a>
+
+    <a href="index.html" style="margin-left: 20px; border-left: 1px solid #4b5563; padding-left: 20px;">🏠 Home</a>
+</nav>
+
+<h1>PRINT - Evolución de los Ingresos</h1>
+
+<div class="container">
+
+  <div class="card">
+    <label class="upload-label">Cargar datos (Excel):</label>
+    <div class="file-input-wrapper">
+        <input type="file" id="fileInput" accept=".json,.xlsx">
+    </div>
+    <div id="loadStatus">Esperando archivo...</div>
+  </div>
+
+<div id="filters" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div>
+        <label class="labelBase">Año base</label>
+        <select id="fYear"></select>
+        <div class="checkboxGroup" id="monthsBase"></div>
+      </div>
+      <div>
+        <label class="labelComp">Año comparación</label>
+        <select id="fYear2"></select>
+        <div class="checkboxGroup" id="monthsComp"></div>
+      </div>
+    </div>
+  </div> 
+
+  <div id="siteBlock" class="card filters" style="display:none">
+    <div class="filtersRow">
+      <div><label>Revista</label><select id="fSite"></select></div>
+      <div><label>Producto</label><select id="fProduct"></select></div>
+      <div><label>Sector</label><select id="fSector"></select></div>
+      <div><label>Comercial</label><select id="fComercial"></select></div>
+      <div><label>Área</label><select id="fArea"></select></div>
+    </div>
+  </div>
+
+  <div id="familyBlock" class="card family-container" style="display:none">
+    <label style="color:#111; font-weight:bold; margin-bottom:10px; display:block;">Familias (Multiselección):</label>
+    <div id="familyCheckboxes" class="checkboxGroup"></div>
+  </div>
+
+  <div id="totalBlock" class="card filters" style="display:none">
+    <div class="totalBlock">
+      <div class="totalValues">
+        <div><div>Año base</div><div id="totalYear1" class="value">0€</div></div>
+        <div><div>Año comparación</div><div id="totalYear2" class="value">-</div></div>
+        <div><div>% diferencia</div><div id="diffPercent" class="value">-</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="statsBlock" class="card filters" style="display:none">
+    <div class="statsBlock">
+      <div class="subBlock statsBase">
+        <div class="statsValues">
+          <div><div>Fact. Año Base</div><div id="totalStatsBase" class="value">0€</div></div>
+          <div><div>Nº líneas</div><div id="linesStatsBase" class="value">0</div></div>
+          <div><div>Presup. medio</div><div id="avgStatsBase" class="value">0€</div></div>
+        </div>
+      </div>
+
+      <div class="subBlock statsDiff">
+        <div class="statsValues">
+          <div><div>% Crec. Presup. Medio</div><div id="diffAvgStats" class="value" style="font-size: 1.8em; margin-top: 5px;">-</div></div>
+        </div>
+      </div>
+
+      <div class="subBlock statsComp">
+        <div class="statsValues">
+          <div><div>Fact. Año Comparación</div><div id="totalStatsComp" class="value">-</div></div>
+          <div><div>Nº líneas</div><div id="linesStatsComp" class="value">-</div></div>
+          <div><div>Presup. medio</div><div id="avgStatsComp" class="value">-</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chartsGrid" class="grid" style="display:none">
+    <div class="card"><h2>Área acumulada</h2><div id="chartArea" class="chart"></div></div>
+  </div>
+
+  <h2 id="miniChartsTitle" style="display:none; text-align: center; margin: 30px 0 10px 0; font-size: 1.4rem;">Evolución Mensual Acumulada por Revista</h2>
+  <div id="sitesGrid" class="sites-grid"></div>
+
+</div>
+
+<script>
+const excelUrl = "https://javiap20.github.io/datos-en-excel/PRODUCCION PRINT.xlsx";
+
+window.addEventListener("DOMContentLoaded", () => {
+  const statusEl = document.getElementById("loadStatus");
+  if (statusEl) statusEl.innerText = "Cargando archivo https://javiap20.github.io/datos-en-excel/PRODUCCION PRINT.xlsx…";
+
+  fetch(excelUrl)
+    .then(resp => {
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return resp.arrayBuffer();
+    })
+    .then(buf => {
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      init(json);
+      if (statusEl) {
+        statusEl.innerText = "✅ Archivo cargado automáticamente";
+        statusEl.style.color = "var(--ok-green)";
+      }
+    })
+    .catch(err => {
+      console.error("Auto-carga fallida:", err);
+      if (statusEl) {
+        statusEl.innerText = "⚠️ No se pudo cargar automáticamente. Selecciona el Excel manualmente.";
+        statusEl.style.color = "var(--neg)";
+      }
+    });
+});
+</script>
+
+<script>
+const MONTHS=["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio","07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+let rawData=[];
+
+const currencyFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function formatCurrency(n){ return currencyFormatter.format(Math.round(n || 0)) + '€'; }
+const integerFormatter = new Intl.NumberFormat('es-ES', { useGrouping: true });
+function formatInteger(n){ return integerFormatter.format(n || 0); }
+
+function formatLabel(val) {
+    if(!val) return "";
+    let s = String(val).toLowerCase().trim();
+    return s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+function normalizeText(s){
+  if(s==null) return "";
+  return String(s).trim().toUpperCase();
+}
+
+function cleanSector(s){
+  if(!s) return "SIN SECTOR";
+  let txt = String(s).trim().toUpperCase();
+  if(txt.includes("*")){
+    return txt.split("*").pop().trim();
+  }
+  return txt;
+}
+
+function normalizeMonth(m){
+  if(!m) return "";
+  const s = String(m).trim();
+  const nn = s.substring(0,2);
+  return MONTHS.find(x=>x.startsWith(nn)) || "";
+}
+
+function num(v){
+  if(v==null) return 0;
+  if(typeof v === 'number') return v;
+  let s = String(v).replace(/\u00A0/g," ").replace(/€/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+fileInput.onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const ext = f.name.split(".").pop().toLowerCase();
+      if(ext==="json") {
+        init(JSON.parse(ev.target.result));
+      } else {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, {type:"array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        init(XLSX.utils.sheet_to_json(ws, { defval: "" }));
+      }
+      document.getElementById("loadStatus").innerHTML = "✅ Archivo cargado";
+      document.getElementById("loadStatus").style.color = "var(--ok-green)";
+    } catch (err) {
+      document.getElementById("loadStatus").innerText = "❌ Error al leer el archivo";
+      document.getElementById("loadStatus").style.color = "var(--neg)";
+    }
+  };
+  if (f.name.endsWith("json")) r.readAsText(f);
+  else r.readAsArrayBuffer(f);
+};
+
+function init(data){
+  rawData = data.map(d=>({
+    ingreso: num(d["Imp.Neto a Comisionar"]),
+    Año: normalizeText(d["Año inserción"]),
+    Mes: normalizeMonth(d["Mes inserción"]),
+    Site: normalizeText(d["Publicación"]),
+    Product: normalizeText(d["Producto"]),
+    Sector: cleanSector(d["Sector"]),
+    Comercial: normalizeText(d["Comercial"]),
+    Area: normalizeText(d["ÁREAS"]),
+    Anunciante: normalizeText(d["Anunciante"]),
+    Family: formatLabel(d["Familia"] || "") // Usamos formatLabel para normalizar a Primera Mayúscula
+  })).filter(d => d.Año !== "");
+
+  const populate = (id, arr) => {
+    const s = document.getElementById(id);
+    s.innerHTML = "<option>Todos</option>" + arr.sort().map(v=>`<option value="${v}">${formatLabel(v)}</option>`).join("");
+  };
+
+  populate("fSite",   [...new Set(rawData.map(d=>d.Site).filter(Boolean))]);
+  populate("fProduct",[...new Set(rawData.map(d=>d.Product).filter(Boolean))]);
+  populate("fSector", [...new Set(rawData.map(d=>d.Sector).filter(Boolean))]);
+  populate("fComercial",[...new Set(rawData.map(d=>d.Comercial).filter(Boolean))]);
+  populate("fArea",   [...new Set(rawData.map(d=>d.Area).filter(Boolean))]);
+
+  // ORDEN PERSONALIZADO FAMILIAS
+  const ordenManual = ["Convencional", "Elementos Especiales", "Sponsorship", "Curated", "Certificación", "Patrocinio", "Otras Facturaciones"];
+  const families = [...new Set(rawData.map(d => d.Family).filter(Boolean))].sort((a, b) => {
+    let indexA = ordenManual.indexOf(a);
+    let indexB = ordenManual.indexOf(b);
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+
+  document.getElementById("familyCheckboxes").innerHTML = families.map(f => 
+    `<label><input type="checkbox" value="${f}" onchange="render()"> ${f}</label>`
+  ).join("");
+
+  const years=[...new Set(rawData.map(d=>d.Año).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+  fYear.innerHTML  = "<option>Todos</option>" + years.map(y=>`<option>${y}</option>`).join("");
+  fYear2.innerHTML = "<option>Sin comparar</option>" + years.map(y=>`<option>${y}</option>`).join("");
+
+  document.getElementById("monthsBase").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+  document.getElementById("monthsComp").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+
+  [fSite,fProduct,fSector,fYear,fYear2,fComercial,fArea].forEach(e=>e.onchange=render);
+
+  siteBlock.style.display="block";
+  familyBlock.style.display="block";
+  filters.style.display="block";
+  totalBlock.style.display="block";
+  statsBlock.style.display="flex";
+  chartsGrid.style.display="grid";
+  document.getElementById("miniChartsTitle").style.display = "block";
+
+  render();
+}
+
+function getSelectedMonths(id){
+  const sel = Array.from(document.getElementById(id).querySelectorAll("input:checked")).map(i=>i.value);
+  return sel.length ? sel : MONTHS;
+}
+
+function calcNetting(data) {
+    const totalFact = data.reduce((acc, b) => acc + b.ingreso, 0);
+    const groups = {};
+    data.forEach(d => {
+        if (!groups[d.Anunciante]) groups[d.Anunciante] = [];
+        groups[d.Anunciante].push(d.ingreso);
+    });
+    let finalLinesCount = 0;
+    Object.values(groups).forEach(pool => {
+        let sortedPool = pool.filter(v => v !== 0).sort((a, b) => Math.abs(a) - Math.abs(b));
+        while (sortedPool.length > 0) {
+            let current = sortedPool.shift();
+            let counterpartIndex = sortedPool.findIndex(v => v === -current);
+            if (counterpartIndex !== -1) {
+                sortedPool.splice(counterpartIndex, 1);
+            } else if (current > 0) {
+                finalLinesCount++;
+            }
+        }
+    });
+    return { total: totalFact, lines: finalLinesCount, avg: finalLinesCount ? (totalFact / finalLinesCount) : 0 };
+}
+
+function render(){
+  const site=fSite.value, prod=fProduct.value, sect=fSector.value, 
+        y1=fYear.value, y2=fYear2.value, com=fComercial.value, area=fArea.value;
+  const m1=getSelectedMonths("monthsBase"), m2=getSelectedMonths("monthsComp");
+  
+  // CAPTURAR FAMILIAS
+  const famF = Array.from(document.getElementById("familyCheckboxes").querySelectorAll("input:checked")).map(c => c.value);
+
+  const filter = (y, m, siteOverride = null) => rawData.filter(d=>
+    (y==="Todos" || d.Año===y) && 
+    (siteOverride ? d.Site === siteOverride : (site==="Todos" || d.Site===site)) &&
+    (famF.length === 0 || famF.includes(d.Family)) &&
+    (prod==="Todos" || d.Product===prod) && (sect==="Todos" || d.Sector===sect) &&
+    (com==="Todos" || d.Comercial===com) && (area==="Todos" || d.Area===area) && m.includes(d.Mes)
+  );
+
+  const d1=filter(y1, m1), d2=fYear2.value!=="Sin comparar" ? filter(y2, m2) : [];
+  const s1=calcNetting(d1), s2=calcNetting(d2);
+
+  const style = getComputedStyle(document.documentElement);
+  const colorB = style.getPropertyValue('--color-anio-base').trim();
+  const colorC = style.getPropertyValue('--color-anio-comp').trim();
+
+  totalYear1.textContent   = formatCurrency(s1.total);
+  totalStatsBase.textContent= formatCurrency(s1.total);
+  linesStatsBase.textContent= formatInteger(s1.lines);
+  avgStatsBase.textContent  = formatCurrency(s1.avg);
+
+  if(fYear2.value!=="Sin comparar"){
+    totalYear2.textContent     = formatCurrency(s2.total);
+    totalStatsComp.textContent = formatCurrency(s2.total);
+    linesStatsComp.textContent = formatInteger(s2.lines);
+    avgStatsComp.textContent   = formatCurrency(s2.avg);
+    const dPct = s2.total ? Math.round(((s1.total/s2.total)-1)*100) : 0;
+    diffPercent.textContent = (dPct > 0 ? "+" : "") + dPct + "%";
+    diffPercent.className   = "value" + (dPct<0 ? " negative" : "");
+    const aPct = s2.avg ? Math.round(((s1.avg/s2.avg)-1)*100) : 0;
+    diffAvgStats.textContent = (aPct > 0 ? "+" : "") + aPct + "%";
+    diffAvgStats.className   = "value" + (aPct<0 ? " negative" : "");
+  } else {
+    totalYear2.textContent = "-"; totalStatsComp.textContent = "-"; linesStatsComp.textContent = "-"; avgStatsComp.textContent = "-";
+    diffPercent.textContent = "-"; diffAvgStats.textContent = "-";
+    diffPercent.className = "value"; diffAvgStats.className = "value";
+  }
+
+  const v1 = MONTHS.map(m=>d1.filter(d=>d.Mes===m).reduce((a,b)=>a+b.ingreso,0));
+  const v2 = fYear2.value!=="Sin comparar" ? MONTHS.map(m=>d2.filter(d=>d.Mes===m).reduce((a,b)=>a+b.ingreso,0)) : null;
+
+  const layout = {
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { color: "#e5e7eb" }, margin: { t: 20, l: 60, r: 30, b: 60 },
+    legend: { orientation: "h", y: -0.2 },
+    xaxis: { gridcolor: '#1f2937' },
+    yaxis: { gridcolor: '#1f2937', tickformat: ',.0f', ticksuffix: '€' },
+    separators: '.,'
+  };
+
+  const traces = (type, extra={}) => {
+    let t = [];
+    t.push({ x:MONTHS.map(m=>m.slice(3)), y:v1, name:fYear.value, type, marker:{color: colorB}, line:{color: colorB}, hovertemplate: '%{y:,.0f}€<extra></extra>', ...extra });
+    if(v2) {
+      t.push({ x:MONTHS.map(m=>m.slice(3)), y:v2, name:fYear2.value, type, marker:{color: colorC}, line:{color: colorC}, hovertemplate: '%{y:,.0f}€<extra></extra>', ...extra });
+    }
+    return t;
+  };
+
+  Plotly.newPlot("chartArea",  traces("scatter", {fill:"tozeroy"}), layout);
+
+  const sitesList = [...new Set(rawData.map(d => d.Site))].sort();
+  const grid = document.getElementById("sitesGrid");
+  grid.innerHTML = "";
+
+  sitesList.forEach((siteName, index) => {
+    const siteData1 = filter(y1, m1, siteName);
+    const siteData2 = fYear2.value !== "Sin comparar" ? filter(y2, m2, siteName) : [];
+    const monthlyS1 = MONTHS.map(m => siteData1.filter(d => d.Mes === m).reduce((acc, val) => acc + val.ingreso, 0));
+    const monthlyS2 = fYear2.value !== "Sin comparar" ? MONTHS.map(m => siteData2.filter(d => d.Mes === m).reduce((acc, val) => acc + val.ingreso, 0)) : [];
+
+    if(monthlyS1.some(v => v !== 0) || monthlyS2.some(v => v !== 0)) {
+        const container = document.createElement("div");
+        container.className = "mini-chart-card";
+        container.innerHTML = `<h3>${formatLabel(siteName)}</h3><div id="site-chart-${index}" class="mini-chart"></div>`;
+        grid.appendChild(container);
+
+        Plotly.newPlot(`site-chart-${index}`, [
+            { x: MONTHS.map(m=>m.slice(3,5)), y: monthlyS1, type: 'bar', name: y1, marker: {color: colorB} },
+            ...(v2 ? [{ x: MONTHS.map(m=>m.slice(3,5)), y: monthlyS2, type: 'bar', name: y2, marker: {color: colorC} }] : [])
+        ], {
+            ...layout,
+            showlegend: false,
+            margin: { t:10, l:35, r:10, b:25 },
+            yaxis: { gridcolor: "#2d3748", tickfont: {size: 9}, tickformat: ',.0f', ticksuffix: "€" },
+            xaxis: { tickfont: {size: 9} }
+        }, {displayModeBar: false});
+    }
+  });
+}
+</script>
+</body>
+</html>

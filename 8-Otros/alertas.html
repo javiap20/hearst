@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Dashboard de Alertas — Peores Rendimientos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f5f6f8;--bg2:#ffffff;--bg3:#f0f1f4;--bg4:#e4e6ed;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.13);
+  --text:#1a1d27;--text2:#4a4f66;--text3:#8891ae;
+  --accent:#d4960a;--accent2:#b87e08;
+  --red:#d91535;--green:#1a9e60;--orange:#d4600a;
+  --radius:10px;--radius-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;}
+.mono{font-family:'DM Mono',monospace;}
+.syne{font-family:'Syne',sans-serif;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+html > body::-webkit-scrollbar{width:8px;}
+html > body::-webkit-scrollbar-track{background:#e0e2e8;}
+html > body::-webkit-scrollbar-thumb{background:#9098b0;border-radius:4px;}
+html > body::-webkit-scrollbar-thumb:hover{background:#6b7494;}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:200;background:rgba(245,246,248,0.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;flex-direction:column;gap:8px;}
+.topbar-row1{display:flex;align-items:center;justify-content:space-between;width:100%;}
+.topbar-row2{display:flex;justify-content:center;width:100%;}
+.brand{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;letter-spacing:-0.3px;display:flex;align-items:center;gap:10px;}
+.brand-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+.top-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;}
+
+/* UPLOAD */
+.upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 56px);gap:24px;padding:24px;}
+.upload-card{background:var(--bg2);border:1.5px dashed var(--border2);border-radius:20px;padding:40px 48px;text-align:center;cursor:pointer;max-width:400px;width:100%;transition:all 0.2s;}
+.upload-card:hover,.upload-card.drag{border-color:var(--accent);background:rgba(245,200,66,0.04);}
+.up-icon{font-size:40px;margin-bottom:12px;}
+.up-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;}
+.up-sub{font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:20px;}
+.up-btn{background:var(--accent);color:#ffffff;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;}
+.up-msg{font-size:11px;color:var(--text3);margin-top:10px;font-family:'DM Mono',monospace;}
+
+/* APP */
+#app{display:none;}
+.section{padding:20px 20px 0;}
+.section:last-child{padding-bottom:32px;}
+
+/* BLOCK HEADER */
+.block-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.block-num{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--accent);background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.25);border-radius:6px;padding:3px 8px;letter-spacing:0.05em;}
+.block-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.block-sub{font-size:11px;color:var(--text3);margin-left:auto;}
+
+/* B1 */
+.years-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;}
+.year-group{display:flex;flex-direction:column;gap:6px;}
+.year-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-weight:500;}
+.ctrl-select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);padding:9px 32px 9px 14px;font-size:14px;font-family:'DM Mono',monospace;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ba3c0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;min-width:130px;}
+.ctrl-select:focus{border-color:var(--accent);}
+.year-arrow{font-size:18px;color:var(--text3);padding-bottom:9px;}
+.sep{width:1px;height:40px;background:var(--border2);align-self:flex-end;}
+.apply-btn{background:var(--accent);color:#ffffff;border:none;border-radius:var(--radius);padding:10px 22px;font-size:13px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;transition:all 0.15s;margin-left:auto;align-self:flex-end;}
+.apply-btn:hover{background:var(--accent2);transform:translateY(-1px);}
+.apply-btn-inline{margin-left:0;align-self:center;flex-shrink:0;white-space:nowrap;}
+
+/* B2 */
+.months-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.months-row-wrap{display:flex;align-items:center;gap:12px;}
+.months-row{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding-bottom:4px;flex:1;}
+.m-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text2);user-select:none;transition:all 0.13s;white-space:nowrap;}
+.m-chip:active{transform:scale(0.96);}
+.m-chip.active{background:var(--accent);border-color:var(--accent);color:#ffffff;font-weight:700;}
+.m-chip.all-chip.active{background:var(--bg4);border-color:var(--border2);color:var(--text);}
+
+/* FAMILY FILTER */
+.fam-filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.fam-filter-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-weight:600;flex-shrink:0;white-space:nowrap;}
+.fam-chips{display:flex;flex-wrap:wrap;gap:5px;flex:1;}
+.f-chip{flex-shrink:0;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);user-select:none;transition:all 0.13s;white-space:nowrap;line-height:1.6;}
+.f-chip:active{transform:scale(0.96);}
+.f-chip.active{background:var(--accent);border-color:var(--accent);color:#ffffff;font-weight:700;}
+.f-chip.all-fchip.active{background:var(--bg4);border-color:var(--border2);color:var(--text);}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:20px 20px 0;}
+
+/* B3 RANKINGS */
+.rankings-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:1000px){.rankings-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:500px){.rankings-grid{grid-template-columns:1fr;}}
+.ranking-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.ranking-card-header{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.ranking-card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.ranking-list{max-height:360px;overflow-y:auto;}
+
+.rk-total-row{display:flex;align-items:center;padding:10px 14px;border-bottom:2px solid var(--border2);gap:8px;background:rgba(245,200,66,0.07);}
+.rk-total-label{flex:1;font-size:11px;font-weight:700;color:var(--accent);font-family:'Syne',sans-serif;letter-spacing:0.05em;}
+.rk-total-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);white-space:nowrap;}
+.rk-total-pct{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;white-space:nowrap;min-width:56px;text-align:right;}
+
+.ranking-row{display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);gap:6px;transition:background 0.12s;}
+.ranking-row:last-child{border-bottom:none;}
+.ranking-row:hover{background:var(--bg3);}
+.rk-pos{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);width:18px;flex-shrink:0;}
+.rk-name{flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rk-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);white-space:nowrap;}
+.rk-pct{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;white-space:nowrap;min-width:54px;text-align:right;}
+.rk-diff{font-family:'DM Mono',monospace;font-size:9px;white-space:nowrap;opacity:0.75;}
+.rk-sub{display:block;font-size:9px;color:var(--text3);font-style:italic;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.neg{color:var(--red)!important;}
+.pos{color:var(--green)!important;}
+.zero-c{color:var(--text3)!important;}
+.badge-lost{font-size:9px;font-weight:700;color:var(--orange);background:rgba(251,146,60,0.13);border-radius:4px;padding:1px 5px;flex-shrink:0;}
+.badge-new{font-size:9px;font-weight:700;color:var(--green);background:rgba(61,214,140,0.13);border-radius:4px;padding:1px 5px;flex-shrink:0;}
+
+/* SECTOR POPOVER */
+.sector-pop{position:fixed;z-index:999;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:0 8px 32px rgba(0,0,0,0.18);width:520px;display:none;flex-direction:column;pointer-events:none;}
+.sector-pop.visible{display:flex;pointer-events:auto;}
+.sector-pop-list{overflow-y:visible;}
+.sector-pop-header{padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:flex-start;gap:8px;}
+.sector-pop-header-text{flex:1;min-width:0;}
+.sector-pop-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sector-pop-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.sector-pop-close{flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;font-size:12px;line-height:1;padding:4px 8px;cursor:pointer;color:var(--text2);display:none;}
+.touch-device .sector-pop-close{display:block;}
+.sector-pop-cols{display:grid;grid-template-columns:1fr auto auto auto;gap:0 8px;padding:4px 14px;background:var(--bg3);border-bottom:1px solid var(--border2);flex-shrink:0;}
+.spc-lbl{font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);font-weight:600;white-space:nowrap;}
+.spc-lbl.r{text-align:right;}
+.sector-pop-list{overflow-y:visible;}
+.sp-row{display:grid;grid-template-columns:1fr auto auto auto;gap:0 8px;padding:6px 14px;border-bottom:1px solid var(--border);align-items:center;transition:background 0.1s;}
+.sp-row:last-child{border-bottom:none;}
+.sp-row:hover{background:var(--bg3);}
+.sp-marca{font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp-base{font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);white-space:nowrap;text-align:right;}
+.sp-comp{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);white-space:nowrap;text-align:right;}
+.sp-pct{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;white-space:nowrap;text-align:right;min-width:46px;}
+.sp-empty{padding:20px;text-align:center;font-size:11px;color:var(--text3);}
+/* Touch hint on hoverable rows */
+.touch-device .worst-row2[data-popidx]::after{content:'👆';font-size:9px;margin-left:4px;opacity:0.4;}
+/* B4 */
+.worst-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:1000px){.worst-grid{grid-template-columns:1fr;}}
+.worst-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.worst-card-header{padding:12px 14px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(255,77,106,0.08),transparent);}
+.worst-card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--red);}
+.worst-card-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.worst-list{max-height:420px;overflow-y:auto;}
+.worst-row{display:flex;padding:9px 14px;border-bottom:1px solid var(--border);gap:6px;align-items:center;transition:background 0.12s;}
+.worst-row:last-child{border-bottom:none;}
+.worst-row:hover{background:var(--bg3);}
+.w-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);width:18px;flex-shrink:0;}
+.w-info{flex:1;overflow:hidden;}
+.w-name{font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.w-sub{font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.w-bar-wrap{width:100%;height:3px;background:var(--bg4);border-radius:2px;margin-top:4px;}
+.w-bar{height:3px;border-radius:2px;background:var(--red);}
+.w-pct{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--red);white-space:nowrap;text-align:right;}
+.w-bruto{display:block;font-size:9px;font-weight:400;color:var(--orange);margin-top:2px;}
+.worst-col-labels{display:flex;align-items:center;padding:5px 14px 5px 36px;gap:6px;border-bottom:1px solid var(--border2);background:var(--bg3);}
+.wcl-name{flex:1;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;}
+.wcl-val{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;white-space:nowrap;min-width:130px;text-align:right;}
+.wcl-pct{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;white-space:nowrap;min-width:54px;text-align:right;}
+.worst-row2{display:flex;padding:9px 14px;border-bottom:1px solid var(--border);gap:8px;align-items:center;transition:background 0.12s;}
+.worst-row2:last-child{border-bottom:none;}
+.worst-row2:hover{background:var(--bg3);}
+.w-val-neg{font-family:'DM Mono',monospace;font-size:10px;color:var(--red);white-space:nowrap;text-align:right;min-width:130px;}
+.w-val-pos{font-family:'DM Mono',monospace;font-size:10px;color:var(--green);white-space:nowrap;text-align:right;min-width:130px;}
+.w-vs{font-size:9px;opacity:0.6;}
+.w-neg{color:var(--red)!important;}
+.w-pos{color:var(--green)!important;}
+.w-bar-pos{background:var(--green)!important;}
+.w-pct{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;white-space:nowrap;text-align:right;min-width:54px;}
+
+/* B04b */
+.bc-header-bar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.bc-pub-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-weight:600;flex-shrink:0;}
+.bc-pub-select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);padding:8px 32px 8px 14px;font-size:13px;font-family:'DM Mono',monospace;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ba3c0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;min-width:260px;}
+.bc-pub-select:focus{border-color:var(--accent);}
+.bc-year-hint{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-left:auto;}
+.bc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px;}
+@media(max-width:1100px){.bc-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:650px){.bc-grid{grid-template-columns:1fr 1fr;}}
+.bc-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.bc-card-header{padding:10px 12px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(245,200,66,0.06),transparent);display:flex;align-items:center;gap:7px;}
+.bc-card-icon{font-size:14px;}
+.bc-card-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bc-list{max-height:420px;overflow-y:auto;}
+.bc-row{display:flex;align-items:flex-start;padding:7px 10px;border-bottom:1px solid var(--border);gap:5px;transition:background 0.12s;}
+.bc-row:last-child{border-bottom:none;}
+.bc-row:hover{background:var(--bg3);}
+.bc-pos{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);width:16px;flex-shrink:0;padding-top:2px;}
+.bc-info{flex:1;overflow:hidden;}
+.bc-marca{font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;}
+.bc-anun{font-size:9px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:italic;}
+.bc-val{font-family:'DM Mono',monospace;font-size:9px;color:var(--orange);white-space:nowrap;flex-shrink:0;padding-top:2px;}
+.bc-empty{text-align:center;color:var(--text3);padding:20px 10px;font-size:11px;}
+
+/* B04c */
+.com-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.com-table{width:100%;border-collapse:collapse;}
+.com-table thead tr{background:var(--bg3);border-bottom:2px solid var(--border2);}
+.com-table th{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;padding:9px 14px;text-align:center;white-space:nowrap;}
+.com-table th:first-child{text-align:left;}
+.com-table th.num{text-align:center;}
+.com-table tbody tr{border-bottom:1px solid var(--border);transition:background 0.12s;}
+.com-table tbody tr:last-child{border-bottom:none;}
+.com-table tbody tr:hover{background:var(--bg3);}
+.com-table td{padding:8px 14px;font-size:12px;white-space:nowrap;}
+.com-td-name{font-weight:500;color:var(--text);}
+.com-td-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);text-align:center;}
+.com-td-pct{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;text-align:center;}
+.com-td-diff{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:center;}
+.com-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;}
+.com-col{overflow-x:auto;}
+.com-col:not(:last-child){border-right:1px solid var(--border);}
+
+/* B5 */
+.card-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.pub-section-label{font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);font-weight:600;padding:10px 14px 6px;border-bottom:1px solid var(--border);}
+.pub-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;}
+.pub-chip{padding:8px 14px;border-radius:8px;background:var(--bg3);border:1px solid var(--border2);font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.15s;white-space:nowrap;user-select:none;}
+.pub-chip:hover{border-color:var(--accent);color:var(--accent);}
+.pub-chip.active-pub{background:rgba(245,200,66,0.12);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.pub-tag{font-size:9px;color:var(--text3);margin-left:4px;font-style:italic;}
+.pub-chip.active-pub .pub-tag{color:rgba(245,200,66,0.6);}
+
+.anun-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-top:12px;overflow:hidden;animation:slideDown 0.2s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.anun-panel-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.anun-panel-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.anun-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 8px;border-radius:6px;}
+.anun-close:hover{background:var(--bg3);color:var(--text);}
+.anun-cols{display:grid;grid-template-columns:1fr 1fr;}
+@media(max-width:600px){.anun-cols{grid-template-columns:1fr;}}
+.anun-col:first-child{border-right:1px solid var(--border);}
+.anun-col-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.anun-col-subheader{display:flex;align-items:center;padding:4px 14px 4px 36px;gap:6px;background:var(--bg3);border-bottom:1px solid var(--border2);}
+.anun-sh-name{flex:1;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;}
+.anun-sh-val{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;white-space:nowrap;}
+.anun-sh-pct{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;white-space:nowrap;min-width:48px;text-align:right;}
+.a-diff{font-size:9px;color:var(--orange);}
+.anun-col-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;}
+.anun-col-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
+.anun-list{max-height:320px;overflow-y:auto;}
+.anun-row{display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);gap:6px;transition:background 0.12s;}
+.anun-row:last-child{border-bottom:none;}
+.anun-row:hover{background:var(--bg3);}
+.a-info{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:1px;}
+.a-pos{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);width:18px;flex-shrink:0;}
+.a-name{font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.a-prods{font-size:9px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:italic;}
+.a-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);white-space:nowrap;}
+.a-pct{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--red);white-space:nowrap;}
+.a-badge-lost{font-size:9px;font-weight:700;color:var(--orange);background:rgba(251,146,60,0.13);border-radius:4px;padding:1px 5px;white-space:nowrap;}
+.empty-msg{text-align:center;color:var(--text3);padding:28px;font-size:12px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="brand-dot"></span><span class="syne">Alertas · Peores Rendimientos</span></div>
+  <div id="top-badge" class="top-badge" style="display:none">—</div>
+</div>
+
+<div id="upload-screen" class="upload-screen">
+  <div class="upload-card" id="upload-card"
+    onclick="document.getElementById('file-input').click()"
+    ondragover="event.preventDefault();this.classList.add('drag')"
+    ondragleave="this.classList.remove('drag')"
+    ondrop="onDrop(event)">
+    <div class="up-icon" id="up-icon">⏳</div>
+    <div class="up-title" id="up-title">Cargando datos…</div>
+    <div class="up-sub" id="up-sub">Buscando <span class="mono">PRINT Y DIGITAL.xlsx</span> en el servidor</div>
+    <button class="up-btn" id="up-manual-btn" style="display:none" onclick="event.stopPropagation();document.getElementById('file-input').click()">Elegir archivo manualmente</button>
+    <div class="up-msg" id="up-msg"></div>
+  </div>
+</div>
+<input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" onchange="onFileInput(this)">
+
+<div id="app">
+
+  <!-- B1 -->
+  <div class="section">
+    <div class="block-header">
+      <span class="block-num">01</span>
+      <span class="block-title syne">Años, Áreas y Canales</span>
+    </div>
+    <div class="years-card">
+      <div class="year-group">
+        <div class="year-label">Año base (actual)</div>
+        <select class="ctrl-select" id="yr-base" onchange="applyFilters()"></select>
+      </div>
+      <div class="year-arrow">→</div>
+      <div class="year-group">
+        <div class="year-label">Año comparado (anterior)</div>
+        <select class="ctrl-select" id="yr-comp" onchange="applyFilters()"></select>
+      </div>
+      <div class="sep"></div>
+      <div class="year-group">
+        <div class="year-label">Área</div>
+        <select class="ctrl-select" id="f-area" style="min-width:160px" onchange="applyFilters()">
+          <option value="all">Todas las áreas</option>
+        </select>
+      </div>
+      <div class="sep"></div>
+      <div class="year-group">
+        <div class="year-label">Canal</div>
+        <select class="ctrl-select" id="f-canal" style="min-width:160px" onchange="onCanalChange()">
+          <option value="all">Todos los canales</option>
+          <option value="DIGITAL">Digital</option>
+          <option value="PRINT">Print</option>
+          <option value="EVENTOS">Eventos</option>
+        </select>
+      </div>
+    </div>
+    <div class="fam-filter-row">
+      <span class="fam-filter-label">Familia</span>
+      <div class="fam-chips" id="fam-chips-row">
+        <span class="f-chip all-fchip active" onclick="toggleFam('all')">Todas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- B2 -->
+  <div class="section">
+    <div class="block-header">
+      <span class="block-num">02</span>
+      <span class="block-title syne">Meses</span>
+      <span class="block-sub" id="months-hint">Todos seleccionados</span>
+    </div>
+    <div class="months-card">
+      <div class="months-row" id="months-row"></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- B3 -->
+  <div class="section">
+    <div class="block-header">
+      <span class="block-num">03</span>
+      <span class="block-title syne">Rankings generales</span>
+      <span class="block-sub">Primera fila = total · peor primero ↑</span>
+    </div>
+    <p style="margin:0 0 12px;font-size:11px;color:var(--text3);font-style:italic;padding:0 2px;">
+      ℹ️ Datos reales del periodo seleccionado, ordenados de peor a mejor comportamiento respecto al año comparado. La primera fila de cada bloque muestra el total agregado.
+    </p>
+    <div class="rankings-grid">
+      <div class="ranking-card">
+        <div class="ranking-card-header"><span>📰</span><span class="ranking-card-title">Publicaciones</span></div>
+        <div class="ranking-list" id="rk-pub"></div>
+      </div>
+      <div class="ranking-card">
+        <div class="ranking-card-header"><span>🗺️</span><span class="ranking-card-title">Áreas</span></div>
+        <div class="ranking-list" id="rk-area"></div>
+      </div>
+      <div class="ranking-card">
+        <div class="ranking-card-header"><span>🏭</span><span class="ranking-card-title">Sectores</span></div>
+        <div class="ranking-list" id="rk-sector"></div>
+      </div>
+      <div class="ranking-card">
+        <div class="ranking-card-header"><span>📁</span><span class="ranking-card-title">Familias</span></div>
+        <div class="ranking-list" id="rk-familia"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- B4 -->
+  <div class="section">
+    <div class="block-header">
+      <span class="block-num">04</span>
+      <span class="block-title syne">Top 30 peores</span>
+      <span class="block-sub">Ordenado por pérdida bruta · año base vs año comparado</span>
+    </div>
+    <div class="worst-grid">
+      <div class="worst-card">
+        <div class="worst-card-header">
+          <div class="worst-card-title">🔴 Peores sectores por publicación</div>
+          <div class="worst-card-sub">Ingreso neto total · Publicación × Sector</div>
+        </div>
+        <div class="worst-col-labels">
+          <span class="wcl-name">Publicación / Sector</span>
+          <span class="wcl-val">Pérdida / Ganancia</span>
+          <span class="wcl-pct">%</span>
+        </div>
+        <div class="worst-list" id="w-sector-site"></div>
+      </div>
+      <div class="worst-card">
+        <div class="worst-card-header">
+          <div class="worst-card-title">🔴 Peores sectores por área</div>
+          <div class="worst-card-sub">Ingreso neto total · Área × Sector</div>
+        </div>
+        <div class="worst-col-labels">
+          <span class="wcl-name">Área / Sector</span>
+          <span class="wcl-val">Pérdida / Ganancia</span>
+          <span class="wcl-pct">%</span>
+        </div>
+        <div class="worst-list" id="w-pm-prod"></div>
+      </div>
+      <div class="worst-card">
+        <div class="worst-card-header">
+          <div class="worst-card-title">🔴 Peores presupuestos medios por Producto y Publicación
+          <div class="worst-card-sub">PM = Ingreso neto ÷ nº líneas · Producto × Publicación</div>
+        </div>
+        <div class="worst-col-labels">
+          <span class="wcl-name">Producto / Publicación</span>
+          <span class="wcl-val">PM este año vs anterior</span>
+          <span class="wcl-pct">%</span>
+        </div>
+        <div class="worst-list" id="w-pm-prod-site"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- B04a: BC Global, todas las publicaciones -->
+  <div class="section">
+    <div class="block-header">
+      <span class="block-num">05</span>
+      <span class="block-title syne">Contenido · Peores presupuestos globales</span>
+      <span class="block-sub">Top 30 mínimos · todas las publicaciones · año base</span>
+    </div>
+    <div class="bc-grid" id="bca-grid">
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">✍️</span><span class="bc-card-title">Branded Content</span></div>
+        <div class="bc-list" id="bca-0"><div class="bc-empty">Carga el Excel para ver datos</div></div>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">🎬</span><span class="bc-card-title">BC Video</span></div>
+        <div class="bc-list" id="bca-1"><div class="bc-empty">Carga el Excel para ver datos</div></div>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">📱</span><span class="bc-card-title">Social Networks</span></div>
+        <div class="bc-list" id="bca-2"><div class="bc-empty">Carga el Excel para ver datos</div></div>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">📄</span><span class="bc-card-title">Página Branded</span></div>
+        <div class="bc-list" id="bca-3"><div class="bc-empty">Carga el Excel para ver datos</div></div>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">📰</span><span class="bc-card-title">Doble Página Branded</span></div>
+        <div class="bc-list" id="bca-4"><div class="bc-empty">Carga el Excel para ver datos</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- B04b -->
+  <div class="section">
+    <div class="block-header">
+      <span class="block-num">06</span>
+      <span class="block-title syne">Contenido · Presupuestos más bajos por Publicación seleccionada</span>
+      <span class="block-sub">Top 30 mínimos · año base</span>
+    </div>
+    <div class="bc-header-bar">
+      <span class="bc-pub-label">Publicación</span>
+      <select class="bc-pub-select" id="bc-pub-select" onchange="renderBC()">
+        <option value="">— Selecciona publicación —</option>
+      </select>
+      <span class="bc-year-hint" id="bc-year-hint"></span>
+    </div>
+    <div class="bc-grid" id="bc-grid">
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">✍️</span><span class="bc-card-title">Branded Content</span></div>
+        <div class="bc-list bc-empty-wrap" id="bc-0"><div class="bc-empty">Selecciona publicación</div></div>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">🎬</span><span class="bc-card-title">BC Video</span></div>
+        <div class="bc-list bc-empty-wrap" id="bc-1"><div class="bc-empty">Selecciona publicación</div></div>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">📱</span><span class="bc-card-title">Social Networks</span></div>
+        <div class="bc-list bc-empty-wrap" id="bc-2"><div class="bc-empty">Selecciona publicación</div></div>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">📄</span><span class="bc-card-title">Página Branded</span></div>
+        <div class="bc-list bc-empty-wrap" id="bc-3"><div class="bc-empty">Selecciona publicación</div></div>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><span class="bc-card-icon">📰</span><span class="bc-card-title">Doble Página Branded</span></div>
+        <div class="bc-list bc-empty-wrap" id="bc-4"><div class="bc-empty">Selecciona publicación</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- B04c -->
+  <div class="section">
+    <div class="block-header">
+      <span class="block-num">07</span>
+      <span class="block-title syne">Comerciales · inserciones Año base vs Año comparado</span>
+      <span class="block-sub" id="com-hint"></span>
+    </div>
+    <div class="com-wrap">
+      <div class="com-cols">
+        <div class="com-col" id="com-col-left"></div>
+        <div class="com-col" id="com-col-mid"></div>
+        <div class="com-col" id="com-col-right"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- B5 -->
+  <div class="section">
+    <div class="block-header">
+      <span class="block-num">08</span>
+      <span class="block-title syne">Anunciantes por publicación</span>
+      <span class="block-sub">Toca una publicación para ver el detalle</span>
+    </div>
+    <div class="card-wrap">
+      <div class="pub-section-label">🖥 Digital</div>
+      <div class="pub-grid" id="pub-digital"></div>
+      <div class="pub-section-label" style="border-top:1px solid var(--border)">📰 Print</div>
+      <div class="pub-grid" id="pub-print"></div>
+      <div class="pub-section-label" style="border-top:1px solid var(--border);color:#7c5cbf">🎪 Eventos</div>
+      <div class="pub-grid" id="pub-eventos"></div>
+    </div>
+    <div id="anun-panel-wrap"></div>
+  </div>
+
+</div>
+
+<div id="sector-pop" class="sector-pop"></div>
+
+<script>
+const COL_MES='Mes inserción',COL_PUB='Publicación',COL_ANUN='Anunciante',
+      COL_MARCA='Marca',COL_COMERCIAL='Comercial',
+      COL_FAM='Familia',COL_PROD='Producto',COL_YEAR='Año inserción',
+      COL_ING='Imp.Neto a Comisionar',COL_AREA='ÁREAS',COL_SECTOR='Sector',
+      SHEET_NAME='Analizador general';
+
+const MESES_ORDER=['01 Enero','02 Febrero','03 Marzo','04 Abril','05 Mayo','06 Junio',
+                   '07 Julio','08 Agosto','09 Septiembre','10 Octubre','11 Noviembre','12 Diciembre'];
+const MESES_SHORT={'01 Enero':'Ene','02 Febrero':'Feb','03 Marzo':'Mar','04 Abril':'Abr',
+  '05 Mayo':'May','06 Junio':'Jun','07 Julio':'Jul','08 Agosto':'Ago',
+  '09 Septiembre':'Sep','10 Octubre':'Oct','11 Noviembre':'Nov','12 Diciembre':'Dic'};
+
+const FAM_DIGITAL=new Set(['Curated','Display','Programatica Display Directo','Programatica Display Indirecto',
+  'Social Networks','Sponsorship','Video','Video Programatico Directo','Video Programatico Indirecto']);
+const FAM_PRINT=new Set(['CERTIFICACIÓN','CONVENCIONAL','Curated','ELEMENTOS ESPECIALES',
+  'Otras facturaciones','Patrocinio','Sponsorship']);
+
+let DATA=[], selectedMonths=new Set(), selectedFamilies=new Set(), activePub=null;
+
+function classifyRow(r){
+  const fam=(r[COL_FAM]||'').trim(), prod=(r[COL_PROD]||'').trim();
+  if(fam==='Eventos') return 'EVENTOS';
+  if(fam==='Curated'){
+    if(prod==='CURATED') return 'PRINT';
+    if(prod==='Curated') return 'DIGITAL';
+    return FAM_DIGITAL.has(fam)?'DIGITAL':'PRINT';
+  }
+  if(fam==='Sponsorship'){
+    if(prod==='DOBLE PAGINA BRANDED'||prod==='PAGINA BRANDED') return 'PRINT';
+    return 'DIGITAL';
+  }
+  if(FAM_DIGITAL.has(fam)) return 'DIGITAL';
+  if(FAM_PRINT.has(fam))   return 'PRINT';
+  return 'OTROS';
+}
+
+const DIGITAL_DISPLAY_NAMES = {
+  'www.caranddriver.com/es':    'Car & Driver',
+  'www.cosmopolitan.com/es':    'Cosmopolitan',
+  'www.diezminutos.es':         'Diez Minutos',
+  'www.elle.com/es':            'Elle',
+  'www.elledecor.com/es':       'Elle Decor',
+  'www.ellegourmet.com/es':     'Elle Gourmet',
+  'www.elletravel.com/es':      'Elle Travel',
+  'www.esquire.com/es':         'Esquire',
+  'www.fotogramas.es':          'Fotogramas',
+  'www.harpersbazaar.com/es':   'Harper\'s Bazaar',
+  'www.menshealth.com/es':      'Men\'s Health',
+  'www.micasarevista.com':      'Mi Casa Revista',
+  'www.nuevo-estilo.es':        'Nuevo Estilo',
+  'www.runnersworld.com/es':    'Runner\'s World',
+  'www.womenshealthmag.com/es': 'Women\'s Health',
+};
+
+function cleanPubName(raw, canal){
+  let s = raw.trim();
+  if(canal === 'DIGITAL'){
+    const norm = s.replace(/^https?:\/\//i,'').replace(/\/+$/,'').toLowerCase();
+    if(DIGITAL_DISPLAY_NAMES[norm]) return DIGITAL_DISPLAY_NAMES[norm];
+    // fallback: quitar protocolo/www y usar primer segmento capitalizado
+    const stripped = norm.replace(/^www\./,'').replace(/\/.*$/,'').split('.')[0];
+    return stripped.charAt(0).toUpperCase() + stripped.slice(1);
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function parseIngreso(v){
+  // Manejar tanto número como string con coma decimal
+  if(typeof v==='number') return v;
+  const s=String(v).replace(/\s/g,'').replace(',','.');
+  return parseFloat(s)||0;
+}
+
+function fmt(n){
+  if(n==null||isNaN(n)) return '—';
+  return new Intl.NumberFormat('es-ES',{maximumFractionDigits:0,useGrouping:true}).format(n)+' €';
+}
+function fmtPct(p){
+  if(p==null||isNaN(p)) return '—';
+  return (p>=0?'+':'')+p.toFixed(1)+'%';
+}
+function pctClass(p, isLost, isNew){
+  if(isLost) return 'neg';
+  if(isNew)  return 'pos';
+  if(p==null) return 'zero-c';
+  return p<0?'neg':p>0?'pos':'zero-c';
+}
+
+// ── LOAD ──
+function onDrop(e){e.preventDefault();document.getElementById('upload-card').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processFile(f);}
+function onFileInput(inp){if(inp.files[0])processFile(inp.files[0]);}
+
+// ── CARGA AUTOMÁTICA DESDE SERVIDOR ──
+// Intenta cargar "https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCpQL7XxQQyQKzfLOSsA9_LAXGIt4j0H90jLe6ctOGg5uE" desde la misma carpeta del servidor.
+// Si no encuentra el archivo (entorno local sin servidor), muestra la pantalla
+// de carga manual sin ningún error visible.
+const EXCEL_FILENAME = 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCpQL7XxQQyQKzfLOSsA9_LAXGIt4j0H90jLe6ctOGg5uE';
+
+async function autoLoadFromServer() {
+  try {
+    const res = await fetch(EXCEL_FILENAME, { cache: 'no-cache' });
+    if (!res.ok) throw new Error('No encontrado');
+    const buf = await res.arrayBuffer();
+    processArrayBuffer(buf, EXCEL_FILENAME);
+  } catch(e) {
+    // No hay servidor o el archivo no existe → mostrar carga manual
+    showManualUpload();
+  }
+}
+
+function showManualUpload() {
+  document.getElementById('up-icon').textContent = '📊';
+  document.getElementById('up-title').textContent = 'Cargar Excel';
+  document.getElementById('up-sub').innerHTML = 'Arrastra tu <span class="mono">PRINT Y DIGITAL.xlsx</span><br>o pulsa para buscarlo';
+  document.getElementById('up-manual-btn').style.display = '';
+}
+
+function processArrayBuffer(buffer, filename) {
+  try {
+    const wb = XLSX.read(buffer, {type:'array'});
+    const sn = wb.SheetNames.includes(SHEET_NAME) ? SHEET_NAME : wb.SheetNames[0];
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[sn], {defval:''});
+    DATA = raw.map(r => {
+      const canal = classifyRow(r);
+      const pubRaw = String(r[COL_PUB]||'').trim();
+      return {
+        _canal: canal,
+        _ingreso: parseIngreso(r[COL_ING]),
+        _prod: String(r[COL_PROD]||'(sin producto)').trim(),
+        _fam: String(r[COL_FAM]||'').trim(),
+        _year: String(r[COL_YEAR]||'').trim(),
+        _mes: String(r[COL_MES]||'').trim(),
+        _pub: pubRaw,
+        _pubClean: cleanPubName(pubRaw, canal),
+        _anun: String(r[COL_ANUN]||'').trim(),
+        _marca: String(r[COL_MARCA]||'').trim(),
+        _comercial: String(r[COL_COMERCIAL]||'').trim(),
+        _area: String(r[COL_AREA]||'').trim(),
+        _sector: String(r[COL_SECTOR]||'').trim(),
+      };
+    });
+    document.getElementById('top-badge').style.display = '';
+    document.getElementById('top-badge').textContent = DATA.length.toLocaleString('es-ES') + ' registros · ' + filename;
+    populateFilters();
+    document.getElementById('upload-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    applyFilters();
+  } catch(err) {
+    document.getElementById('up-msg').textContent = 'Error al leer el archivo: ' + err.message;
+    showManualUpload();
+    console.error(err);
+  }
+}
+
+function processFile(file) {
+  document.getElementById('up-msg').textContent = 'Leyendo ' + file.name + '…';
+  const reader = new FileReader();
+  reader.onload = e => processArrayBuffer(e.target.result, file.name);
+  reader.readAsArrayBuffer(file);
+}
+
+function populateFilters(){
+  const years=[...new Set(DATA.map(r=>r._year).filter(Boolean))].sort();
+  const yb=document.getElementById('yr-base'), yc=document.getElementById('yr-comp');
+  yb.innerHTML='<option value="">— Año base —</option>';
+  yc.innerHTML='<option value="">— Año comparado —</option>';
+  years.forEach(y=>{yb.innerHTML+=`<option value="${y}">${y}</option>`;yc.innerHTML+=`<option value="${y}">${y}</option>`;});
+
+  // Áreas
+  const areas=[...new Set(DATA.map(r=>r._area).filter(Boolean))].sort();
+  const fa=document.getElementById('f-area');
+  fa.innerHTML='<option value="all">Todas las áreas</option>';
+  areas.forEach(a=>{fa.innerHTML+=`<option value="${a}">${a}</option>`;});
+
+  const availMeses=new Set(DATA.map(r=>r._mes).filter(Boolean));
+  const meses=MESES_ORDER.filter(m=>availMeses.has(m));
+  let html=`<span class="m-chip all-chip active" onclick="toggleMonth('all')">Todos</span>`;
+  meses.forEach(m=>{html+=`<span class="m-chip" data-mes="${m}" onclick="toggleMonth('${m}')">${MESES_SHORT[m]||m}</span>`;});
+  document.getElementById('months-row').innerHTML=html;
+  populateFamChips();
+  populateBCSelector();
+  renderBC();
+  // Seleccionar ELLE por defecto si existe
+  const bcSel = document.getElementById('bc-pub-select');
+  if(bcSel){
+    const elleOpt = [...bcSel.options].find(o => o.value === 'revista::ELLE');
+    if(elleOpt){ bcSel.value = elleOpt.value; }
+  }
+  showEmptyState();
+}
+
+function toggleMonth(mes){
+  if(mes==='all'){selectedMonths.clear();}
+  else{selectedMonths.has(mes)?selectedMonths.delete(mes):selectedMonths.add(mes);}
+  document.querySelectorAll('.m-chip').forEach(ch=>{
+    if(ch.classList.contains('all-chip')) ch.classList.toggle('active',selectedMonths.size===0);
+    else ch.classList.toggle('active',selectedMonths.has(ch.dataset.mes));
+  });
+  document.getElementById('months-hint').textContent=
+    selectedMonths.size===0?'Todos seleccionados':[...selectedMonths].map(m=>MESES_SHORT[m]||m).join(', ');
+  applyFilters();
+}
+
+function getRows(year){
+  const canal=document.getElementById('f-canal').value;
+  const area=document.getElementById('f-area').value;
+  return DATA.filter(r=>{
+    if(r._year!==year) return false;
+    if(selectedMonths.size>0&&!selectedMonths.has(r._mes)) return false;
+    if(canal!=='all'&&r._canal!==canal) return false;
+    if(area!=='all'&&r._area!==area) return false;
+    if(selectedFamilies.size>0&&!selectedFamilies.has(famKey(r))) return false;
+    return true;
+  });
+}
+
+// Devuelve la clave de familia para una fila, distinguiendo Curated/Sponsorship por canal
+function famKey(r){
+  const fam=r._fam;
+  if(fam==='Curated') return r._canal==='PRINT'?'Curated (Print)':'Curated (Digital)';
+  if(fam==='Sponsorship') return r._canal==='PRINT'?'Sponsorship (Print)':'Sponsorship (Digital)';
+  return fam;
+}
+
+function onCanalChange(){
+  populateFamChips();
+  applyFilters();
+}
+
+function populateFamChips(){
+  const canal=document.getElementById('f-canal').value;
+  // Recopilar familias presentes en los datos según el canal seleccionado
+  const famSet=new Set();
+  DATA.forEach(r=>{
+    if(canal!=='all'&&r._canal!==canal) return;
+    famSet.add(famKey(r));
+  });
+
+  // Ordenar: primero "Curated/Sponsorship" con variantes agrupadas, luego el resto
+  const sorted=[...famSet].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
+
+  // Limpiar selección si las familias seleccionadas ya no están disponibles
+  selectedFamilies.forEach(f=>{ if(!famSet.has(f)) selectedFamilies.delete(f); });
+
+  let html=`<span class="f-chip all-fchip${selectedFamilies.size===0?' active':''}" onclick="toggleFam('all')">Todas</span>`;
+  sorted.forEach(fam=>{
+    const active=selectedFamilies.has(fam)?' active':'';
+    html+=`<span class="f-chip${active}" data-fam="${fam.replace(/"/g,'&quot;')}" onclick="toggleFam(this)">${fam}</span>`;
+  });
+  document.getElementById('fam-chips-row').innerHTML=html;
+}
+
+function toggleFam(el){
+  if(el==='all'){
+    selectedFamilies.clear();
+  } else {
+    const fam=el.dataset.fam;
+    if(selectedFamilies.has(fam)) selectedFamilies.delete(fam);
+    else selectedFamilies.add(fam);
+  }
+  // Actualizar clases
+  document.querySelectorAll('.f-chip').forEach(ch=>{
+    if(ch.classList.contains('all-fchip')) ch.classList.toggle('active',selectedFamilies.size===0);
+    else ch.classList.toggle('active',selectedFamilies.has(ch.dataset.fam));
+  });
+  applyFilters();
+}
+
+// Suma de ingresos (positivos Y negativos) → ingreso neto real
+function aggSum(rows,keyFn){
+  const m=new Map();
+  rows.forEach(r=>{
+    const k=keyFn(r);
+    if(k===null||k===undefined||k==='') return;
+    m.set(k,(m.get(k)||0)+r._ingreso);
+  });
+  return m;
+}
+// Suma y count para presupuesto medio
+function aggMean(rows,keyFn){
+  const m=new Map();
+  rows.forEach(r=>{
+    const k=keyFn(r);
+    if(k===null||k===undefined||k==='') return;
+    if(!m.has(k)) m.set(k,{sum:0,count:0});
+    const g=m.get(k); g.sum+=r._ingreso; g.count++;
+  });
+  return m;
+}
+
+function calcPct(base,comp){
+  if(!comp&&comp!==0) return null;
+  if(comp===0) return null;
+  return((base-comp)/Math.abs(comp))*100;
+}
+
+function applyFilters(){
+  const yrBase=document.getElementById('yr-base').value;
+  const yrComp=document.getElementById('yr-comp').value;
+  if(!yrBase||!yrComp){showEmptyState();return;}
+  const base=getRows(yrBase), comp=getRows(yrComp);
+  renderRankings(base,comp);
+  renderWorst(base,comp);
+  renderComerciales(base,comp);
+  renderPublicaciones();
+  renderBC();
+  renderBCGlobal();
+  document.getElementById('anun-panel-wrap').innerHTML='';
+  activePub=null;
+  document.querySelectorAll('.pub-chip').forEach(c=>c.classList.remove('active-pub'));
+}
+
+function showEmptyState(){
+  const msg='<div class="empty-msg" style="padding:32px 14px">Selecciona año base y año comparado para ver el análisis</div>';
+  ['rk-pub','rk-area','rk-sector','rk-familia'].forEach(id=>document.getElementById(id).innerHTML=msg);
+  ['w-sector-site','w-pm-prod','w-pm-prod-site'].forEach(id=>document.getElementById(id).innerHTML=msg);
+  ['pub-digital','pub-print','pub-eventos'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  BC_SLOTS.forEach(s=>{const el=document.getElementById(s.id);if(el)el.innerHTML='<div class="bc-empty">Selecciona año base y año comparado</div>';});
+  BC_SLOTS.forEach((s,i)=>{const el=document.getElementById('bca-'+i);if(el)el.innerHTML='<div class="bc-empty">Selecciona año base y año comparado</div>';});
+  const cg=document.getElementById('com-col-left');if(cg)cg.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">Selecciona año base y año comparado para ver el análisis</div>';
+  const cgr=document.getElementById('com-col-right');if(cgr)cgr.innerHTML='';
+  document.getElementById('anun-panel-wrap').innerHTML='';
+}
+
+// ── B3 RANKINGS ──
+function cleanSectorName(s){
+  // Quita "12345 * " del inicio
+  return s.replace(/^\d+\s*\*\s*/,'').trim();
+}
+
+function renderRankings(base,comp){
+  const canalSel = document.getElementById('f-canal').value;
+  renderRankingCard('rk-pub',    base,comp,r=>r._pub,       null, canalSel);
+  renderRankingCard('rk-area',   base,comp,r=>r._area,      null, canalSel);
+  renderRankingCard('rk-sector', base,comp,r=>r._sector,    null, canalSel);
+  renderRankingCard('rk-familia',base,comp,r=>r._fam,       null, canalSel);
+}
+
+function renderRankingCard(elId,base,comp,keyFn,subKeyFn,canalSel){
+  const bMap=aggSum(base,keyFn);
+  const cMap=aggSum(comp,keyFn);
+
+  // Para sectores: encontrar la publicación con mayor ingreso base por sector
+  let bSubMap=null;
+  if(subKeyFn){
+    bSubMap=new Map();
+    base.forEach(r=>{
+      const k=keyFn(r); const sub=subKeyFn(r);
+      if(!k||!sub) return;
+      if(!bSubMap.has(k)) bSubMap.set(k,new Map());
+      const sm=bSubMap.get(k);
+      sm.set(sub,(sm.get(sub)||0)+r._ingreso);
+    });
+  }
+
+  // Total: suma de TODOS los ingresos del array completo (no de los mapas)
+  const totalBase=base.reduce((s,r)=>s+r._ingreso,0);
+  const totalComp=comp.reduce((s,r)=>s+r._ingreso,0);
+  const tPct=calcPct(totalBase,totalComp);
+  const tClass=pctClass(tPct,false,false);
+
+  const allKeys=new Set([...bMap.keys(),...cMap.keys()]);
+  let items=[];
+  allKeys.forEach(k=>{
+    if(!k) return;
+    const bv=bMap.get(k)||0, cv=cMap.get(k)||0;
+    const isLost=cv!==0&&bv===0;
+    const isNew=bv!==0&&cv===0;
+    const p=(!isLost&&!isNew)?calcPct(bv,cv):null;
+    const diff=bv-cv; // negativo = pérdida
+    // Publicación principal del sector (la de mayor ingreso)
+    let topSub='';
+    if(bSubMap&&bSubMap.has(k)){
+      const sm=bSubMap.get(k);
+      topSub=[...sm.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+    }
+    // Para rk-pub con canal EVENTOS: mostrar el producto más frecuente
+    let eventoProd = '';
+    if(elId==='rk-pub' && canalSel==='EVENTOS'){
+      const prodCount = new Map();
+      base.filter(r=>keyFn(r)===k).forEach(r=>{ if(r._prod) prodCount.set(r._prod,(prodCount.get(r._prod)||0)+1); });
+      if(prodCount.size) eventoProd = [...prodCount.entries()].sort((a,b)=>b[1]-a[1])[0][0];
+    }
+    items.push({k,bv,cv,p,isLost,isNew,diff,topSub,eventoProd});
+  });
+
+  // Ordenar por bruto perdido (diff más negativo primero), luego perdidos, nuevos al final
+  items.sort((a,b)=>{
+    if(a.isNew&&!b.isNew) return 1;
+    if(!a.isNew&&b.isNew) return -1;
+    return a.diff-b.diff; // más negativo (mayor pérdida) primero
+  });
+
+  let html=`<div class="rk-total-row">
+    <span class="rk-total-label">TOTAL</span>
+    <span class="rk-total-val">${fmt(totalBase)}</span>
+    <span class="rk-total-pct ${tClass}">${tPct!==null?fmtPct(tPct):'—'}</span>
+  </div>`;
+
+  items.forEach((it,i)=>{
+    const pc=pctClass(it.p,it.isLost,it.isNew);
+    const badge=it.isLost?'<span class="badge-lost">PERDIDO</span>':it.isNew?'<span class="badge-new">NUEVO</span>':'';
+    const pText=it.isLost||it.isNew?'':(it.p!==null?fmtPct(it.p):'—');
+    const diff=it.diff;
+    const diffText=(it.isLost||it.isNew||it.cv===0)?'':`<span class="rk-diff ${diff>=0?'pos':'neg'}">(${diff>=0?'+':''}${fmt(diff)})</span>`;
+    const displayName=elId==='rk-sector'?cleanSectorName(it.k):it.k;
+    const subLabel=(it.eventoProd?`<span class="rk-sub">${it.eventoProd}</span>`:it.topSub?`<span class="rk-sub">${it.topSub}</span>`:'');
+    html+=`<div class="ranking-row">
+      <span class="rk-pos">${i+1}</span>
+      <span class="rk-name" title="${it.k}">${displayName}${subLabel}</span>
+      ${badge}
+      <span class="rk-val">${fmt(it.bv)}</span>
+      ${diffText}
+      <span class="rk-pct ${pc}">${pText}</span>
+    </div>`;
+  });
+  document.getElementById(elId).innerHTML=html||'<div class="empty-msg">Sin datos</div>';
+}
+
+// ── B4 TOP 20 ──
+function renderWorst(base,comp){
+  // Bloque 1: ingreso neto total por pub × sector (bruto real)
+  renderWorstSectorSite('w-sector-site', base, comp);
+  // Bloque 2: ingreso neto total por área × sector (bruto real)
+  renderWorstSectorArea('w-pm-prod', base, comp);
+  // Bloque 3: presupuesto medio por producto × pub
+  renderWorstPM('w-pm-prod-site', base, comp, r=>`${r._prod}|||${r._pub}`,
+    it=>{const[a,b]=it.k.split('|||');return{name:a,sub:b};});
+}
+
+// Bloque 1: pérdida/ganancia bruta por pub × sector
+function renderWorstSectorSite(elId, base, comp){
+  _popData = []; // reset shared index
+  const keyFn = r => `${r._pub}|||${r._sector}`;
+  const bMap = aggSum(base, keyFn);
+  const cMap = aggSum(comp, keyFn);
+  const allKeys = new Set([...bMap.keys(), ...cMap.keys()]);
+  let items = [];
+  allKeys.forEach(k => {
+    if(!k) return;
+    const[pub, sector] = k.split('|||');
+    if(!pub || !sector) return;
+    const bv = bMap.get(k)||0;
+    const cv = cMap.get(k)||0;
+    const diff = bv - cv; // negativo = pérdida
+    const p = cv !== 0 ? calcPct(bv, cv) : null;
+    items.push({pub, sector: cleanSectorName(sector), bv, cv, diff, p});
+  });
+  // Solo los que tienen comparativa en ambos años
+  items = items.filter(it => it.bv !== 0 || it.cv !== 0);
+  // Ordenar por pérdida bruta (más negativo primero)
+  items.sort((a,b) => a.diff - b.diff);
+  const worst = items.slice(0,30);
+  const maxAbs = Math.max(...worst.map(it=>Math.abs(it.diff)), 1);
+  let html = '';
+  worst.forEach((it,i) => {
+    const barW = Math.min(100,(Math.abs(it.diff)/maxAbs)*100);
+    const diffCol = it.diff >= 0
+      ? `<span class="w-val-pos">${fmt(it.diff)}</span>`
+      : `<span class="w-val-neg">${fmt(it.diff)}</span>`;
+    const pctCol = it.p !== null
+      ? `<span class="w-pct ${it.p>=0?'w-pos':'w-neg'}">${fmtPct(it.p)}</span>`
+      : `<span class="w-pct" style="color:var(--text3)">—</span>`;
+    const idx_s = _popData.push({type:'pub', dim1:it.pub, sector:it.sector}) - 1;
+    html += `<div class="worst-row2" style="cursor:pointer" data-popidx="${idx_s}"
+      onmouseenter="onRowEnter(event,${idx_s})"
+      onmouseleave="onRowLeave(event)"
+      ontouchend="onRowTap(event,${idx_s})">
+      <span class="w-num">${i+1}</span>
+      <div class="w-info">
+        <div class="w-name">${it.sector}</div>
+        <div class="w-sub">${it.pub}</div>
+        <div class="w-bar-wrap"><div class="w-bar ${it.diff>=0?'w-bar-pos':''}" style="width:${barW}%"></div></div>
+      </div>
+      ${diffCol}
+      ${pctCol}
+    </div>`;
+  });
+  document.getElementById(elId).innerHTML = html || '<div class="empty-msg">Sin datos comparables</div>';
+}
+// Bloque 2: pérdida/ganancia bruta por área × sector
+const AREA_MAP = {
+  'BRAND EXPERIENCE':           'Madrid',
+  'CLIENT EXPERIENCE LIFESTYLE':'Madrid',
+  'CLIENT EXPERIENCE LUJO':     'Madrid',
+  'CLIENT EXPERIENCE BARCELONA':'Barcelona',
+  'INTERNACIONAL':              'Internacional',
+  'PROGRAMÁTICA':               'Programática',
+};
+function mapArea(raw){ return AREA_MAP[raw.trim().toUpperCase()] || AREA_MAP[raw.trim()] || raw.trim(); }
+
+function renderWorstSectorArea(elId, base, comp){
+  // _popData continues from renderWorstSectorSite (indices are global)
+  const keyFn = r => `${mapArea(r._area)}|||${r._sector}`;
+  const bMap = aggSum(base, keyFn);
+  const cMap = aggSum(comp, keyFn);
+  const allKeys = new Set([...bMap.keys(), ...cMap.keys()]);
+  let items = [];
+  allKeys.forEach(k => {
+    if(!k) return;
+    const[area, sector] = k.split('|||');
+    if(!area || !sector) return;
+    const bv = bMap.get(k)||0;
+    const cv = cMap.get(k)||0;
+    const diff = bv - cv;
+    const p = cv !== 0 ? calcPct(bv, cv) : null;
+    items.push({area, sector: cleanSectorName(sector), bv, cv, diff, p});
+  });
+  items = items.filter(it => it.bv !== 0 || it.cv !== 0);
+  items.sort((a,b) => a.diff - b.diff);
+  const worst = items.slice(0,30);
+  const maxAbs = Math.max(...worst.map(it=>Math.abs(it.diff)), 1);
+  let html = '';
+  worst.forEach((it,i) => {
+    const barW = Math.min(100,(Math.abs(it.diff)/maxAbs)*100);
+    const diffCol = it.diff >= 0
+      ? `<span class="w-val-pos">${fmt(it.diff)}</span>`
+      : `<span class="w-val-neg">${fmt(it.diff)}</span>`;
+    const pctCol = it.p !== null
+      ? `<span class="w-pct ${it.p>=0?'w-pos':'w-neg'}">${fmtPct(it.p)}</span>`
+      : `<span class="w-pct" style="color:var(--text3)">—</span>`;
+    const idx_a = _popData.push({type:'area', dim1:it.area, sector:it.sector}) - 1;
+    html += `<div class="worst-row2" style="cursor:pointer" data-popidx="${idx_a}"
+      onmouseenter="onRowEnter(event,${idx_a})"
+      onmouseleave="onRowLeave(event)"
+      ontouchend="onRowTap(event,${idx_a})">
+      <span class="w-num">${i+1}</span>
+      <div class="w-info">
+        <div class="w-name">${it.sector}</div>
+        <div class="w-sub">${it.area}</div>
+        <div class="w-bar-wrap"><div class="w-bar ${it.diff>=0?'w-bar-pos':''}" style="width:${barW}%"></div></div>
+      </div>
+      ${diffCol}
+      ${pctCol}
+    </div>`;
+  });
+  document.getElementById(elId).innerHTML = html || '<div class="empty-msg">Sin datos comparables</div>';
+}
+
+// Bloques 2 y 3: presupuesto medio
+function renderWorstPM(elId, base, comp, keyFn, labelFn){
+  const bMap = aggMean(base, keyFn);
+  const cMap = aggMean(comp, keyFn);
+  const allKeys = new Set([...bMap.keys(), ...cMap.keys()]);
+  let items = [];
+  allKeys.forEach(k => {
+    if(!k) return;
+    const bg = bMap.get(k), cg = cMap.get(k);
+    if(!bg || !cg) return; // solo si existe en ambos años
+    const bPM = bg.sum / bg.count;
+    const cPM = cg.sum / cg.count;
+    const diff = bPM - cPM;
+    const p = cPM !== 0 ? calcPct(bPM, cPM) : null;
+    if(p === null) return;
+    const {name, sub} = labelFn({k});
+    items.push({name, sub, bPM, cPM, diff, p});
+  });
+  items.sort((a,b) => a.diff - b.diff);
+  const worst = items.slice(0,30);
+  const maxAbs = Math.max(...worst.map(it=>Math.abs(it.diff)), 1);
+  let html = '';
+  worst.forEach((it,i) => {
+    const barW = Math.min(100,(Math.abs(it.diff)/maxAbs)*100);
+    const valCol = `<span class="w-val-neg">${fmt(it.bPM)} <span class="w-vs">vs ${fmt(it.cPM)}</span></span>`;
+    const pctCol = `<span class="w-pct ${it.p>=0?'w-pos':'w-neg'}">${fmtPct(it.p)}</span>`;
+    html += `<div class="worst-row2">
+      <span class="w-num">${i+1}</span>
+      <div class="w-info">
+        <div class="w-name">${it.name}</div>
+        ${it.sub ? `<div class="w-sub">${it.sub}</div>` : ''}
+        <div class="w-bar-wrap"><div class="w-bar ${it.diff>=0?'w-bar-pos':''}" style="width:${barW}%"></div></div>
+      </div>
+      ${valCol}
+      ${pctCol}
+    </div>`;
+  });
+  document.getElementById(elId).innerHTML = html || '<div class="empty-msg">Sin datos comparables</div>';
+}
+
+// ── B04b BRANDED CONTENT ──
+// 5 cajitas: cada una filtra por producto/familia específico,
+// muestra las 20 marcas con el presupuesto más bajo en el año base.
+// Selector de publicación: publicaciones Print (sin familia Eventos) etiquetadas
+// como "(Revista)" y las mismas publicaciones con sólo familia Eventos como "(Evento)".
+
+const BC_SLOTS = [
+  { id: 'bc-0', label: 'Branded Content',       icon: '✍️',  type: 'prod', value: 'Branded Content',       showProduct: false },
+  { id: 'bc-1', label: 'BC Video',              icon: '🎬',  type: 'prod', value: 'Branded Content video',  showProduct: false },
+  { id: 'bc-2', label: 'Social Networks',       icon: '📱',  type: 'fam',  value: 'Social Networks',        showProduct: true  },
+  { id: 'bc-3', label: 'Página Branded',        icon: '📄',  type: 'prod', value: 'PAGINA BRANDED',         showProduct: false },
+  { id: 'bc-4', label: 'Doble Página Branded',  icon: '📰',  type: 'prod', value: 'DOBLE PAGINA BRANDED',   showProduct: false },
+];
+
+// Mapa de URL digital → nombre canónico (Print)
+// Clave: _pub tal como llega del Excel (normalizada a minúsculas sin trailing slash para match)
+const BC_PUB_MAP = [
+  { digital: 'www.caranddriver.com/es',    canon: 'CAR & DRIVER' },
+  { digital: 'www.cosmopolitan.com/es',    canon: 'COSMOPOLITAN' },
+  { digital: 'www.diezminutos.es',         canon: 'DIEZ MINUTOS' },
+  { digital: 'www.elle.com/es',            canon: 'ELLE' },
+  { digital: 'www.elledecor.com/es',       canon: 'ELLE DECORATION' },
+  { digital: 'www.esquire.com/es',         canon: 'ESQUIRE' },
+  { digital: 'www.fotogramas.es',          canon: 'FOTOGRAMAS' },
+  { digital: 'www.harpersbazaar.com/es',   canon: 'HARPER\'S BAZAAR' },
+  { digital: 'www.menshealth.com/es',      canon: 'MEN\'S HEALTH' },
+  { digital: 'www.micasarevista.com',      canon: 'MI CASA REVISTA' },
+  { digital: 'www.nuevo-estilo.es',        canon: 'NUEVO ESTILO' },
+  { digital: 'www.runnersworld.com/es',    canon: 'RUNNER\'S WORLD' },
+  { digital: 'www.womenshealthmag.com/es', canon: 'WOMEN\'S HEALTH' },
+];
+
+// Nombres Print que se mapean directamente a su canónico
+const BC_PRINT_CANON = {
+  'CAR & DRIVER':      'CAR & DRIVER',
+  'COSMOPOLITAN':      'COSMOPOLITAN',
+  'DIEZ MINUTOS':      'DIEZ MINUTOS',
+  'ELLE':              'ELLE',
+  'ELLE DECORATION':   'ELLE DECORATION',
+  'ELLE GOURMET':      'ELLE GOURMET',
+  'ELLE TRAVEL':       'ELLE TRAVEL',
+  'ESQUIRE':           'ESQUIRE',
+  'FOTOGRAMAS & VIDEO':'FOTOGRAMAS',
+  'FOTOGRAMAS':        'FOTOGRAMAS',
+  'HARPER\'S BAZAAR':  'HARPER\'S BAZAAR',
+  'HARPERS BAZAAR':    'HARPER\'S BAZAAR',
+  'MEN\'S HEALTH':     'MEN\'S HEALTH',
+  'MENS HEALTH':       'MEN\'S HEALTH',
+  'NUEVO ESTILO':      'NUEVO ESTILO',
+  'RUNNER\'S WORLD':   'RUNNER\'S WORLD',
+  'RUNNERS WORLD':     'RUNNER\'S WORLD',
+  'WOMEN\'S HEALTH':   'WOMEN\'S HEALTH',
+  'WOMENS HEALTH':     'WOMEN\'S HEALTH',
+};
+
+// Normaliza una URL digital a la clave del mapa (quita protocolo, www ya está, quita trailing slash)
+function normDigitalPub(raw) {
+  return raw.trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/+$/, '')
+    .toLowerCase();
+}
+
+// Devuelve el nombre canónico para una fila, o null si no se puede mapear
+function canonPub(r) {
+  if (r._canal === 'DIGITAL') {
+    const norm = normDigitalPub(r._pub);
+    const entry = BC_PUB_MAP.find(e => norm === e.digital || norm.startsWith(e.digital));
+    return entry ? entry.canon : null;
+  }
+  if (r._canal === 'PRINT') {
+    const up = r._pub.trim().toUpperCase();
+    return BC_PRINT_CANON[up] || null;
+  }
+  return null; // EVENTOS se separan
+}
+
+function populateBCSelector() {
+  const sel = document.getElementById('bc-pub-select');
+  if (!sel) return;
+
+  // Recopilar canónicos con datos (Revista = Digital+Print sin Eventos, Evento = fam Eventos)
+  const canonRevista = new Set();
+  const canonEvento  = new Set();
+
+  DATA.forEach(r => {
+    if (r._fam === 'Eventos') {
+      // Para eventos usamos el nombre de pub directamente
+      if (r._pub) canonEvento.add(r._pub.trim());
+      return;
+    }
+    const c = canonPub(r);
+    if (c) canonRevista.add(c);
+  });
+
+  const prevVal = sel.value;
+  sel.innerHTML = '<option value="">— Selecciona publicación —</option>';
+
+  const grpRevista = document.createElement('optgroup');
+  grpRevista.label = '📰 Revista + Web';
+  grpRevista.style.color = 'var(--accent)';
+
+  [...canonRevista].sort().forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = 'revista::' + name;
+    opt.textContent = name;
+    grpRevista.appendChild(opt);
+  });
+  if (grpRevista.children.length) sel.appendChild(grpRevista);
+  // Seleccionar ELLE por defecto si no había valor previo
+  // Sin selección por defecto — el usuario debe elegir publicación
+
+  const grpEvento = document.createElement('optgroup');
+  grpEvento.label = '🎪 Eventos';
+  grpEvento.style.color = '#7c3aed';
+
+  [...canonEvento].sort().forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = 'evento::' + name;
+    opt.textContent = name;
+    opt.style.color = '#7c3aed';
+    grpEvento.appendChild(opt);
+  });
+  if (grpEvento.children.length) sel.appendChild(grpEvento);
+
+  if (prevVal) { sel.value = prevVal; if (!sel.value) sel.value = ''; }
+}
+
+
+// ── B04a BRANDED CONTENT GLOBAL (todas las publicaciones) ──
+function renderBCGlobal() {
+  const yrBase = document.getElementById('yr-base').value;
+  const NO_DATA = '<div class="bc-empty">Sin datos para este filtro</div>';
+  const WAIT    = '<div class="bc-empty">Selecciona año base para ver datos</div>';
+
+  if (!yrBase) {
+    BC_SLOTS.forEach((s, i) => { const el=document.getElementById('bca-'+i); if(el) el.innerHTML=WAIT; });
+    return;
+  }
+
+  // Todas las filas del año base (sin filtro de publicación)
+  const baseRows = DATA.filter(r => r._year === yrBase && r._fam !== 'Eventos');
+
+  BC_SLOTS.forEach((s, i) => {
+    const el = document.getElementById('bca-' + i);
+    if (!el) return;
+
+    const slotRows = baseRows.filter(r =>
+      s.type === 'prod' ? r._prod === s.value : r._fam === s.value
+    );
+
+    // Solo marcas con ingreso superior a 0
+    const slotRowsConIngreso = slotRows.filter(r => r._ingreso > 0);
+
+    if (!slotRowsConIngreso.length) { el.innerHTML = NO_DATA; return; }
+
+    const sorted = [...slotRowsConIngreso]
+      .sort((a, b) => a._ingreso - b._ingreso)
+      .slice(0, 30);
+
+    el.innerHTML = sorted.map((r, idx) => {
+      const marca = r._marca || r._anun || '(sin marca)';
+      const anun  = r._anun  || '';
+      const pub   = r._pubClean || r._pub || '';
+      const prod  = r._prod  || '';
+      const diferente = anun && anun !== marca;
+
+      let infoHtml;
+      if (s.showProduct) {
+        // Social Networks: línea 1 = marca + anunciante, línea 2 = publicación + producto
+        const anunInline = diferente
+          ? ` <span style="color:var(--text2);font-size:9px;font-style:italic">(${esc(anun)})</span>` : '';
+        const subLine = [pub, prod].filter(Boolean).join(' · ');
+        infoHtml = `<div class="bc-marca">${esc(marca)}${anunInline}</div>`
+                 + (subLine ? `<div class="bc-anun">${esc(subLine)}</div>` : '');
+      } else {
+        // Resto: línea 1 = marca (publicación), línea 2 = anunciante
+        const marcaLine = pub ? `${esc(marca)} <span style="color:var(--text3);font-size:9px">(${esc(pub)})</span>` : esc(marca);
+        const anunBelow = diferente ? `<div class="bc-anun">(${esc(anun)})</div>` : '';
+        infoHtml = `<div class="bc-marca">${marcaLine}</div>${anunBelow}`;
+      }
+
+      return `<div class="bc-row">
+        <span class="bc-pos">${idx+1}</span>
+        <div class="bc-info">${infoHtml}</div>
+        <span class="bc-val">${fmt(r._ingreso)}</span>
+      </div>`;
+    }).join('');
+  });
+}
+
+function renderBC() {
+  const sel    = document.getElementById('bc-pub-select');
+  const val    = sel ? sel.value : '';
+  const hint   = document.getElementById('bc-year-hint');
+  const yrBase = document.getElementById('yr-base').value;
+
+  if (hint) hint.textContent = yrBase ? 'Año base: ' + yrBase : '';
+
+  const EMPTY   = '<div class="bc-empty">Selecciona publicación</div>';
+  const NO_DATA = '<div class="bc-empty">Sin datos para este filtro</div>';
+
+  if (!val || !yrBase) {
+    BC_SLOTS.forEach(s => { const el=document.getElementById(s.id); if(el) el.innerHTML=EMPTY; });
+    return;
+  }
+
+  const [mode, targetCanon] = val.split('::');
+
+  // Seleccionar filas del año base que pertenecen a esta publicación canónica
+  const baseRows = DATA.filter(r => {
+    if (r._year !== yrBase) return false;
+    if (mode === 'evento') {
+      return r._fam === 'Eventos' && r._pub.trim() === targetCanon;
+    }
+    // Revista + Web: excluir Eventos, incluir si canon coincide
+    if (r._fam === 'Eventos') return false;
+    return canonPub(r) === targetCanon;
+  });
+
+  BC_SLOTS.forEach(s => {
+    const el = document.getElementById(s.id);
+    if (!el) return;
+
+    const slotRows = baseRows.filter(r =>
+      s.type === 'prod' ? r._prod === s.value : r._fam === s.value
+    );
+
+    if (!slotRows.length) { el.innerHTML = NO_DATA; return; }
+
+    // Cada línea individual del Excel, ordenadas por importe ascendente
+    const sorted = [...slotRows]
+      .sort((a, b) => a._ingreso - b._ingreso)
+      .slice(0, 30);
+
+    el.innerHTML = sorted.map((r, i) => {
+      const marca = r._marca || r._anun || '(sin marca)';
+      const anun  = r._anun  || '';
+      const diferente = anun && anun !== marca;
+
+      let infoHtml;
+      if (s.showProduct) {
+        // Social Networks: marca + (anunciante) en la misma línea, producto debajo
+        const anunInline = diferente
+          ? ` <span style="color:var(--text2);font-size:9px;font-style:italic">(${esc(anun)})</span>` : '';
+        const prodLine = r._prod
+          ? `<div class="bc-anun" style="color:var(--accent);opacity:0.8">${esc(r._prod)}</div>` : '';
+        infoHtml = `<div class="bc-marca">${esc(marca)}${anunInline}</div>${prodLine}`;
+      } else {
+        // Resto: marca arriba, anunciante debajo en cursiva
+        const anunBelow = diferente
+          ? `<div class="bc-anun">(${esc(anun)})</div>` : '';
+        infoHtml = `<div class="bc-marca">${esc(marca)}</div>${anunBelow}`;
+      }
+
+      return `<div class="bc-row">
+        <span class="bc-pos">${i+1}</span>
+        <div class="bc-info">${infoHtml}</div>
+        <span class="bc-val">${fmt(r._ingreso)}</span>
+      </div>`;
+    }).join('');
+  });
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Arrancar carga automática al terminar de cargar el DOM
+document.addEventListener('DOMContentLoaded', autoLoadFromServer);
+
+// ── B04c COMERCIALES ──
+function shortName(full){
+  // Devuelve nombre completo sin abreviar
+  return full.trim();
+}
+
+function renderComerciales(base, comp){
+  const leftEl  = document.getElementById('com-col-left');
+  const midEl   = document.getElementById('com-col-mid');
+  const rightEl = document.getElementById('com-col-right');
+  const hint    = document.getElementById('com-hint');
+  if(!leftEl || !rightEl) return;
+
+  const EMPTY = '<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">Sin datos de comerciales</div>';
+
+  const bMap = new Map(), cMap = new Map();
+  base.forEach(r => { if(!r._comercial) return; bMap.set(r._comercial,(bMap.get(r._comercial)||0)+1); });
+  comp.forEach(r => { if(!r._comercial) return; cMap.set(r._comercial,(cMap.get(r._comercial)||0)+1); });
+
+  const COMERCIALES_EXCLUIDOS = new Set(['PAULA GUADALUPE DEVOTO','MARCOS MARTIN MOYANO SERRANO','BARCELONA']);
+  const allComs = new Set([...bMap.keys(),...cMap.keys()].filter(c => c && !COMERCIALES_EXCLUIDOS.has(c.trim().toUpperCase())));
+  if(!allComs.size){ leftEl.innerHTML=EMPTY; if(midEl) midEl.innerHTML=''; rightEl.innerHTML=''; return; }
+
+  const items = [...allComs].map(c => {
+    const b = bMap.get(c)||0, cp = cMap.get(c)||0;
+    const diff = b - cp;
+    const pct  = cp > 0 ? (diff/cp)*100 : null;
+    return { name: shortName(c), b, cp, diff, pct };
+  }).sort((a,b) => {
+    if(a.pct===null && b.pct===null) return 0;
+    if(a.pct===null) return 1;
+    if(b.pct===null) return -1;
+    return a.pct - b.pct;
+  });
+
+  if(hint) hint.textContent = items.length + ' comerciales · ordenado por variación ↑';
+
+  const buildTable = rows => {
+    const rowsHtml = rows.map(it => {
+      const pctStr  = it.pct !== null ? (it.pct>=0?'+':'')+it.pct.toFixed(1)+'%' : (it.cp===0?'Nuevo':'—');
+      const pctCls  = it.pct === null ? (it.cp===0?'pos':'zero-c') : (it.pct<0?'neg':it.pct>0?'pos':'zero-c');
+      const diffStr = it.diff !== 0 ? (it.diff>0?'+':'')+it.diff : '=';
+      return `<tr>
+        <td class="com-td-name">${esc(it.name)}</td>
+        <td class="com-td-num">${it.b}</td>
+        <td class="com-td-num">${it.cp}</td>
+        <td class="com-td-diff">${esc(diffStr)}</td>
+        <td class="com-td-pct ${pctCls}">${esc(pctStr)}</td>
+      </tr>`;
+    }).join('');
+    return `<table class="com-table">
+      <thead><tr>
+        <th>Comercial</th>
+        <th class="num">Este año</th>
+        <th class="num">Año ant.</th>
+        <th class="num">Dif.</th>
+        <th class="num">%</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
+  };
+
+  const third = Math.ceil(items.length / 3);
+  const second = third + Math.ceil((items.length - third) / 2);
+  leftEl.innerHTML  = buildTable(items.slice(0, third));
+  if(midEl) midEl.innerHTML = buildTable(items.slice(third, second));
+  rightEl.innerHTML = buildTable(items.slice(second));
+}
+
+// ── B5 PUBLICACIONES ──
+function renderPublicaciones(){
+  const pubsByCanal=new Map();
+  DATA.forEach(r=>{
+    if(!pubsByCanal.has(r._canal)) pubsByCanal.set(r._canal,new Map());
+    // key: pub raw → valor: nombre limpio para mostrar
+    pubsByCanal.get(r._canal).set(r._pub, r._pubClean || r._pub);
+  });
+  ['DIGITAL','PRINT','EVENTOS'].forEach(canal=>{
+    const el=document.getElementById('pub-'+canal.toLowerCase());
+    const map=pubsByCanal.get(canal)||new Map();
+    // map: raw pub → pubClean
+    const sorted=[...map.keys()].sort((a,b)=>{
+      const na=map.get(a)||a, nb=map.get(b)||b;
+      return na.localeCompare(nb,'es');
+    });
+    if(!sorted.length){el.innerHTML='<div class="empty-msg" style="font-size:11px">Sin datos</div>';return;}
+    el.innerHTML=sorted.map(p=>{
+      const displayName=map.get(p)||p;
+      return `<span class="pub-chip" data-pub="${p.replace(/"/g,'&quot;')}" data-canal="${canal}" onclick="togglePub(this)">${displayName}</span>`;
+    }).join('');
+  });
+}
+
+function togglePub(el){
+  const pub  = el.dataset.pub;
+  const canal= el.dataset.canal;
+  if(activePub===pub){
+    activePub=null;
+    document.querySelectorAll('.pub-chip').forEach(c=>c.classList.remove('active-pub'));
+    document.getElementById('anun-panel-wrap').innerHTML='';
+    return;
+  }
+  document.querySelectorAll('.pub-chip').forEach(c=>c.classList.remove('active-pub'));
+  el.classList.add('active-pub');
+  activePub=pub;
+  renderAnunPanel(pub,canal);
+}
+
+function closeAnunPanel(){
+  activePub=null;
+  document.querySelectorAll('.pub-chip').forEach(c=>c.classList.remove('active-pub'));
+  document.getElementById('anun-panel-wrap').innerHTML='';
+}
+
+function renderAnunPanel(pub,canal){
+  const yrBase=document.getElementById('yr-base').value;
+  const yrComp=document.getElementById('yr-comp').value;
+  // Filtrar por pub exacta (raw) Y canal — evita mezclar Digital/Print con mismo nombre
+  const baseRows=getRows(yrBase).filter(r=>r._pub===pub&&r._canal===canal);
+  const compRows=getRows(yrComp).filter(r=>r._pub===pub&&r._canal===canal);
+
+  // Mapa anunciante → ingreso
+  const bMap=aggSum(baseRows,r=>r._anun);
+  const cMap=aggSum(compRows,r=>r._anun);
+
+  // Mapa anunciante → set de productos (para mostrar en el panel)
+  function prodMap(rows){
+    const m=new Map();
+    rows.forEach(r=>{
+      if(!r._anun) return;
+      if(!m.has(r._anun)) m.set(r._anun,new Set());
+      if(r._prod) m.get(r._anun).add(r._prod);
+    });
+    return m;
+  }
+  const bProds=prodMap(baseRows);
+  const cProds=prodMap(compRows);
+
+  // PERDIDOS: tenían ingreso en comp, no en base
+  let perdidos=[];
+  cMap.forEach((cv,k)=>{
+    if(k&&cv>0&&(!bMap.has(k)||bMap.get(k)===0)){
+      const prods=[...(cProds.get(k)||[])].join(', ');
+      perdidos.push({name:k,cv,prods});
+    }
+  });
+  perdidos.sort((a,b)=>b.cv-a.cv);
+  perdidos=perdidos.slice(0,30);
+
+  // PEOR COMPORTAMIENTO: en ambos, base < comp — ordenado por bruto perdido
+  let peores=[];
+  bMap.forEach((bv,k)=>{
+    if(!k) return;
+    const cv=cMap.get(k)||0;
+    if(cv>0&&bv<cv){
+      const p=calcPct(bv,cv);
+      const diff=bv-cv;
+      const prods=[...(bProds.get(k)||[])].join(', ');
+      peores.push({name:k,bv,cv,p,diff,prods});
+    }
+  });
+  peores.sort((a,b)=>a.diff-b.diff);
+  peores=peores.slice(0,30);
+
+  const tagMap={DIGITAL:'Web',PRINT:'Revista',EVENTOS:'Eventos'};
+  const tag=tagMap[canal]||canal;
+
+  const wrap=document.getElementById('anun-panel-wrap');
+  wrap.innerHTML=`
+    <div class="anun-panel">
+      <div class="anun-panel-header">
+        <span class="anun-panel-title syne">
+          ${pub}
+          <span style="color:var(--text3);font-size:12px;font-weight:400;margin-left:6px">(${tag}) · ${yrBase} vs ${yrComp}</span>
+        </span>
+        <button class="anun-close" onclick="closeAnunPanel()">✕</button>
+      </div>
+      <div class="anun-cols">
+        <div class="anun-col">
+          <div class="anun-col-header">
+            <span class="anun-col-title" style="color:var(--orange)">🔶 Anunciantes perdidos</span>
+            <span class="anun-col-count">${perdidos.length} anunciantes</span>
+          </div>
+          <div class="anun-col-subheader">
+            <span class="anun-sh-name">Anunciante · Productos</span>
+            <span class="anun-sh-val">Pérdida</span>
+          </div>
+          <div class="anun-list">
+            ${perdidos.length
+              ?perdidos.map((it,i)=>`
+                <div class="anun-row">
+                  <span class="a-pos">${i+1}</span>
+                  <div class="a-info">
+                    <span class="a-name" title="${it.name}">${it.name}</span>
+                    ${it.prods?`<span class="a-prods">${it.prods}</span>`:''}
+                  </div>
+                  <span class="a-badge-lost">${yrComp}</span>
+                  <span class="a-val">${fmt(it.cv)}</span>
+                </div>`).join('')
+              :'<div class="empty-msg">Ninguno perdido 👍</div>'
+            }
+          </div>
+        </div>
+        <div class="anun-col">
+          <div class="anun-col-header">
+            <span class="anun-col-title" style="color:var(--red)">🔴 Peor comportamiento</span>
+            <span class="anun-col-count">${peores.length} anunciantes</span>
+          </div>
+          <div class="anun-col-subheader">
+            <span class="anun-sh-name">Anunciante · Productos</span>
+            <span class="anun-sh-val">Este año · (pérdida)</span>
+            <span class="anun-sh-pct">%</span>
+          </div>
+          <div class="anun-list">
+            ${peores.length
+              ?peores.map((it,i)=>`
+                <div class="anun-row">
+                  <span class="a-pos">${i+1}</span>
+                  <div class="a-info">
+                    <span class="a-name" title="${it.name}">${it.name}</span>
+                    ${it.prods?`<span class="a-prods">${it.prods}</span>`:''}
+                  </div>
+                  <span class="a-val">${fmt(it.bv)} <span class="a-diff">(${fmt(it.diff)})</span></span>
+                  <span class="a-pct">${fmtPct(it.p)}</span>
+                </div>`).join('')
+              :'<div class="empty-msg">Sin caídas 👍</div>'
+            }
+          </div>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(()=>wrap.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+// ── TOUCH DETECTION ──
+const isTouch = () => window.matchMedia('(hover: none)').matches || ('ontouchstart' in window);
+document.addEventListener('DOMContentLoaded', () => {
+  if (isTouch()) document.documentElement.classList.add('touch-device');
+});
+
+// ── SECTOR POPOVER ──
+let _popTimer = null;
+let _popData = []; // stores {type, dim1, sector} per rendered row
+let _activeTapIdx = null; // tracks which row is open on touch
+const _pop = () => document.getElementById('sector-pop');
+
+// Mouse (desktop): hover to show, leave to hide
+function onRowEnter(e, idx) {
+  if (isTouch()) return; // ignore on touch devices
+  clearTimeout(_popTimer);
+  showSectorPop(e, idx);
+}
+function onRowLeave(e) {
+  if (isTouch()) return;
+  // Small delay so user can move into the popover without it closing
+  _popTimer = setTimeout(() => {
+    // Only hide if mouse isn't over the popover
+    hideSectorPop();
+  }, 120);
+}
+
+// Touch (iPad): tap to toggle
+function onRowTap(e, idx) {
+  e.preventDefault();
+  e.stopPropagation();
+  const pop = _pop();
+  if (_activeTapIdx === idx && pop.classList.contains('visible')) {
+    hideSectorPop();
+    _activeTapIdx = null;
+  } else {
+    _activeTapIdx = idx;
+    // Use a synthetic event-like object with touch coordinates
+    const touch = e.changedTouches[0];
+    const fakeE = { clientX: touch.clientX, clientY: touch.clientY };
+    showSectorPop(fakeE, idx);
+  }
+}
+
+// Close popover when tapping outside
+document.addEventListener('touchend', (e) => {
+  const pop = _pop();
+  if (!pop || !pop.classList.contains('visible')) return;
+  if (!pop.contains(e.target) && !e.target.closest('[data-popidx]')) {
+    hideSectorPop();
+    _activeTapIdx = null;
+  }
+}, { passive: true });
+
+// Keep popover open when mousing over it (desktop)
+document.addEventListener('DOMContentLoaded', () => {
+  const pop = _pop();
+  if (!pop) return;
+  pop.addEventListener('mouseenter', () => clearTimeout(_popTimer));
+  pop.addEventListener('mouseleave', () => { hideSectorPop(); });
+});
+
+function showSectorPop(e, idx){
+  const {type, dim1, sector} = _popData[idx];
+  // type: 'pub' or 'area'
+  // dim1: publicación o área mapeada
+  const yrBase = document.getElementById('yr-base').value;
+  const yrComp = document.getElementById('yr-comp').value;
+  if(!yrBase || !yrComp) return;
+
+  const base = getRows(yrBase);
+  const comp = getRows(yrComp);
+
+  // Filtrar filas que coincidan con sector + dim1
+  const matchFn = type === 'pub'
+    ? r => r._pub === dim1 && cleanSectorName(r._sector) === sector
+    : r => mapArea(r._area) === dim1 && cleanSectorName(r._sector) === sector;
+
+  const bRows = base.filter(matchFn);
+  const cRows = comp.filter(matchFn);
+
+  // Agrupar por marca
+  const bMap = aggSum(bRows, r => r._marca || r._anun || '(sin marca)');
+  const cMap = aggSum(cRows, r => r._marca || r._anun || '(sin marca)');
+
+  const allMarcas = new Set([...bMap.keys(), ...cMap.keys()]);
+  let items = [];
+  allMarcas.forEach(m => {
+    if(!m) return;
+    const bv = bMap.get(m) || 0;
+    const cv = cMap.get(m) || 0;
+    const diff = bv - cv;
+    const p = cv !== 0 ? calcPct(bv, cv) : null;
+    items.push({m, bv, cv, diff, p});
+  });
+  // Ordenar de mayor caída a menor (diff más negativo primero)
+  items.sort((a, b) => a.diff - b.diff);
+
+  const label = type === 'pub' ? dim1 : dim1;
+  const pop = _pop();
+  pop.innerHTML = `
+    <div class="sector-pop-header">
+      <div class="sector-pop-header-text">
+        <div class="sector-pop-title">${esc(sector)}</div>
+        <div class="sector-pop-sub">${esc(label)} · ${yrBase} vs ${yrComp} · ${items.length} marcas</div>
+      </div>
+      <button class="sector-pop-close" onclick="hideSectorPop()">✕</button>
+    </div>
+    <div class="sector-pop-cols">
+      <span class="spc-lbl">Marca</span>
+      <span class="spc-lbl r">Año base</span>
+      <span class="spc-lbl r">Año ant.</span>
+      <span class="spc-lbl r">%</span>
+    </div>
+    <div class="sector-pop-list">
+      ${items.length ? items.map(it => {
+        const pc = it.p === null ? 'zero-c' : it.p < 0 ? 'neg' : it.p > 0 ? 'pos' : 'zero-c';
+        const pStr = it.p !== null ? fmtPct(it.p) : (it.cv === 0 ? 'NUEVO' : '—');
+        const diffStr = it.diff !== 0 ? ` (${it.diff >= 0 ? '+' : ''}${fmt(it.diff)})` : '';
+        return `<div class="sp-row">
+          <span class="sp-marca" title="${esc(it.m)}">${esc(it.m)}</span>
+          <span class="sp-base">${fmt(it.bv)}${diffStr}</span>
+          <span class="sp-comp">${fmt(it.cv)}</span>
+          <span class="sp-pct ${pc}">${pStr}</span>
+        </div>`;
+      }).join('') : '<div class="sp-empty">Sin marcas</div>'}
+    </div>`;
+
+  positionPop(e, pop);
+  pop.classList.add('visible');
+}
+
+
+function positionPop(e, pop){
+  pop.style.visibility = 'hidden';
+  pop.style.display = 'flex';
+  pop.style.maxHeight = '';  // reset before measuring
+  const pw = pop.offsetWidth || 520;
+  const ph = pop.offsetHeight;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const margin = 12;
+  let x = e.clientX + 16;
+  let y = e.clientY + 16;
+  if(x + pw > vw - margin) x = e.clientX - pw - 16;
+  if(x < margin) x = margin;
+  // If natural height fits, no scroll. If not, cap it and re-enable scroll.
+  const availH = vh - y - margin;
+  if(ph > availH){
+    if(availH < 200){
+      // Try above the cursor instead
+      y = e.clientY - ph - 16;
+      if(y < margin) { y = margin; pop.style.maxHeight = (vh - margin*2) + 'px'; pop.style.overflowY = 'auto'; }
+    } else {
+      pop.style.maxHeight = availH + 'px';
+      pop.style.overflowY = 'auto';
+    }
+  }
+  pop.style.left = x + 'px';
+  pop.style.top  = y + 'px';
+  pop.style.visibility = '';
+}
+
+function hideSectorPop(){
+  const pop = _pop();
+  pop.classList.remove('visible');
+  pop.style.display = 'none';
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGITAL - Análisis de Anunciantes por Producto</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --card:#111827; --text:#e5e7eb; --base:#38bdf8; --comp:#f59e0b;
+  --neg:#f87171; --ok-green:#34d399; --totalBg:#1e40af;
+  --siteBg:#fef3c7; --productoBg:#dbeafe; --sectorBg:#fbcfe8;
+  --comercialBg:#d1fae5; --areaBg:#fcd5ce; --anuncianteBg:#e9d5ff;
+}
+
+body { margin: 0; font-family: 'Inter', Arial, sans-serif; background: linear-gradient(180deg,#020617,#0f172a); color: var(--text); }
+h1 { text-align: center; font-size: 1.5rem; margin: 30px 0; }
+.container{ max-width:1500px; margin:auto; padding:20px; }
+.card{ background:rgba(17,24,39,.9); border-radius:14px; padding:18px; margin-bottom:20px; border: 1px solid #1f2937; position: relative; }
+.filters select, input[type=file]{ background:#1f2933; color:var(--text); border:1px solid #374151; padding:8px 10px; border-radius:8px; width: 100%; }
+.filters label{ font-weight:600; display:block; margin-top:10px; margin-bottom: 5px; }
+.filtersRow{ display:flex; gap:20px; flex-wrap:wrap; }
+.filtersRow div select{ width:220px; font-weight:600; }
+
+#fSite{ background:var(--siteBg); color:#111; }
+#fProduct{ background:var(--productoBg); color:#111; }
+#fSector{ background:var(--sectorBg); color:#111; }
+#fComercial{ background:var(--comercialBg); color:#111; }
+#fArea{ background:var(--areaBg); color:#111; }
+#fAnunciante{ background:var(--anuncianteBg); color:#111; }
+
+.checkboxGroup{ display:flex; flex-wrap:wrap; gap:10px; margin-top:5px; }
+.checkboxGroup label{ font-size: 0.85em; cursor: pointer; color: #cbd5e1; }
+
+.totalBlock{ background:var(--totalBg); padding:20px; border-radius:12px; margin-top:10px; }
+.totalValues{ display:flex; justify-content:space-around; align-items: center; }
+.totalValues div{ text-align:center; }
+.totalValues .value{ font-size:26px; font-weight:800; display: block; margin-top: 5px; }
+#diffPercent.pos { color: var(--ok-green); }
+#diffPercent.neg { color: var(--neg); }
+
+table { width: 100%; border-collapse: collapse; color: #e5e7eb; font-size: 0.9em; margin-bottom: 20px;}
+th { background: #1f2937; color: var(--base); padding: 12px; text-align: center; border-bottom: 2px solid #374151; }
+td { padding: 12px; border-bottom: 1px solid #1f2937; text-align: center; }
+.amt { font-weight: 800; }
+.pos { color: var(--ok-green); }
+.neg { color: var(--neg); }
+.mes-info { display: block; font-size: 0.75em; color: #9ca3af; margin-top: 2px; }
+
+#emptyState { text-align: center; padding: 40px; color: var(--base); font-weight: bold; }
+
+.btn-export {
+    background: var(--ok-green); color: #111; border: none; padding: 10px 20px;
+    border-radius: 8px; font-weight: 800; cursor: pointer; display: block; margin: 20px auto 0;
+    transition: transform 0.2s;
+}
+.btn-export:hover { transform: scale(1.05); background: #2bd091; }
+</style>
+</head>
+
+<body>
+
+<h1>DIGITAL - Análisis de Anunciantes por Producto</h1>
+
+<div class="container">
+  <div class="card">
+    <label style="font-weight:bold; display:block; margin-bottom:10px;">Cargar datos (Excel):</label>
+    <input type="file" id="fileInput" accept=".json,.xlsx">
+    <div id="loadStatus" style="margin-top:10px; font-size:0.85em;">Esperando archivo...</div>
+  </div>
+
+      <div class="card filters">
+        <div class="filtersRow">
+          <div>
+            <label style="color:var(--comp);">Año base</label>
+            <select id="fYear"></select>
+            <div class="checkboxGroup" id="monthsBase"></div>
+          </div>
+          <div>
+            <label style="color:var(--base);">Año comparación</label>
+            <select id="fYear2"></select>
+            <div class="checkboxGroup" id="monthsComp"></div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <div id="filterSection" style="display:none">
+      <div class="card filters">
+        <div class="filtersRow">
+          <div><label>Producto</label><select id="fProduct"></select></div>
+          <div><label>Anunciante (Volumen)</label><select id="fAnunciante"></select></div>
+          <div><label>Site</label><select id="fSite"></select></div>
+          <div><label>Sector</label><select id="fSector"></select></div>
+          <div><label>Comercial</label><select id="fComercial"></select></div>
+          <div><label>Área</label><select id="fArea"></select></div>
+        </div>
+      </div>
+
+
+
+  <div id="resultsSection" style="display:none">
+      <div class="card">
+        <div class="totalBlock">
+          <div class="totalValues">
+            <div>Año base<div id="totalYear1" class="value">0€</div></div>
+            <div>Año comparación<div id="totalYear2" class="value">-</div></div>
+            <div>Crecimiento<div id="diffPercent" class="value">-</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="text-align:center;">Resumen Detallado por Selección</h2>
+        <div style="overflow-x: auto;">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th>Mes</th><th>Anunciante</th><th>Marca</th><th>Producto</th><th>Site</th><th>Comercial</th><th>Facturación</th><th>Vs Año Comp.</th>
+                    </tr>
+                </thead>
+                <tbody id="detailBody"></tbody>
+            </table>
+        </div>
+        <button class="btn-export" onclick="exportToExcel()">📥 Descargar Reporte Excel</button>
+      </div>
+  </div>
+
+  <div id="emptyState" style="display:none">
+      ⚠️ Por favor, selecciona un Año Base y un Año de Comparación para visualizar los datos.
+  </div>
+</div>
+
+<script>
+const MONTHS = ["01 Enero","02 Febrero","03 Marzo","04 Abril","05 Mayo","06 Junio","07 Julio","08 Agosto","09 Septiembre","10 Octubre","11 Noviembre","12 Diciembre"];
+const MONTH_MAP = { "Enero":"ene", "Febrero":"feb", "Marzo":"mar", "Abril":"abr", "Mayo":"may", "Junio":"jun", "Julio":"jul", "Agosto":"ago", "Septiembre":"sep", "Octubre":"oct", "Noviembre":"nov", "Diciembre":"dic" };
+let rawData = [];
+
+function cleanSiteForTable(s) { return s ? s.toLowerCase().replace(/www\./g,"").replace(/\.es|\.com|\.net|\.org/g,"").split('/')[0] : ""; }
+function cleanSector(s) { if(!s) return ""; let r = s.replace(/^[0-9* ]+/, ""); return toTitleCase(r); }
+function toTitleCase(s) { return s ? s.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : ""; }
+function num(v){ if(v==null) return 0; if(typeof v === 'number') return v; let s = String(v).replace(/\u00A0/g," ").replace(/[€\s\.]/g,"").replace(/,/g,"."); return Number.isFinite(Number(s)) ? Number(s) : 0; }
+function formatCurrency(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "€"; }
+
+fileInput.onchange = e => {
+  const f = e.target.files[0];
+  const r = new FileReader();
+  r.onload = ev => {
+    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:"array"});
+    init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }));
+    loadStatus.innerText = "✅ Datos cargados. Selecciona años.";
+  };
+  r.readAsArrayBuffer(f);
+};
+
+function init(data){
+  rawData = data.map(d => ({
+    ingreso: num(d["Imp.Neto a Comisionar"]),
+    Año: String(d["Año inserción"] || "").trim(),
+    Mes: MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+    Site: String(d["Publicación"] || "").trim().toLowerCase(),
+    Product: toTitleCase(String(d["Producto"] || "").trim()),
+    Sector: cleanSector(String(d["Sector"] || "")),
+    Comercial: toTitleCase(String(d["Comercial"] || "").trim()),
+    Area: toTitleCase(String(d["ÁREAS"] || "").trim()),
+    Anunciante: String(d["Anunciante"] || "SIN ANUNCIANTE").trim().toUpperCase(),
+    Marca: toTitleCase(String(d["Marca"] || "").trim())
+  })).filter(d => d.Año !== "");
+
+  const pop = (id, arr) => { document.getElementById(id).innerHTML = "<option>Todos</option>" + [...new Set(arr.filter(Boolean))].sort().map(v=>`<option>${v}</option>`).join(""); };
+  
+  const advSums = {};
+  rawData.forEach(d => { advSums[d.Anunciante] = (advSums[d.Anunciante] || 0) + d.ingreso; });
+  fAnunciante.innerHTML = "<option>Todos</option>" + Object.keys(advSums).sort((a,b)=>advSums[b]-advSums[a]).map(v=>`<option>${v}</option>`).join("");
+
+  pop("fSite", rawData.map(d=>d.Site)); pop("fProduct", rawData.map(d=>d.Product));
+  pop("fSector", rawData.map(d=>d.Sector)); pop("fComercial", rawData.map(d=>d.Comercial));
+  pop("fArea", rawData.map(d=>d.Area));
+  
+  const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+  fYear.innerHTML = "<option value='Todos'>Seleccionar...</option>" + years.map(y=>`<option>${y}</option>`).join("");
+  fYear2.innerHTML = "<option value='Todos'>Seleccionar...</option>" + years.map(y=>`<option>${y}</option>`).join("");
+
+  document.getElementById("monthsBase").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+  document.getElementById("monthsComp").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+
+  [fAnunciante,fSite,fProduct,fSector,fYear,fYear2,fComercial,fArea].forEach(el=>el.onchange=render);
+  document.getElementById("filterSection").style.display="block";
+  render();
+}
+
+function render(){
+  const y1 = fYear.value, y2 = fYear2.value;
+  if(y1 === "Todos" || y2 === "Todos") {
+      document.getElementById("resultsSection").style.display = "none";
+      document.getElementById("emptyState").style.display = "block";
+      return;
+  }
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("resultsSection").style.display = "block";
+
+  const site = fSite.value.toLowerCase(), prod = fProduct.value, sec = fSector.value, 
+        com = fComercial.value, adv = fAnunciante.value, area = fArea.value;
+  const m1 = Array.from(document.getElementById("monthsBase").querySelectorAll("input:checked")).map(c=>c.value);
+  const m2 = Array.from(document.getElementById("monthsComp").querySelectorAll("input:checked")).map(c=>c.value);
+
+  const filterData = (y, months) => rawData.filter(d =>
+    d.Año===y && (adv==="Todos" || d.Anunciante===adv) && (site==="todos" || d.Site===site) &&
+    (prod==="Todos" || d.Product===prod) && (sec==="Todos" || d.Sector===sec) &&
+    (com==="Todos" || d.Comercial===com) && (area==="Todos" || d.Area===area) &&
+    (months.length === 0 || months.includes(d.Mes))
+  ).sort((a,b) => a.Mes.localeCompare(b.Mes));
+
+  const d1 = filterData(y1, m1);
+  const d2 = filterData(y2, m2);
+
+  const sum1 = d1.reduce((a,b)=>a+b.ingreso,0), sum2 = d2.reduce((a,b)=>a+b.ingreso,0);
+  totalYear1.textContent = formatCurrency(sum1);
+  totalYear2.textContent = formatCurrency(sum2);
+
+  if(sum2 > 0) {
+      const g = Math.round(((sum1/sum2)-1)*100);
+      diffPercent.textContent = (g>0?"+":"")+g+"%";
+      diffPercent.className = "value "+(g>=0?"pos":"neg");
+  } else { diffPercent.textContent = "-"; diffPercent.className = "value"; }
+
+  const compReg = {};
+  d2.forEach(d => {
+      const k = `${d.Anunciante}|${d.Marca}|${d.Product}|${d.Site}`;
+      if(!compReg[k]) compReg[k] = [];
+      compReg[k].push({i: d.ingreso, m: d.Mes});
+  });
+
+  const tbody = document.getElementById("detailBody");
+  tbody.innerHTML = "";
+  const baseCount = {};
+
+  d1.forEach(d => {
+      const k = `${d.Anunciante}|${d.Marca}|${d.Product}|${d.Site}`;
+      baseCount[k] = (baseCount[k] || 0) + 1;
+      const idx = baseCount[k], comp = compReg[k] ? compReg[k][idx-1] : null;
+
+      let cHtml = '<span style="color:gray">—</span>';
+      if (comp) {
+          const p = Math.round(((d.ingreso / comp.i) - 1) * 100);
+          cHtml = `<span class="${p>=0?'pos':'neg'}">${p>0?'+':''}${p}%</span><span class="mes-info">${idx}ª de ${y2}: ${MONTH_MAP[comp.m.slice(3).trim()]}</span>`;
+      } else {
+          cHtml = '<span class="pos">Nuevo</span>' + (compReg[k] ? `<span class="mes-info">Exceso en ${y1}</span>` : "");
+      }
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${d.Mes.slice(3)}</td><td style="font-weight:700">${d.Anunciante}</td><td>${d.Marca}</td><td style="color:var(--base)">${d.Product}</td><td>${cleanSiteForTable(d.Site)}</td><td>${d.Comercial}</td><td class="amt">${formatCurrency(d.ingreso)}</td><td style="font-weight:bold">${cHtml}</td>`;
+      tbody.appendChild(tr);
+  });
+}
+
+function exportToExcel() {
+    const table = document.getElementById("mainTable");
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Análisis Digital" });
+    const dateStr = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, `Reporte_Digital_${dateStr}.xlsx`);
+}
+
+// --- BLOQUE DE CARGA AUTOMÁTICA ADAPTADO PARA ANÁLISIS DE ANUNCIANTES ---
+window.addEventListener('load', () => {
+    const nombreArchivo = "https://javiap20.github.io/datos-en-excel/PRODUCCION DIGITAL.xlsx"; 
+
+    fetch(nombreArchivo)
+        .then(res => {
+            if (!res.ok) throw new Error();
+            return res.arrayBuffer();
+        })
+        .then(data => {
+            const wb = XLSX.read(new Uint8Array(data), {type: "array"});
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+            
+            // Reutilizamos tu lógica de mapeo específica para este archivo de Anunciantes
+            if (json.length > 0) {
+                rawData = json.map(d => ({
+                    ingreso: num(d["Imp.Neto a Comisionar"]),
+                    Año: String(d["Año inserción"] || "").trim(),
+                    Mes: MONTHS.find(m => m.startsWith(String(d["Mes inserción"]).trim().substring(0,2))) || "",
+                    Site: String(d["Publicación"] || "").trim().toLowerCase(),
+                    Product: toTitleCase(String(d["Producto"] || "").trim()),
+                    Sector: cleanSector(String(d["Sector"] || "")),
+                    Comercial: toTitleCase(String(d["Comercial"] || "").trim()),
+                    Area: toTitleCase(String(d["ÁREAS"] || "").trim()), // Aquí usas ÁREAS
+                    Anunciante: String(d["Anunciante"] || "SIN ANUNCIANTE").trim().toUpperCase(),
+                    Marca: toTitleCase(String(d["Marca"] || "").trim())
+                })).filter(d => d.Año !== "");
+
+                // Ejecutamos el resto de la inicialización de filtros (tu función init pero sin re-mapear)
+                const pop = (id, arr) => { 
+                    document.getElementById(id).innerHTML = "<option>Todos</option>" + [...new Set(arr.filter(Boolean))].sort().map(v=>`<option>${v}</option>`).join(""); 
+                };
+                
+                const advSums = {};
+                rawData.forEach(d => { advSums[d.Anunciante] = (advSums[d.Anunciante] || 0) + d.ingreso; });
+                fAnunciante.innerHTML = "<option>Todos</option>" + Object.keys(advSums).sort((a,b)=>advSums[b]-advSums[a]).map(v=>`<option>${v}</option>`).join("");
+
+                pop("fSite", rawData.map(d=>d.Site)); pop("fProduct", rawData.map(d=>d.Product));
+                pop("fSector", rawData.map(d=>d.Sector)); pop("fComercial", rawData.map(d=>d.Comercial));
+                pop("fArea", rawData.map(d=>d.Area));
+                
+                const years = [...new Set(rawData.map(d=>d.Año))].sort().reverse();
+                fYear.innerHTML = "<option value='Todos'>Seleccionar...</option>" + years.map(y=>`<option>${y}</option>`).join("");
+                fYear2.innerHTML = "<option value='Todos'>Seleccionar...</option>" + years.map(y=>`<option>${y}</option>`).join("");
+
+                document.getElementById("monthsBase").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+                document.getElementById("monthsComp").innerHTML = MONTHS.map(m=>`<label><input type="checkbox" value="${m}" onchange="render()"> ${m.slice(3)}</label>`).join("");
+
+                [fAnunciante,fSite,fProduct,fSector,fYear,fYear2,fComercial,fArea].forEach(el=>el.onchange=render);
+                document.getElementById("filterSection").style.display="block";
+                
+                document.getElementById("loadStatus").innerText = "✅ Reporte cargado automáticamente";
+                render();
+            }
+        })
+        .catch(() => {
+            document.getElementById("loadStatus").innerText = "⚠️ Carga automática no disponible. Sube el archivo manualmente.";
+        });
+});
+
+</script>
+</body>
+</html>

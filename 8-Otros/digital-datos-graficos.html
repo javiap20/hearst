@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIGITAL - Dashboard Publicidad</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --card: #111827;
+            --card-soft: #1f2933;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            /* MODIFICA ESTOS DOS PARA CAMBIAR TODO EL DASHBOARD */
+            --base-color: #38bdf8; 
+            --comp-color: #f59e0b; 
+            
+            --down: #f87171;
+            --ok-green: #34d399;
+            --comercial-color: #a78bfa;
+            --print-color: #db2777;
+            --evento-color: #34d399;
+        }
+
+        body {
+          margin: 0;
+          font-family: 'Inter', Arial, sans-serif;
+          background: linear-gradient(180deg,#020617,#0f172a);
+          color: var(--text);
+          overflow-y: scroll;
+        }
+
+        .nav-menu {
+          background: #111827;
+          padding: 15px;
+          text-align: center;
+          border-bottom: 1px solid #374151;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+          height: 55px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .nav-menu a {
+          color: #fff;
+          margin: 0 10px;
+          text-decoration: none;
+          font-size: .9em;
+          opacity: 0.8;
+        }
+        .nav-menu .active { opacity: 1; font-weight: bold; border-bottom: 2px solid var(--base-color); padding-bottom: 5px; }
+
+        .container { max-width: 1500px; margin: auto; padding: 20px; }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 20px 0;
+            color: var(--text);
+        }
+
+        .card {
+            background: rgba(17, 24, 39, 0.85);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #1f2937;
+        }
+
+        .label-style { font-size: 0.95em; font-weight: bold; margin-bottom: 8px; display: block; }
+        .label-base { color: var(--base-color); }
+        .label-comp { color: var(--comp-color); }
+        .label-comercial { color: var(--comercial-color); }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        select, input[type=file] {
+            background: var(--card-soft);
+            color: var(--text);
+            border: 1px solid #374151;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100%;
+        }
+
+        .months-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .months-container label {
+            font-size: 0.75em;
+            background: #0f172a;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border: 1px solid #1f2937;
+        }
+
+        .kpis { display: flex; gap: 15px; flex-wrap: wrap; }
+        .kpi {
+            flex: 1;
+            min-width: 280px;
+            text-align: center;
+            padding: 20px;
+            background: #0f172a;
+            border-radius: 12px;
+            border: 1px solid #1f2937;
+        }
+        .kpi.base { border-top: 4px solid var(--base-color); }
+        .kpi.comp { border-top: 4px solid var(--comp-color); }
+
+        .kpi h2 { margin: 0; font-size: 2.2em; }
+        .kpi p { margin: 5px 0 0; color: var(--muted); font-size: 0.9em; }
+        .kpi .diff-pct { font-size: 0.9em; font-weight: bold; margin-top: 8px; display: block; }
+
+        .chart { height: 500px; width: 100%; margin-top: 15px; }
+        #chartSector { height: 750px !important; }
+        #chartComercial { height: 1200px !important; }
+
+        #loadStatus { margin-top: 10px; font-weight: 600; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+
+<nav class="nav-menu">
+    <span style="color: #38bdf8; font-weight: bold; margin-right: 10px; opacity: 1;">DIGITAL:</span>
+    <a href="digital-datos-graficos.html" class="active">Datos</a>
+    <a href="digital-facturacion-desglosada.html">Desglose</a>
+    <a href="digital-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="digital-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="digital-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--print-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1;">PRINT:</span>
+    <a href="print-datos-graficos.html">Datos</a>
+    <a href="print-facturacion-desglosada.html">Desglose</a>
+    <a href="print-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="print-facturacion-por-anunciante-y-marca.html">Marcas</a>
+    <a href="print-totales-familas-productos.html">Productos</a>
+
+    <span style="color: var(--evento-color); font-weight: bold; margin-left: 20px; margin-right: 10px; border-left: 1px solid #4b5563; padding-left: 20px; opacity: 1; font-size: 0.95em;">EVENTOS:</span>
+    <a href="eventos-datos-graficos.html">Datos</a>
+    <a href="eventos-facturacion-desglosada.html">Desglose</a>
+    <a href="eventos-facturacion-por-anunciante.html">Anunciantes</a>
+    <a href="eventos-facturacion-por-anunciante-y-marca.html">Marcas</a>
+
+
+    
+    <a href="index.html" style="margin-left: 20px; border-left: 1px solid #4b5563; padding-left: 20px;">🏠 Home</a>
+</nav>
+
+<h1>DIGITAL - Dashboard Publicidad</h1>
+
+<div class="container">
+    <div class="card">
+        <label class="label-style">Cargar datos (Excel):</label>
+        <input type="file" id="fileInput" accept=".xlsx">
+        <div id="loadStatus">Cargando archivo automáticamente...</div>
+    </div>
+
+    <div id="filtersBlock" class="card" style="display:none">
+        <div class="filters-grid">
+            <div>
+                <label class="label-style label-base">Año Base</label>
+                <select id="fYear"></select>
+                <div id="monthContainer1" class="months-container"></div>
+            </div>
+            <div>
+                <label class="label-style label-comp">Comparar con:</label>
+                <select id="fYear2"></select>
+                <div id="monthContainer2" class="months-container"></div>
+            </div>
+            <div>
+                <label class="label-style label-comercial">Filtrar por Comercial</label>
+                <select id="fComercial"></select>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpis" id="kpisTotals"></div>
+
+    <div class="card"><h3>Ingresos por Site</h3><div id="chartSite" class="chart"></div></div>
+    <div class="card"><h3>Ingresos por Área</h3><div id="chartArea" class="chart"></div></div>
+    <div class="card"><h3>Ingresos por Sector</h3><div id="chartSector" class="chart"></div></div>
+    <div class="card"><h3>Ingresos por Familia</h3><div id="chartFamilia" class="chart"></div></div>
+    <div class="card"><h3>Ingresos por Comercial</h3><div id="chartComercial" class="chart"></div></div>
+</div>
+
+<script>
+let rawData = [];
+const excelUrl = "https://javiap20.github.io/datos-en-excel/PRODUCCION DIGITAL.xlsx";
+
+window.addEventListener("DOMContentLoaded", () => {
+  const statusEl = document.getElementById("loadStatus");
+  if (statusEl) statusEl.innerText = "Cargando archivo https://javiap20.github.io/datos-en-excel/PRODUCCION DIGITAL.xlsx…";
+
+  fetch(excelUrl)
+    .then(resp => {
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return resp.arrayBuffer();
+    })
+    .then(buf => {
+      const workbook = XLSX.read(buf, { type: "array" });
+      const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+      processData(json);
+      if (statusEl) {
+        statusEl.innerText = "✅ Archivo cargado automáticamente";
+        statusEl.style.color = "var(--ok-green)";
+      }
+    })
+    .catch(err => {
+      if (statusEl) {
+        statusEl.innerText = "⚠️ No se pudo cargar automáticamente. Selecciona el Excel manualmente.";
+        statusEl.style.color = "var(--down)";
+      }
+    });
+});
+
+function toTitleCase(str) {
+    return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+document.getElementById("fileInput").onchange = e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const data = new Uint8Array(ev.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+            processData(json);
+            const statusEl = document.getElementById("loadStatus");
+            if (statusEl) {
+              statusEl.innerText = "✅ Archivo cargado";
+              statusEl.style.color = "var(--ok-green)";
+            }
+        } catch (err) {
+            const statusEl = document.getElementById("loadStatus");
+            if (statusEl) {
+              statusEl.innerText = "❌ Error: " + err.message;
+              statusEl.style.color = "var(--down)";
+            }
+        }
+    };
+    reader.readAsArrayBuffer(f);
+};
+
+function cleanNum(v) {
+    if (!v) return 0;
+    if (typeof v === 'number') return v;
+    let s = v.toString().replace(/[€\s]/g, "");
+    if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "");
+    s = s.replace(",", ".");
+    return parseFloat(s) || 0;
+}
+
+function processData(data) {
+    rawData = data.map(d => ({
+        ingreso: cleanNum(d["Imp.Neto a Comisionar"]),
+        Año: String(d["Año inserción"] || "").trim(),
+        Mes: String(d["Mes inserción"] || "").trim(),
+        Site: String(d["Publicación"] || "Sin site").trim(),
+        Familia: String(d["Familia"] || "Sin familia").trim(),
+        Area: String(d["ÁREAS"] || "Sin área").trim(),
+        Comercial: toTitleCase(String(d["Comercial"] || "Sin comercial").trim()),
+        Sector: String(d["Sector"] || "Sin sector").trim()
+    })).filter(d => d.Año !== "");
+
+    const years = [...new Set(rawData.map(d => d.Año))].sort((a,b) => b-a);
+    const months = [...new Set(rawData.map(d => d.Mes))].sort((a,b) => a.localeCompare(b));
+    const commercials = [...new Set(rawData.map(d => d.Comercial))].sort();
+
+    document.getElementById("fYear").innerHTML = "<option>Todos</option>" + years.map(y => `<option>${y}</option>`).join("");
+    document.getElementById("fYear2").innerHTML = "<option value='none'>No comparar</option>" + years.map(y => `<option>${y}</option>`).join("");
+    document.getElementById("fComercial").innerHTML = "<option>Todos</option>" + commercials.map(c => `<option>${c}</option>`).join("");
+
+    createChecks("monthContainer1", months);
+    createChecks("monthContainer2", months);
+
+    document.getElementById("fYear").onchange = render;
+    document.getElementById("fYear2").onchange = render;
+    document.getElementById("fComercial").onchange = render;
+
+    document.getElementById("filtersBlock").style.display = "block";
+    render();
+}
+
+function createChecks(id, months) {
+    const container = document.getElementById(id);
+    container.innerHTML = "";
+    months.forEach(m => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" value="${m}" onchange="render()"> ${m.replace(/^\d{2}\s/, "")}`;
+        container.appendChild(label);
+    });
+}
+
+function render() {
+    const yBase = document.getElementById("fYear").value;
+    const yComp = document.getElementById("fYear2").value;
+    const com = document.getElementById("fComercial").value;
+    const m1 = Array.from(document.getElementById("monthContainer1").querySelectorAll("input:checked")).map(i => i.value);
+    const m2 = Array.from(document.getElementById("monthContainer2").querySelectorAll("input:checked")).map(i => i.value);
+
+    const dBase = rawData.filter(d => (yBase === "Todos" || d.Año === yBase) && (m1.length === 0 || m1.includes(d.Mes)) && (com === "Todos" || d.Comercial === com));
+    const dComp = yComp !== "none" ? rawData.filter(d => d.Año === yComp && (m2.length === 0 || m2.includes(d.Mes)) && (com === "Todos" || d.Comercial === com)) : [];
+
+    const tBase = dBase.reduce((a, b) => a + b.ingreso, 0);
+    const tComp = dComp.reduce((a, b) => a + b.ingreso, 0);
+
+    let diffHtml = "";
+    if (yComp !== "none" && tComp > 0) {
+        const pct = ((tBase - tComp) / tComp) * 100;
+        const color = pct >= 0 ? 'var(--ok-green)' : 'var(--down)';
+        diffHtml = `<span class="diff-pct" style="color:${color}">${pct >= 0 ? '▲' : '▼'} ${pct.toFixed(1)}% vs ${yComp}</span>`;
+    }
+
+    const kpis = document.getElementById("kpisTotals");
+    kpis.innerHTML = `
+        <div class="kpi base">
+            <h2 style="color:var(--base-color)">€ ${Math.round(tBase).toLocaleString("es-ES")}</h2>
+            <p>Facturación ${yBase}</p>
+            ${diffHtml}
+        </div>`;
+
+    if (yComp !== "none") {
+        kpis.innerHTML += `
+            <div class="kpi comp">
+                <h2 style="color:var(--comp-color)">€ ${Math.round(tComp).toLocaleString("es-ES")}</h2>
+                <p>Facturación ${yComp}</p>
+            </div>`;
+    }
+
+    ["Site", "Area", "Sector", "Familia", "Comercial"].forEach(key => {
+        makePlot("chart" + key, key, dBase, dComp, yBase, yComp);
+    });
+}
+
+function makePlot(id, key, d1, d2, l1, l2) {
+    const s1 = {}, s2 = {};
+    d1.forEach(d => s1[d[key]] = (s1[d[key]] || 0) + d.ingreso);
+    d2.forEach(d => s2[d[key]] = (s2[d[key]] || 0) + d.ingreso);
+
+    let labels = [...new Set([...Object.keys(s1), ...Object.keys(s2)])];
+    labels.sort((a,b) => (s1[b]||0) - (s1[a]||0));
+
+    // TRUCO PROFESIONAL: Obtenemos los colores definidos en el CSS (:root)
+    const style = getComputedStyle(document.documentElement);
+    const colorBase = style.getPropertyValue('--base-color').trim();
+    const colorComp = style.getPropertyValue('--comp-color').trim();
+
+    const textLabels = labels.map(l => {
+        const v1 = s1[l] || 0;
+        const v2 = s2[l] || 0;
+        if (l2 !== "none" && v2 > 0) {
+            const p = ((v1 - v2) / v2) * 100;
+            return ` ${p >= 0 ? '+' : ''}${Math.round(p)}%`;
+        }
+        return "";
+    });
+
+    const textColors = labels.map(l => {
+        const v1 = s1[l] || 0;
+        const v2 = s2[l] || 0;
+        return (v1 - v2 >= 0) ? "#34d399" : "#f87171";
+    });
+
+    const traces = [];
+
+    traces.push({
+        y: labels, x: labels.map(l => Math.round(s1[l]||0)),
+        name: l1, type: 'bar', orientation: 'h',
+        marker: {color: colorBase}, // Usa el color del CSS
+        text: textLabels,
+        textposition: 'outside',
+        textfont: { color: textColors, size: 10, weight: 'bold' },
+        cliponaxis: false
+    });
+
+    if (l2 !== "none") {
+        traces.push({
+            y: labels, x: labels.map(l => Math.round(s2[l]||0)),
+            name: l2, type: 'bar', orientation: 'h', 
+            marker: {color: colorComp, opacity: 0.8} // Usa el color del CSS
+        });
+    }
+
+    const layout = {
+        barmode: 'group',
+        margin: { l: 200, r: 80, t: 20, b: 40 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#e5e7eb', size: 10 },
+        xaxis: { gridcolor: '#1f2937', ticksuffix: ' €' },
+        yaxis: { automargin: true, autorange: "reversed" },
+        legend: { orientation: 'h', y: -0.15 },
+        bargap: 0.25
+    };
+
+    Plotly.newPlot(id, traces, layout, {responsive: true});
+}
+</script>
+</body>
+</html>
