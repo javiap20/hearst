@@ -1000,7 +1000,6 @@ th.th-yoy {
       <button class="nav-btn active" onclick="switchView('main',this)">📊 Dashboard General</button>
       <button class="nav-btn" onclick="switchView('alertas',this)">⚠️ Alertas</button>
       <button class="nav-btn" onclick="switchView('sectores',this)">🏭 Sectores</button>
-      <button class="nav-btn" onclick="switchView('proyecciones',this)">📈 Proyecciones</button>
     </div>
   </div>
 </div>
@@ -1071,7 +1070,7 @@ th.th-yoy {
     <!-- Año -->
     <div class="year-bar-main">
       <div class="year-bar-label">Año</div>
-      <select class="year-bar-select" id="m-f-year" onchange="renderMain(); if(document.getElementById('view-proyecciones').classList.contains('active')) renderProyecciones(); if(document.getElementById('view-sectores').classList.contains('active')) renderSectoresTab();"></select>
+      <select class="year-bar-select" id="m-f-year" onchange="renderMain(); if(document.getElementById('view-proyecciones')&&document.getElementById('view-proyecciones').classList.contains('active')) renderProyecciones(); if(document.getElementById('view-sectores').classList.contains('active')) renderSectoresTab();"></select>
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
         <span style="font-size:13px;color:var(--text3);font-weight:400">Análisis comercial de</span>
         <div class="year-display-big" id="m-year-display">todos los años</div>
@@ -1508,135 +1507,6 @@ th.th-yoy {
   </div><!-- /view-main -->
 
   
-  <!-- ══════════════ VISTA PROYECCIONES ══════════════ -->
-  <div id="view-proyecciones" class="view">
-
-    <div class="main-view">
-
-      <!-- ─── BANNER INFO OBJETIVOS ─── -->
-      <div class="chart-card" style="padding:14px 18px;background:linear-gradient(135deg,rgba(245,200,66,0.08),rgba(245,200,66,0.02));border:1px solid rgba(212,150,10,0.2)">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <span style="font-size:20px;flex-shrink:0">📊</span>
-          <div style="flex:1;min-width:0">
-            <span style="font-size:14px;font-weight:700;color:var(--text);font-family:'Syne',sans-serif">Proyecciones vs Objetivos</span>
-            <p style="font-size:11px;color:var(--text3);margin-top:3px;margin-bottom:0">Los objetivos se leen automáticamente de la hoja <strong style="color:var(--accent);font-family:'DM Mono',monospace">Objetivos</strong> del Excel. Para actualizarlos, edita esa hoja y vuelve a cargar el archivo.</p>
-          </div>
-          <div id="proy-obj-status" style="font-family:'DM Mono',monospace;font-size:11px;padding:5px 12px;border-radius:8px;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);white-space:nowrap;flex-shrink:0">Sin cargar</div>
-        </div>
-      </div>
-
-      <!-- ─── TABLA TOTAL HEARST ─── -->
-      <div class="chart-card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:linear-gradient(90deg, rgba(212,150,10,0.1) 0%, transparent 100%)">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--accent);flex-shrink:0"></span>
-          <span style="font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.07em;font-family:'Syne',sans-serif">🏢 Total Hearst</span>
-          <span class="proy-note" id="proy-yoy-note">ℹ️ El % Real año anterior indica el ingreso hasta el último mes cerrado</span>
-          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto" id="proy-total-year-label"></span>
-          <div class="yoy-toggle proy-yoy-toggle"><button class="yoy-toggle-btn active" onclick="setYoyMode(false)" title="% Real año anterior: solo meses cerrados">Hasta mes cerrado</button><button class="yoy-toggle-btn" onclick="setYoyMode(true)" title="% Real año anterior: incluir mes en curso">Incl. mes actual</button></div>
-          <button class="proy-export-btn" onclick="openExpModal('proy-total-table','🏢 Total Hearst')" title="Exportar como imagen o PDF">📸 Exportar</button>
-        </div>
-        <div id="proy-total-table"></div>
-      </div>
-
-      <!-- ─── TABLA SECTORES ─── -->
-      <div class="chart-card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,0.08) 0%,transparent 100%)">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--purple);flex-shrink:0"></span>
-          <span style="font-size:12px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:0.07em;font-family:'Syne',sans-serif">🏭 Total Sectores</span>
-          <span class="proy-note">ℹ️ El % Real año anterior indica el ingreso hasta el último mes cerrado</span>
-          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto" id="proy-sector-year-label"></span>
-          <div class="yoy-toggle proy-yoy-toggle"><button class="yoy-toggle-btn active" onclick="setYoyMode(false)" title="% Real año anterior: solo meses cerrados">Hasta mes cerrado</button><button class="yoy-toggle-btn" onclick="setYoyMode(true)" title="% Real año anterior: incluir mes en curso">Incl. mes actual</button></div>
-          <div class="yoy-toggle"><button class="yoy-toggle-btn active proySecProgBtnSin" onclick="setProySecProgMode('sin')" title="No incluye el ingreso del Excel de Anunciantes Programática">Sin Programática</button><button class="yoy-toggle-btn proySecProgBtnCon" onclick="setProySecProgMode('con')" title="Excel de Anunciantes Programática no cargado" disabled>Con Programática</button></div>
-          <button class="proy-export-btn" onclick="openExpModal('proy-sector-table','🏭 Total Sectores')" title="Exportar como imagen o PDF">📸 Exportar</button>
-        </div>
-        <div id="proy-sector-table"></div>
-      </div>
-
-      <!-- ─── TABLA PUBLICACIONES: DIGITALES ─── -->
-      <div class="chart-card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--blue);flex-shrink:0"></span>
-          <span style="font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.07em;font-family:'Syne',sans-serif">🖥 Digital (Publicaciones)</span>
-          <span class="proy-note">ℹ️ El % Real año anterior indica el ingreso hasta el último mes cerrado</span>
-          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto" id="proy-pubs-year-label"></span>
-          <div class="yoy-toggle proy-yoy-toggle"><button class="yoy-toggle-btn active" onclick="setYoyMode(false)" title="% Real año anterior: solo meses cerrados">Hasta mes cerrado</button><button class="yoy-toggle-btn" onclick="setYoyMode(true)" title="% Real año anterior: incluir mes en curso">Incl. mes actual</button></div>
-          <button class="proy-export-btn" onclick="openExpModal('proy-pubdig-table','🖥 Digital (Publicaciones)')" title="Exportar como imagen o PDF">📸 Exportar</button>
-        </div>
-        <div id="proy-pubdig-table"></div>
-      </div>
-
-      <!-- ─── TABLA SECTORES: DIGITAL ─── -->
-      <div class="chart-card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,0.06) 0%,transparent 100%)">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--purple);flex-shrink:0"></span>
-          <span style="font-size:12px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:0.07em;font-family:'Syne',sans-serif">🏭 Digital (Sectores)</span>
-          <span class="proy-note">ℹ️ El % Real año anterior indica el ingreso hasta el último mes cerrado</span>
-          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto" id="proy-sector-dig-year-label"></span>
-          <div class="yoy-toggle proy-yoy-toggle"><button class="yoy-toggle-btn active" onclick="setYoyMode(false)" title="% Real año anterior: solo meses cerrados">Hasta mes cerrado</button><button class="yoy-toggle-btn" onclick="setYoyMode(true)" title="% Real año anterior: incluir mes en curso">Incl. mes actual</button></div>
-          <div class="yoy-toggle"><button class="yoy-toggle-btn active proySecProgBtnSin" onclick="setProySecProgMode('sin')" title="No incluye el ingreso del Excel de Anunciantes Programática">Sin Programática</button><button class="yoy-toggle-btn proySecProgBtnCon" onclick="setProySecProgMode('con')" title="Excel de Anunciantes Programática no cargado" disabled>Con Programática</button></div>
-          <button class="proy-export-btn" onclick="openExpModal('proy-sector-dig-table','🏭 Digital (Sectores)')" title="Exportar como imagen o PDF">📸 Exportar</button>
-        </div>
-        <div id="proy-sector-dig-table"></div>
-      </div>
-
-      <!-- ─── TABLA PUBLICACIONES: PRINT / REVISTAS ─── -->
-      <div class="chart-card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green);flex-shrink:0"></span>
-          <span style="font-size:12px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.07em;font-family:'Syne',sans-serif">📰 Print / Revistas (Publicaciones)</span>
-          <span class="proy-note">ℹ️ El % Real año anterior indica el ingreso hasta el último mes cerrado</span>
-          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto" id="proy-pubprint-year-label"></span>
-          <div class="yoy-toggle proy-yoy-toggle"><button class="yoy-toggle-btn active" onclick="setYoyMode(false)" title="% Real año anterior: solo meses cerrados">Hasta mes cerrado</button><button class="yoy-toggle-btn" onclick="setYoyMode(true)" title="% Real año anterior: incluir mes en curso">Incl. mes actual</button></div>
-          <button class="proy-export-btn" onclick="openExpModal('proy-pubprint-table','📰 Print / Revistas (Publicaciones)')" title="Exportar como imagen o PDF">📸 Exportar</button>
-        </div>
-        <div id="proy-pubprint-table"></div>
-      </div>
-
-      <!-- ─── TABLA SECTORES: PRINT ─── -->
-      <div class="chart-card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,0.06) 0%,transparent 100%)">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--purple);flex-shrink:0"></span>
-          <span style="font-size:12px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:0.07em;font-family:'Syne',sans-serif">🏭 Print (Sectores)</span>
-          <span class="proy-note">ℹ️ El % Real año anterior indica el ingreso hasta el último mes cerrado</span>
-          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto" id="proy-sector-print-year-label"></span>
-          <div class="yoy-toggle proy-yoy-toggle"><button class="yoy-toggle-btn active" onclick="setYoyMode(false)" title="% Real año anterior: solo meses cerrados">Hasta mes cerrado</button><button class="yoy-toggle-btn" onclick="setYoyMode(true)" title="% Real año anterior: incluir mes en curso">Incl. mes actual</button></div>
-          <button class="proy-export-btn" onclick="openExpModal('proy-sector-print-table','🏭 Print (Sectores)')" title="Exportar como imagen o PDF">📸 Exportar</button>
-        </div>
-        <div id="proy-sector-print-table"></div>
-      </div>
-
-      <!-- ─── TABLA EVENTOS ─── -->
-      <div class="chart-card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(13,148,136,0.08) 0%,transparent 100%)">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--teal);flex-shrink:0"></span>
-          <span style="font-size:12px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:0.07em;font-family:'Syne',sans-serif">🎤 Eventos (Publicaciones)</span>
-          <span class="proy-note">ℹ️ El % Real año anterior indica el ingreso hasta el último mes cerrado</span>
-          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto" id="proy-eventos-year-label"></span>
-          <div class="yoy-toggle proy-yoy-toggle"><button class="yoy-toggle-btn active" onclick="setYoyMode(false)" title="% Real año anterior: solo meses cerrados">Hasta mes cerrado</button><button class="yoy-toggle-btn" onclick="setYoyMode(true)" title="% Real año anterior: incluir mes en curso">Incl. mes actual</button></div>
-          <button class="proy-export-btn" onclick="openExpModal('proy-eventos-table','🎤 Eventos (Publicaciones)')" title="Exportar como imagen o PDF">📸 Exportar</button>
-        </div>
-        <div id="proy-eventos-table"></div>
-      </div>
-
-      <!-- ─── TABLA SECTORES: EVENTOS ─── -->
-      <div class="chart-card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,0.06) 0%,transparent 100%)">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--purple);flex-shrink:0"></span>
-          <span style="font-size:12px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:0.07em;font-family:'Syne',sans-serif">🏭 Eventos (Sectores)</span>
-          <span class="proy-note">ℹ️ El % Real año anterior indica el ingreso hasta el último mes cerrado</span>
-          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto" id="proy-sector-eventos-year-label"></span>
-          <div class="yoy-toggle proy-yoy-toggle"><button class="yoy-toggle-btn active" onclick="setYoyMode(false)" title="% Real año anterior: solo meses cerrados">Hasta mes cerrado</button><button class="yoy-toggle-btn" onclick="setYoyMode(true)" title="% Real año anterior: incluir mes en curso">Incl. mes actual</button></div>
-          <button class="proy-export-btn" onclick="openExpModal('proy-sector-eventos-table','🏭 Eventos (Sectores)')" title="Exportar como imagen o PDF">📸 Exportar</button>
-        </div>
-        <div id="proy-sector-eventos-table"></div>
-      </div>
-
-
-    </div>
-
-  </div><!-- /view-proyecciones -->
-
-
   <!-- ══════════════ OVERLAY ANÁLISIS IA SECTORES ══════════════ -->
   <div id="sec-ai-overlay" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
     <div style="background:var(--bg2);border-radius:20px;box-shadow:0 32px 80px rgba(0,0,0,0.4);width:min(96vw,860px);border:1px solid var(--border2);display:flex;flex-direction:column;position:relative;margin:auto">
