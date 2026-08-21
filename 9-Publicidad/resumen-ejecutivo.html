@@ -1,0 +1,3577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Publicaciones - Digital & Print</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f5f7;
+            --bg2: #ffffff;
+            --bg3: #f0f1f4;
+            --border: rgba(0,0,0,0.08);
+            --text: #1a1a2e;
+            --text2: #3a3a5c;
+            --text3: #7a7a9a;
+            --accent: #2563eb;
+            --green: #16a34a;
+            --red: #dc2626;
+            --purple: #7c3aed;
+            --fucsia: #d946ef;
+            --orange: #f59e0b;
+            --filter-label: #6366f1;
+            --radius: 10px;
+            --faded: #d0d0d8;
+            --faded-bg: #f8f8fa;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        .mono { font-family: 'DM Mono', monospace; }
+        
+        /* TOPBAR */
+        .topbar {
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+        }
+        .topbar-brand {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar-brand .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+        
+        /* STATUS */
+        #status {
+            padding: 12px 24px;
+            background: var(--bg3);
+            border-bottom: 1px solid var(--border);
+        }
+        .status-loading { color: var(--text3); }
+        .status-success { color: var(--green); }
+        .status-error { color: var(--red); }
+        
+        /* FILTERS */
+        .filters {
+            background: var(--bg2);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .filters-row {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .filters-row:last-child {
+            /* Segunda fila con zonas y sectores */
+        }
+        .filter-group-wide {
+            flex: 1;
+            min-width: 300px;
+        }
+        .checkbox-container-wide {
+            max-width: 1100px;
+            flex-wrap: wrap;
+            display: flex;
+            gap: 6px;
+        }
+        
+        /* Forzar que los sectores se distribuyan bien */
+        #sectores-container {
+            max-width: 790px;
+        }
+        #sectores-container .checkbox-item {
+            min-width: fit-content;
+            flex-shrink: 0;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .filter-group label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--filter-label);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .filter-group select, .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg2);
+            min-width: 150px;
+        }
+        .filter-group select:focus, .filter-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        /* MULTI-SELECT CHECKBOXES */
+        .checkbox-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-width: 400px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            background: var(--bg3);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+            user-select: none;
+        }
+        .checkbox-item:hover {
+            background: #e0e7ff;
+        }
+        .checkbox-item.selected {
+            background: #93c5fd;
+            color: #1e3a5f;
+        }
+        .checkbox-item input {
+            display: none;
+        }
+        
+        /* MONTH CHECKBOXES */
+        .months-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-width: 800px;
+        }
+        .month-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--bg3);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            user-select: none;
+        }
+        .month-checkbox:hover {
+            background: #e0e7ff;
+        }
+        .month-checkbox.selected {
+            background: #93c5fd;
+            color: #1e3a5f;
+        }
+        .month-checkbox input {
+            display: none;
+        }
+        .month-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .month-actions button {
+            font-size: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            background: var(--bg2);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .month-actions button:hover {
+            background: var(--bg3);
+        }
+        
+        /* FILTER ACTIONS */
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .filter-actions button {
+            font-size: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            background: var(--bg2);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .filter-actions button:hover {
+            background: var(--bg3);
+        }
+        .filter-actions button.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .filter-actions button.active:hover {
+            background: var(--accent);
+        }
+        
+        /* COMPARISON INFO */
+        .comparison-info {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 4px;
+        }
+        
+        /* TABS BLOCK - Separado */
+        .tabs-block {
+            background: var(--bg2);
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 14px 20px;
+            border: none;
+            background: none;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            white-space: nowrap;
+        }
+        
+        /* Digital tabs - Fucsia */
+        .tab-btn.digital {
+            color: #a855a0;
+        }
+        .tab-btn.digital:hover {
+            color: var(--fucsia);
+            background: #fdf4ff;
+        }
+        .tab-btn.digital.active {
+            color: var(--fucsia);
+            border-bottom-color: var(--fucsia);
+            background: #fdf4ff;
+        }
+        
+        /* Total Hearst tab - Morado corporativo */
+        .tab-btn.total {
+            color: #7c3aed;
+        }
+        .tab-btn.total:hover {
+            color: #6d28d9;
+            background: #f5f3ff;
+        }
+        .tab-btn.total.active {
+            color: #6d28d9;
+            border-bottom-color: #7c3aed;
+            background: #f5f3ff;
+        }
+        
+        /* Print tabs - Naranja */
+        .tab-btn.print {
+            color: #d97706;
+        }
+        .tab-btn.print:hover {
+            color: var(--orange);
+            background: #fffbeb;
+        }
+        .tab-btn.print.active {
+            color: var(--orange);
+            border-bottom-color: var(--orange);
+            background: #fffbeb;
+        }
+        
+        /* CONTENT BLOCKS */
+        .content-block {
+            background: var(--bg2);
+            border-radius: var(--radius);
+            margin: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .block-title {
+            padding: 16px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            background: linear-gradient(135deg, #f8f9fc 0%, #eef1f6 100%);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .block-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+        .block-content {
+            padding: 20px;
+        }
+        
+        /* EXPAND/COLLAPSE BUTTONS */
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .table-actions button {
+            font-size: 11px;
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background: var(--bg2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .table-actions button:hover {
+            background: var(--bg3);
+        }
+        
+        /* TABLE */
+        .table-wrapper {
+            overflow-x: auto;
+            background: var(--bg2);
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            min-width: 85px;
+        }
+        th {
+            background: var(--bg3);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        td:first-child, th:first-child {
+            text-align: left;
+            position: sticky;
+            left: 0;
+            background: var(--bg2);
+            z-index: 1;
+            min-width: 200px;
+        }
+        th:first-child {
+            background: var(--bg3);
+            z-index: 2;
+        }
+        
+        /* PUB HEADER ROW - Clickable */
+        .pub-header {
+            background: #e0e7ff !important;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .pub-header:hover {
+            background: #d0dafb !important;
+        }
+        .pub-header td {
+            background: inherit !important;
+        }
+        .pub-header td:first-child {
+            background: #e0e7ff !important;
+        }
+        .pub-header:hover td:first-child {
+            background: #d0dafb !important;
+        }
+        .toggle-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .pub-header.expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+        
+        /* DETAIL ROWS - Hidden by default */
+        .detail-row {
+            display: none;
+        }
+        .detail-row.visible {
+            display: table-row;
+        }
+        
+        /* Product rows in Family block */
+        .product-row {
+            display: none;
+            background: #f8fafc;
+        }
+        .product-row.visible {
+            display: table-row;
+        }
+        .product-row td {
+            background: #f8fafc;
+        }
+        .product-row td:first-child {
+            background: #f8fafc !important;
+        }
+        .family-header {
+            background: #dbeafe !important;
+        }
+        .family-header td {
+            background: #dbeafe !important;
+        }
+        .family-header td:first-child {
+            background: #dbeafe !important;
+        }
+        .family-header:hover td {
+            background: #bfdbfe !important;
+        }
+        .family-header:hover td:first-child {
+            background: #bfdbfe !important;
+        }
+        
+        /* TOTAL ROW */
+        .total-row {
+            background: #fef9e7 !important;
+            font-weight: 700;
+        }
+        .total-row td {
+            background: #fef9e7 !important;
+            border-bottom: 2px solid #fcd34d;
+        }
+        .total-row td:first-child {
+            background: #fef9e7 !important;
+        }
+        .total-row:hover td {
+            background: #fef3c7 !important;
+        }
+        .total-row:hover td:first-child {
+            background: #fef3c7 !important;
+        }
+        .total-row.expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+        .total-detail-row {
+            display: none;
+            background: #fffef5;
+        }
+        .total-detail-row.visible {
+            display: table-row;
+        }
+        .total-detail-row td {
+            background: #fffef5;
+        }
+        .total-detail-row td:first-child {
+            background: #fffef5 !important;
+            padding-left: 30px;
+        }
+        .year-row td {
+            background: var(--bg2);
+        }
+        .year-row td:first-child {
+            padding-left: 30px;
+        }
+        
+        .pos { color: var(--green); font-weight: 600; }
+        .neg { color: var(--red); font-weight: 600; }
+        .section-header { background: #1e40af; color: white; text-align: center !important; }
+        .section-header-acum { background: #7c3aed; color: white; text-align: center !important; }
+        
+        /* AMOUNT DIFF - pequeño y entre paréntesis */
+        .amount-diff {
+            font-size: 9px;
+            font-weight: 400;
+            opacity: 0.8;
+            margin-left: 2px;
+        }
+        
+        /* FADED COLUMNS (meses no seleccionados) */
+        .faded {
+            color: var(--faded) !important;
+            background: var(--faded-bg) !important;
+        }
+        .faded span {
+            color: var(--faded) !important;
+        }
+        .faded-header {
+            background: #8ba3d4 !important;
+            color: #c8d4f0 !important;
+        }
+        .faded-acum-header {
+            background: #a78dc9 !important;
+            color: #d8cef0 !important;
+        }
+        
+        /* TAB PANES */
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        
+        /* HIDDEN */
+        .hidden { display: none; }
+        
+        /* UPLOAD */
+        .upload-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg2);
+            max-width: 400px;
+            margin: 40px auto;
+        }
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background: rgba(37,99,235,0.03);
+        }
+        .upload-zone input {
+            display: none;
+        }
+        .upload-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .upload-btn:hover {
+            background: #1d4ed8;
+        }
+    
+        /* ═══════════════════════════════════════════════════════════════════════════════
+           RESUMEN EJECUTIVO - CARDS
+           ═══════════════════════════════════════════════════════════════════════════════ */
+        .executive-summary {
+            padding: 24px;
+            background: var(--bg);
+        }
+        .summary-section {
+            margin-bottom: 32px;
+        }
+        .summary-section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .summary-section-title .icon {
+            font-size: 24px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            max-width: 1100px;
+        }
+        .cards-grid-global {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 1100px;
+            margin-bottom: 32px;
+        }
+        @media (max-width: 900px) {
+            .cards-grid-global {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 500px) {
+            .cards-grid-global {
+                grid-template-columns: 1fr;
+            }
+        }
+        .metric-card {
+            background: var(--bg2);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .metric-card .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text3);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .metric-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+        }
+        .metric-card .value.positive { color: var(--green); }
+        .metric-card .value.negative { color: var(--red); }
+        .metric-card .value span.positive { color: var(--green) !important; }
+        .metric-card .value span.negative { color: var(--red) !important; }
+        .metric-card .subtext {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 4px;
+        }
+        .metric-card .variation-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .metric-card .variation-badge.positive {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+        }
+        .metric-card .variation-badge.negative {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--red);
+        }
+        .metric-card.highlight-current {
+            border-left: 4px solid var(--accent);
+        }
+        .metric-card.highlight-prev {
+            border-left: 4px solid var(--purple);
+        }
+        .metric-card.highlight-var {
+            border-left: 4px solid var(--orange);
+        }
+        .metric-card.highlight-diff {
+            border-left: 4px solid var(--green);
+        }
+        .metric-card.highlight-diff.loss {
+            border-left: 4px solid var(--red);
+        }
+        .metric-card.highlight-brands {
+            border-left: 4px solid var(--fucsia);
+            background: linear-gradient(135deg, var(--bg2) 0%, rgba(217,70,239,0.05) 100%);
+        }
+        /* Cards globales con bordes de colores */
+        .metric-card.global-ingresos {
+            border-top: 4px solid var(--accent);
+        }
+        .metric-card.global-anunciantes {
+            border-top: 4px solid var(--orange);
+        }
+        .metric-card.global-ganados {
+            border-top: 4px solid var(--green);
+        }
+        .metric-card.global-perdidos {
+            border-top: 4px solid var(--red);
+        }
+        .card-detail-btn {
+            display: inline-block;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--red);
+            background: rgba(220, 38, 38, 0.08);
+            border: 1px solid rgba(220, 38, 38, 0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .card-detail-btn:hover {
+            background: var(--red);
+            color: #fff;
+        }
+        .card-detail-btn-green {
+            color: var(--green);
+            background: rgba(22, 163, 74, 0.08);
+            border: 1px solid rgba(22, 163, 74, 0.25);
+        }
+        .card-detail-btn-green:hover {
+            background: var(--green);
+            color: #fff;
+        }
+        .perdidos-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        /* MODAL DESGLOSE */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 20, 35, 0.55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-panel {
+            background: var(--bg2);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 1300px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .modal-header .modal-subtext {
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+        .modal-close-btn {
+            background: var(--bg3);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text2);
+        }
+        .modal-close-btn:hover {
+            background: var(--red);
+            color: #fff;
+        }
+        .modal-body {
+            overflow-y: auto;
+            padding: 0 20px 20px;
+        }
+        .modal-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .modal-table col.col-anunciante { width: 20%; }
+        .modal-table col.col-pubs { width: 22%; }
+        .modal-table col.col-productos { width: 18%; }
+        .modal-table col.col-meses { width: 20%; }
+        .modal-table col.col-ingreso { width: 20%; }
+        .modal-table thead th {
+            position: sticky;
+            top: 0;
+            background: var(--bg2);
+            text-align: left;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text3);
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-table tbody td {
+            padding: 10px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text2);
+            vertical-align: top;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+        .modal-table tbody tr:hover {
+            background: var(--bg3);
+        }
+        .modal-table tbody td:first-child {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .modal-table tbody tr.total-row {
+            background: rgba(220, 38, 38, 0.1);
+            font-weight: 700;
+        }
+        .modal-table tbody tr.total-row td {
+            color: var(--red);
+            border-bottom: 2px solid rgba(220, 38, 38, 0.3);
+        }
+        .modal-table tbody tr.total-row:hover {
+            background: rgba(220, 38, 38, 0.1);
+        }
+        .modal-table tbody tr.total-row-green {
+            background: rgba(22, 163, 74, 0.1);
+            font-weight: 700;
+        }
+        .modal-table tbody tr.total-row-green td {
+            color: var(--green);
+            border-bottom: 2px solid rgba(22, 163, 74, 0.3);
+        }
+        .modal-table tbody tr.total-row-green:hover {
+            background: rgba(22, 163, 74, 0.1);
+        }
+        .modal-table th:nth-child(2),
+        .modal-table th:nth-child(3),
+        .modal-table th:nth-child(4),
+        .modal-table td:nth-child(2),
+        .modal-table td:nth-child(3),
+        .modal-table td:nth-child(4) {
+            text-align: center;
+        }
+        .modal-table th:first-child,
+        .modal-table td:first-child {
+            text-align: left;
+        }
+        .modal-table th:last-child,
+        .modal-table td:last-child {
+            text-align: right;
+        }
+        .modal-print-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--accent);
+            background: rgba(37, 99, 235, 0.08);
+            border: 1px solid rgba(37, 99, 235, 0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: all 0.15s;
+        }
+        .modal-print-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .modal-header-actions {
+            display: flex;
+            align-items: center;
+        }
+        .section-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 24px 0;
+        }
+        
+        /* HIDDEN para Resumen Ejecutivo */
+        #titulo-publicaciones.hidden-for-resumen { display: none; }
+        #bloque-familias.hidden-for-resumen { display: none; }
+        
+        /* Fila Total con importe grande */
+        .total-amount-large {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+    
+    
+.prev-year-value {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    opacity: 0.7;
+}
+</style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-brand">
+            <span class="dot"></span>
+            Análisis Publicaciones · Digital & Print
+        </div>
+        <div id="data-info" class="mono" style="font-size:11px;color:var(--text3)"></div>
+    </div>
+    
+    <div id="status" class="status-loading">⏳ Cargando datos desde SharePoint...</div>
+    
+    <div id="upload-section" class="hidden">
+        <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+            <div style="font-size:36px">📊</div>
+            <div style="font-size:16px;font-weight:600">Cargar Excel manualmente</div>
+            <div style="font-size:12px;color:var(--text3)">No se pudo cargar automáticamente desde SharePoint</div>
+            <button class="upload-btn">Seleccionar archivo</button>
+            <input type="file" id="file-input" accept=".xlsx,.xls" onchange="loadManualFile(this)">
+        </div>
+    </div>
+    
+    <div id="app" class="hidden">
+        <!-- FILTROS -->
+        <div class="filters">
+            <!-- FILA 1: Año + Meses + Buscar -->
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>Año</label>
+                    <select id="year-filter" onchange="renderAll()"></select>
+                    <div class="comparison-info" id="comparison-info"></div>
+                </div>
+                <div class="filter-group">
+                    <label>Meses</label>
+                    <div class="months-container" id="months-container"></div>
+                    <div class="month-actions">
+                        <button onclick="selectAllMonths()">Todos</button>
+                        <button onclick="selectNoMonths()">Ninguno</button>
+                        <button onclick="selectClosedMonths()">Meses cerrados</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Buscar publicación</label>
+                    <input type="text" id="search-filter" oninput="renderAll()" placeholder="Escribe para filtrar...">
+                </div>
+            </div>
+            
+            <!-- FILA 2: Zonas + Sectores -->
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>Zonas</label>
+                    <div class="checkbox-container" id="zonas-container"></div>
+                    <div class="filter-actions">
+                        <button id="zonas-todas-btn" onclick="selectAllZonas()">Todas</button>
+                        <button id="zonas-ninguna-btn" onclick="selectNoZonas()">Ninguna</button>
+                    </div>
+                </div>
+                <div class="filter-group filter-group-wide">
+                    <label>Sectores</label>
+                    <div class="checkbox-container checkbox-container-wide" id="sectores-container"></div>
+                    <div class="filter-actions">
+                        <button id="sectores-todos-btn" onclick="selectAllSectores()">Todos</button>
+                        <button id="sectores-ninguno-btn" onclick="selectNoSectores()">Ninguno</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MODAL: Desglose de Anunciantes Perdidos -->
+        <div class="modal-overlay" id="perdidos-modal-overlay" onclick="if(event.target===this) closePerdidosModal()">
+            <div class="modal-panel">
+                <div class="modal-header">
+                    <div>
+                        <h3>Desglose de Anunciantes Perdidos</h3>
+                        <div class="modal-subtext">Anunciantes con ingreso en <span id="perdidos-modal-year"></span> que no tienen ingreso en el año/selección actual</div>
+                        <div style="margin-top: 10px; padding: 10px 14px; background: rgba(220, 38, 38, 0.06); border-left: 2px solid var(--red); border-radius: 0 8px 8px 0; font-size: 10px; color: var(--text3); line-height: 1.5;">
+                            <strong style="color: var(--red);">📌 Nota:</strong> Esto no implica que dicha inversión no pueda materializarse en los meses restantes del ejercicio. Se incluyen activaciones a coste 0€.
+                        </div>
+                    </div>
+                    <div class="modal-header-actions">
+                        <button class="modal-print-btn" onclick="printPerdidosModal()">🖨️ Imprimir / PDF</button>
+                        <button class="modal-close-btn" onclick="closePerdidosModal()">✕</button>
+                    </div>
+                </div>
+                <div class="modal-body" id="perdidos-modal-body"></div>
+            </div>
+        </div>
+        
+        <!-- MODAL: Desglose de Anunciantes Ganados -->
+        <div class="modal-overlay" id="ganados-modal-overlay" onclick="if(event.target===this) closeGanadosModal()">
+            <div class="modal-panel">
+                <div class="modal-header">
+                    <div>
+                        <h3>Desglose de Anunciantes Ganados</h3>
+                        <div class="modal-subtext">Anunciantes con ingreso en <span id="ganados-modal-year"></span> que no tenían ingreso el año anterior</div>
+                        <div style="margin-top: 10px; padding: 10px 14px; background: rgba(22, 163, 74, 0.06); border-left: 2px solid var(--green); border-radius: 0 8px 8px 0; font-size: 10px; color: var(--text3); line-height: 1.5;">
+                            <strong style="color: var(--green);">📌 Nota:</strong> Son nuevos anunciantes en el periodo seleccionado. Esto no implica que estos anunciantes dejen de ser nuevos, porque hayan estado en los meses restantes del ejercicio anterior. Se incluyen activaciones a coste 0€.
+                        </div>
+                    </div>
+                    <div class="modal-header-actions">
+                        <button class="modal-print-btn" onclick="printGanadosModal()">🖨️ Imprimir / PDF</button>
+                        <button class="modal-close-btn" onclick="closeGanadosModal()">✕</button>
+                    </div>
+                </div>
+                <div class="modal-body" id="ganados-modal-body"></div>
+            </div>
+        </div>
+        
+        <!-- TABS - Bloque separado -->
+        <div class="tabs-block">
+            <div class="tabs">
+                <button class="tab-btn total active" onclick="switchTab('resumen-ejecutivo')">📊 Resumen Ejecutivo</button>
+                <button class="tab-btn total" onclick="switchTab('total-hearst')">🏢 Total Hearst</button>
+                <button class="tab-btn digital" onclick="switchTab('digital-mes')">📱 Digital (Mes a Mes)</button>
+                <button class="tab-btn digital" onclick="switchTab('digital-acum')">📱 Digital (Acumulado)</button>
+                <button class="tab-btn print" onclick="switchTab('print-mes')">📰 Print (Mes a Mes)</button>
+                <button class="tab-btn print" onclick="switchTab('print-acum')">📰 Print (Acumulado)</button>
+                <button class="tab-btn print" onclick="switchTab('eventos-acum')">🎪 Eventos (Acumulado)</button>
+            </div>
+        </div>
+        
+        <!-- BLOQUE: Ingresos por Publicación -->
+        <div class="content-block">
+            <div class="block-title hidden-for-resumen" id="titulo-publicaciones">Ingresos por Publicación</div>
+            <div class="block-content">
+                
+                <!-- TAB: Resumen Ejecutivo -->
+                <div id="tab-resumen-ejecutivo" class="tab-pane active">
+                    <div class="executive-summary">
+                        
+                        <!-- CARDS GLOBALES -->
+                        <div class="cards-grid-global" id="cards-global-summary"></div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- GRUPO CONTENIDOS DIGITAL -->
+                        <div class="summary-section" id="section-grupo-contenidos">
+                            <div class="summary-section-title">
+                                <span class="icon">📦</span> Grupo Contenidos Digital
+                                <span style="font-size:11px;color:var(--text3);font-weight:400">(BC + BC Sindicated + BC Video + Curated digital + Curated Portada + Curated Vídeo + Editorial Native)</span>
+                            </div>
+                            <div class="cards-grid" id="cards-grupo-contenidos"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- BRANDED CONTENT -->
+                        <div class="summary-section" id="section-branded-content">
+                            <div class="summary-section-title">
+                                <span class="icon">✨</span> Branded Content
+                            </div>
+                            <div class="cards-grid" id="cards-branded-content"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- BRANDED CONTENT VIDEO -->
+                        <div class="summary-section" id="section-branded-video">
+                            <div class="summary-section-title">
+                                <span class="icon">🎬</span> Branded Content Video
+                            </div>
+                            <div class="cards-grid" id="cards-branded-video"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- CURATED (digital) -->
+                        <div class="summary-section" id="section-curated">
+                            <div class="summary-section-title">
+                                <span class="icon">📰</span> Curated
+                                <span style="font-size:11px;color:var(--text3);font-weight:400">(Digital)</span>
+                            </div>
+                            <div class="cards-grid" id="cards-curated"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- SOCIAL (familia Social Networks) -->
+                        <div class="summary-section" id="section-social">
+                            <div class="summary-section-title">
+                                <span class="icon">📱</span> Social
+                                <span style="font-size:11px;color:var(--text3);font-weight:400">(Familia: Social Networks)</span>
+                            </div>
+                            <div class="cards-grid" id="cards-social"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- SOCIAL PAID -->
+                        <div class="summary-section" id="section-social-paid">
+                            <div class="summary-section-title">
+                                <span class="icon">💰</span> Social Paid
+                                <span style="font-size:11px;color:var(--text3);font-weight:400">(Facebook + Instagram + TikTok Sponsored)</span>
+                            </div>
+                            <div class="cards-grid" id="cards-social-paid"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- SOCIAL ORGANIC -->
+                        <div class="summary-section" id="section-social-organic">
+                            <div class="summary-section-title">
+                                <span class="icon">🌱</span> Social Organic
+                                <span style="font-size:11px;color:var(--text3);font-weight:400">(Insider + Instagram Orgánico + Redes Sociales Orgánicas)</span>
+                            </div>
+                            <div class="cards-grid" id="cards-social-organic"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- SOCIAL INTERNACIONAL -->
+                        <div class="summary-section" id="section-social-intl">
+                            <div class="summary-section-title">
+                                <span class="icon">🌍</span> Social Internacional
+                                <span style="font-size:11px;color:var(--text3);font-weight:400">(Content Ignition)</span>
+                            </div>
+                            <div class="cards-grid" id="cards-social-intl"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- PRINT BRANDED -->
+                        <div class="summary-section" id="section-print-branded">
+                            <div class="summary-section-title">
+                                <span class="icon">📄</span> Print Branded
+                                <span style="font-size:11px;color:var(--text3);font-weight:400">(DOBLE PAGINA BRANDED + PAGINA BRANDED)</span>
+                            </div>
+                            <div class="cards-grid" id="cards-print-branded"></div>
+                        </div>
+                        
+                        <div class="section-divider"></div>
+                        
+                        <!-- CURATED PRINT -->
+                        <div class="summary-section" id="section-curated-print">
+                            <div class="summary-section-title">
+                                <span class="icon">🗞️</span> Curated Print
+                                <span style="font-size:11px;color:var(--text3);font-weight:400">(CURATED)</span>
+                            </div>
+                            <div class="cards-grid" id="cards-curated-print"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+<div id="tab-total-hearst" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAll('total-hearst')">▼ Expandir todo</button>
+                        <button onclick="collapseAll('total-hearst')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="total-hearst-table"></div>
+                </div>
+                <div id="tab-digital-mes" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAll('digital-mes')">▼ Expandir todo</button>
+                        <button onclick="collapseAll('digital-mes')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="digital-mes-table"></div>
+                </div>
+                <div id="tab-digital-acum" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAll('digital-acum')">▼ Expandir todo</button>
+                        <button onclick="collapseAll('digital-acum')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="digital-acum-table"></div>
+                </div>
+                <div id="tab-print-mes" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAll('print-mes')">▼ Expandir todo</button>
+                        <button onclick="collapseAll('print-mes')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="print-mes-table"></div>
+                </div>
+                <div id="tab-print-acum" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAll('print-acum')">▼ Expandir todo</button>
+                        <button onclick="collapseAll('print-acum')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="print-acum-table"></div>
+                </div>
+                <div id="tab-eventos-acum" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAll('eventos-acum')">▼ Expandir todo</button>
+                        <button onclick="collapseAll('eventos-acum')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="eventos-acum-table"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aquí irán futuros bloques -->
+        
+        <!-- BLOQUE: Ingresos por Familia -->
+        <div id="bloque-familias" class="content-block hidden-for-resumen">
+            <div class="block-title">Ingresos por Familia</div>
+            <div class="block-content">
+                <div id="family-total-hearst" class="tab-pane active">
+                    <div class="table-actions">
+                        <button onclick="expandAllFamilies('family-total-hearst')">▼ Expandir todo</button>
+                        <button onclick="collapseAllFamilies('family-total-hearst')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="family-total-hearst-table"></div>
+                </div>
+                <div id="family-digital-mes" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAllFamilies('family-digital-mes')">▼ Expandir todo</button>
+                        <button onclick="collapseAllFamilies('family-digital-mes')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="family-digital-mes-table"></div>
+                </div>
+                <div id="family-digital-acum" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAllFamilies('family-digital-acum')">▼ Expandir todo</button>
+                        <button onclick="collapseAllFamilies('family-digital-acum')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="family-digital-acum-table"></div>
+                </div>
+                <div id="family-print-mes" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAllFamilies('family-print-mes')">▼ Expandir todo</button>
+                        <button onclick="collapseAllFamilies('family-print-mes')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="family-print-mes-table"></div>
+                </div>
+                <div id="family-print-acum" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAllFamilies('family-print-acum')">▼ Expandir todo</button>
+                        <button onclick="collapseAllFamilies('family-print-acum')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="family-print-acum-table"></div>
+                </div>
+                <div id="family-eventos-acum" class="tab-pane">
+                    <div class="table-actions">
+                        <button onclick="expandAllFamilies('family-eventos-acum')">▼ Expandir todo</button>
+                        <button onclick="collapseAllFamilies('family-eventos-acum')">▲ Colapsar todo</button>
+                    </div>
+                    <div class="table-wrapper" id="family-eventos-acum-table"></div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIGURACIÓN
+// ═══════════════════════════════════════════════════════════════════════════════
+function leerFechaDeWorkbook(wb) {
+  const HOJA = wb.SheetNames.find(n => /^meta$/i.test(n) || /^fecha/i.test(n));
+  if (!HOJA) return null;
+  const ws = wb.Sheets[HOJA];
+  const celda = ws['B1'] && ws['B1'].v ? ws['B1'] : ws['A1'];
+  if (!celda || celda.v === undefined || celda.v === '') return null;
+  let fecha = null;
+  if (celda.t === 'n') {
+    const fp = XLSX.SSF.parse_date_code(celda.v);
+    fecha = new Date(fp.y, fp.m - 1, fp.d);
+  } else {
+    const d = new Date(celda.v);
+    if (!isNaN(d)) fecha = d;
+  }
+  return fecha;
+}
+
+const EXCEL_SOURCES = [
+  { url: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y', canal: 'DIGITAL', name: 'PRODUCCION DIGITAL.xlsx' },
+  { url: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU', canal: 'PRINT', name: 'PRODUCCION PRINT.xlsx' },
+  { url: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU', canal: 'EVENTOS', name: 'PRODUCCION EVENTOS.xlsx' }
+];
+const SHEET_NAME = 'Analizador general';
+
+const COL_PUB = 'Publicación';
+const COL_MES = 'Mes inserción';
+const COL_YEAR = 'Año inserción';
+const COL_ING = 'Imp.Neto a Comisionar';
+const COL_FAM = 'Familia';
+const COL_AREA = 'ÁREAS';
+const COL_SECTOR = 'Sector';
+const COL_PRODUCTO = 'Producto';
+const COL_ANUNCIANTE = 'Anunciante';
+const COL_DETALLE = 'Detalle';
+
+const MESES = ['01 Enero','02 Febrero','03 Marzo','04 Abril','05 Mayo','06 Junio',
+               '07 Julio','08 Agosto','09 Septiembre','10 Octubre','11 Noviembre','12 Diciembre'];
+const MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+// Definición de Zonas (agrupaciones de ÁREAS)
+// Mapeo de publicaciones unificadas para Total Hearst
+const UNIFIED_PUBS = {
+    'Elle Decor': ['ELLE DECORATION', 'www.elledecor.com/es/'],
+    'Elle Gourmet': ['ELLE GOURMET', 'www.elle.com/es/gourmet/'],
+    'Elle Travel': ['ELLE TRAVEL', 'www.elle.com/es/travel/'],
+    'Elle': ['ELLE', 'www.elle.com/es/'],
+    'Cosmopolitan': ['COSMOPOLITAN', 'www.cosmopolitan.com/es/'],
+    "Harper's Bazaar": ["HARPER´S BAZAAR", 'www.harpersbazaar.com/es'],
+    'Esquire': ['ESQUIRE', 'www.esquire.com/es/'],
+    'Fotogramas': ['FOTOGRAMAS & VIDEO', 'www.fotogramas.es'],
+    'Diez Minutos': ['DIEZ MINUTOS', 'www.diezminutos.es'],
+    "Men's Health": ["MEN´S HEALTH", 'www.menshealth.com/es'],
+    'Car & Driver': ['CAR & DRIVER', 'www.caranddriver.com/es/'],
+    "Women's Health": ["WOMEN´S HEALTH", 'www.womenshealthmag.com/es/'],
+    "Runner's World": ["RUNNER´S WORLD", 'www.runnersworld.com/es/'],
+    'Nuevo Estilo / Mi Casa': ['NUEVO ESTILO', 'www.micasarevista.com', 'www.nuevo-estilo.es']
+};
+
+// Función para obtener el grupo unificado de una publicación
+// CORREGIDO: Orden específico para evitar que "ELLE" capture "ELLE DECORATION"
+function getUnifiedGroup(pub) {
+    const pubLower = pub.toLowerCase().trim();
+    
+    // Mapeo DIRECTO y EXACTO - sin includes() problemáticos
+    const DIRECT_MAP = {
+        // Elle Decor - PRIMERO para evitar conflicto con Elle
+        'elle decoration': 'Elle Decor',
+        'www.elledecor.com/es/': 'Elle Decor',
+        
+        // Elle (revista principal)
+        'elle': 'Elle',
+        'www.elle.com/es/': 'Elle',
+        
+        // Elle Gourmet (separado)
+        'elle gourmet': 'Elle Gourmet',
+        'www.elle.com/es/gourmet/': 'Elle Gourmet',
+        
+        // Elle Travel (separado)
+        'elle travel': 'Elle Travel',
+        'www.elle.com/es/travel/': 'Elle Travel',
+        
+        // Cosmopolitan
+        'cosmopolitan': 'Cosmopolitan',
+        'www.cosmopolitan.com/es/': 'Cosmopolitan',
+        
+        // Harper's Bazaar
+        "harper´s bazaar": "Harper's Bazaar",
+        "harper's bazaar": "Harper's Bazaar",
+        'www.harpersbazaar.com/es': "Harper's Bazaar",
+        
+        // Esquire
+        'esquire': 'Esquire',
+        'www.esquire.com/es/': 'Esquire',
+        
+        // Fotogramas
+        'fotogramas & video': 'Fotogramas',
+        'fotogramas': 'Fotogramas',
+        'www.fotogramas.es': 'Fotogramas',
+        
+        // Diez Minutos
+        'diez minutos': 'Diez Minutos',
+        'www.diezminutos.es': 'Diez Minutos',
+        
+        // Men's Health
+        "men´s health": "Men's Health",
+        "men's health": "Men's Health",
+        'www.menshealth.com/es': "Men's Health",
+        
+        // Car & Driver
+        'car & driver': 'Car & Driver',
+        'www.caranddriver.com/es/': 'Car & Driver',
+        
+        // Women's Health
+        "women´s health": "Women's Health",
+        "women's health": "Women's Health",
+        'www.womenshealthmag.com/es/': "Women's Health",
+        
+        // Runner's World
+        "runner´s world": "Runner's World",
+        "runner's world": "Runner's World",
+        'www.runnersworld.com/es/': "Runner's World",
+        
+        // Nuevo Estilo / Mi Casa
+        'nuevo estilo': 'Nuevo Estilo / Mi Casa',
+        'www.micasarevista.com': 'Nuevo Estilo / Mi Casa',
+        'www.nuevo-estilo.es': 'Nuevo Estilo / Mi Casa'
+    };
+    
+    // Primero buscar coincidencia EXACTA
+    if (DIRECT_MAP[pubLower]) {
+        return DIRECT_MAP[pubLower];
+    }
+    
+    // Si no hay exacta, buscar si el nombre de publicación CONTIENE alguna clave
+    // Pero en orden de más específico a menos específico
+    const orderedKeys = Object.keys(DIRECT_MAP).sort((a, b) => b.length - a.length);
+    
+    for (const key of orderedKeys) {
+        if (pubLower.includes(key) || key.includes(pubLower)) {
+            return DIRECT_MAP[key];
+        }
+    }
+    
+    return null; // No pertenece a ningún grupo unificado
+}
+
+const ZONAS = {
+    'Madrid': ['BRAND EXPERIENCE', 'CLIENT EXPERIENCE LIFESTYLE', 'CLIENT EXPERIENCE LUJO'],
+    'Barcelona': ['CLIENT EXPERIENCE BARCELONA'],
+    'Internacional': ['INTERNACIONAL'],
+    'Programática': ['PROGRAMÁTICA']
+};
+
+let DATA = [];
+let selectedMonths = new Set();
+let selectedZonas = new Set();
+let selectedSectores = new Set();
+let zonasAllMode = true;
+let sectoresAllMode = true;
+let allSectores = [];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILIDADES
+// ═══════════════════════════════════════════════════════════════════════════════
+function fmtK(n) {
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+    return n.toFixed(0);
+}
+
+function fmtDiff(n) {
+    const sign = n >= 0 ? '+' : '';
+    if (Math.abs(n) >= 1000000) return sign + (n/1000000).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1000) return sign + (n/1000).toFixed(0) + 'K';
+    return sign + n.toFixed(0);
+}
+
+function calcVar(cur, prev) {
+    if (!prev || prev === 0) return cur > 0 ? '<span class="pos">∞</span>' : '-';
+    const pct = ((cur - prev) / Math.abs(prev)) * 100;
+    const diff = cur - prev;
+    const cls = pct >= 0 ? 'pos' : 'neg';
+    const sign = pct >= 0 ? '+' : '';
+    return '<span class="' + cls + '">' + sign + pct.toFixed(1) + '%</span><span class="amount-diff ' + cls + '">(' + fmtDiff(diff) + ')</span>';
+}
+
+// Versión para fila TOTAL con importe largo en primera línea
+function calcVarTotal(cur, prev) {
+    const amountLong = cur.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
+    if (!prev || prev === 0) {
+        return '<span class="total-amount-large">' + amountLong + '</span>' + (cur > 0 ? '<span class="pos">∞</span>' : '-');
+    }
+    const pct = ((cur - prev) / Math.abs(prev)) * 100;
+    const diff = cur - prev;
+    const cls = pct >= 0 ? 'pos' : 'neg';
+    const sign = pct >= 0 ? '+' : '';
+    return '<span class="total-amount-large">' + amountLong + '</span><span class="' + cls + '">' + sign + pct.toFixed(1) + '%</span><span class="amount-diff ' + cls + '">(' + fmtDiff(diff) + ')</span>';
+}
+
+function getClosedMonthIndex() {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    if (currentMonth === 0) return 11;
+    return currentMonth - 1;
+}
+
+// Limpiar sector: "99000 * AAPP" -> "AAPP"
+function cleanSector(sector) {
+    if (!sector) return '';
+    return sector.replace(/^\d+\s*[\*\+]\s*/, '').trim();
+}
+
+// Obtener zona de un área
+function getZonaFromArea(area) {
+    if (!area) return null;
+    const areaUpper = area.toUpperCase().trim();
+    for (const [zona, areas] of Object.entries(ZONAS)) {
+        if (areas.some(a => areaUpper.includes(a) || a.includes(areaUpper))) {
+            return zona;
+        }
+    }
+    return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXPAND/COLLAPSE
+// ═══════════════════════════════════════════════════════════════════════════════
+function togglePub(pubId, tableId) {
+    const table = document.getElementById(tableId);
+    const headerRow = table.querySelector('[data-pub-id="' + pubId + '"]');
+    const detailRows = table.querySelectorAll('[data-parent="' + pubId + '"]');
+    
+    const isExpanded = headerRow.classList.contains('expanded');
+    
+    if (isExpanded) {
+        headerRow.classList.remove('expanded');
+        detailRows.forEach(row => row.classList.remove('visible'));
+    } else {
+        headerRow.classList.add('expanded');
+        detailRows.forEach(row => row.classList.add('visible'));
+    }
+}
+
+function expandAll(tableId) {
+    const table = document.getElementById(tableId + '-table');
+    table.querySelectorAll('.pub-header').forEach(row => {
+        row.classList.add('expanded');
+    });
+    table.querySelectorAll('.detail-row').forEach(row => {
+        row.classList.add('visible');
+    });
+}
+
+function collapseAll(tableId) {
+    const table = document.getElementById(tableId + '-table');
+    table.querySelectorAll('.pub-header').forEach(row => {
+        row.classList.remove('expanded');
+    });
+    table.querySelectorAll('.detail-row').forEach(row => {
+        row.classList.remove('visible');
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CARGA DE DATOS
+// ═══════════════════════════════════════════════════════════════════════════════
+async function loadFromSharePoint() {
+    // Carga los 3 Excels separados
+    const statusEl = document.getElementById('status');
+    let allRows = [];
+    let loadedCount = 0;
+    let errors = [];
+    let sectoresSet = new Set();
+    let fileDates = [];  // ← NUEVO: guardar fechas de los archivos
+
+    for (const source of EXCEL_SOURCES) {
+        statusEl.innerHTML = '⏳ Cargando ' + source.name + '... (' + (loadedCount + 1) + '/' + EXCEL_SOURCES.length + ')';
+        
+        try {
+            const res = await fetch(source.url);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('text/html')) throw new Error('Respuesta HTML (posible error de autenticación)');
+            
+            const buffer = await res.arrayBuffer();
+            const wb = XLSX.read(buffer, { type: 'array' });
+
+            // ← Fecha leída desde la hoja "Meta"/"Fecha" del propio Excel (más fiable que Last-Modified)
+            const fechaMeta = leerFechaDeWorkbook(wb);
+            if (fechaMeta) {
+                fileDates.push({
+                    name: source.canal,
+                    date: fechaMeta,
+                    formatted: fechaMeta.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                });
+            } else {
+                // Fallback: cabecera Last-Modified (puede no estar disponible por CORS)
+                const lastModified = res.headers.get('Last-Modified');
+                if (lastModified) {
+                    const date = new Date(lastModified);
+                    fileDates.push({
+                        name: source.canal,
+                        date: date,
+                        formatted: date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    });
+                }
+            }
+
+            const sheetName = wb.SheetNames.includes(SHEET_NAME) ? SHEET_NAME : wb.SheetNames[0];
+            const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
+            
+            // Procesar filas y asignar el canal directamente desde el archivo
+            // Detectar de forma flexible la columna "Detalle" (puede variar mayúsculas/espacios)
+            const detalleKey = raw.length > 0 ? Object.keys(raw[0]).find(k => k.toLowerCase().trim() === 'detalle') : null;
+            
+            const rowsRaw = raw.map(row => {
+                const sectorRaw = (row[COL_SECTOR] || '').trim();
+                const sectorClean = cleanSector(sectorRaw);
+                if (sectorClean) sectoresSet.add(sectorClean);
+                
+                const detalleValue = (detalleKey ? row[detalleKey] : (row[COL_DETALLE] || row['Detalle'] || '')).toString().trim();
+                
+                return {
+                    pub: (row[COL_PUB] || '').trim(),
+                    mes: (row[COL_MES] || '').trim(),
+                    year: String(row[COL_YEAR] || '').trim(),
+                    ingreso: parseFloat(row[COL_ING]) || 0,
+                    familia: (row[COL_FAM] || '').trim(),
+                    area: (row[COL_AREA] || '').trim(),
+                    sector: sectorClean,
+                    producto: (row[COL_PRODUCTO] || '').trim(),
+                    anunciante: (row[COL_ANUNCIANTE] || '').trim(),
+                    detalle: detalleValue,
+                    _canal: source.canal  // ← ASIGNACIÓN DIRECTA DEL CANAL
+                };
+            }).filter(r => r.pub);
+            
+            // Separar registros de www.elle.com/es/ con Detalle IELG/IELL en
+            // www.elle.com/es/gourmet/ y www.elle.com/es/travel/ (restando de Elle principal)
+            // Normalizamos quitando barra final para que coincida aunque venga sin "/" al final
+            const rows = [];
+            rowsRaw.forEach(row => {
+                const pubNorm = row.pub.toLowerCase().trim().replace(/\/+$/, '');
+                
+                if (pubNorm === 'www.elle.com/es') {
+                    const detalleLower = row.detalle.toLowerCase();
+                    // Coincidencia basada en el texto de URL específico (más fiable que el código
+                    // suelto IELG/IELL, que puede reutilizarse para otras cosas en el Excel)
+                    const hasIELG = detalleLower.includes('elle.com/es/gourmet');
+                    const hasIELL = detalleLower.includes('elle.com/es/living/viajes') || detalleLower.includes('living/viajes');
+                    
+                    if (hasIELG) {
+                        rows.push({ ...row, pub: 'www.elle.com/es/gourmet/', _originalPub: 'www.elle.com/es/', _category: 'gourmet' });
+                        return;
+                    }
+                    if (hasIELL) {
+                        rows.push({ ...row, pub: 'www.elle.com/es/travel/', _originalPub: 'www.elle.com/es/', _category: 'travel' });
+                        return;
+                    }
+                }
+                rows.push(row);
+            });
+            
+            allRows = allRows.concat(rows);
+            loadedCount++;
+            
+            console.log('✓ ' + source.name + ': ' + rows.length + ' filas cargadas como ' + source.canal);
+            
+            // DEBUG: comprobar detección de Gourmet/Travel en esta fuente
+            const gourmetCount = rows.filter(r => r._category === 'gourmet').length;
+            const travelCount = rows.filter(r => r._category === 'travel').length;
+            if (gourmetCount > 0 || travelCount > 0) {
+                console.log('  → Gourmet detectado: ' + gourmetCount + ' filas | Travel detectado: ' + travelCount + ' filas');
+            }
+            if (!detalleKey && rows.some(r => r.pub.toLowerCase().replace(/\/+$/, '') === 'www.elle.com/es')) {
+                console.warn('  ⚠️ No se encontró columna "Detalle" en ' + source.name + '. Columnas disponibles: ' + (raw.length > 0 ? Object.keys(raw[0]).join(', ') : 'N/A'));
+            }
+            // DEBUG: muestra de valores reales de Detalle para filas que siguen en www.elle.com/es/
+            const elleSampleDetalles = rowsRaw
+                .filter(r => r.pub.toLowerCase().replace(/\/+$/, '') === 'www.elle.com/es')
+                .slice(0, 15)
+                .map(r => JSON.stringify(r.detalle));
+            if (elleSampleDetalles.length > 0) {
+                console.log('  📋 Muestra de Detalle en www.elle.com/es/ (' + source.name + '): ' + elleSampleDetalles.join(' | '));
+            }
+        } catch (err) {
+            console.error('✗ Error cargando ' + source.name + ':', err);
+            errors.push(source.name + ': ' + err.message);
+        }
+    }
+
+    if (allRows.length === 0) {
+        statusEl.innerHTML = '⚠️ No se pudieron cargar los archivos';
+        statusEl.className = 'status-error';
+        document.getElementById('upload-section').classList.remove('hidden');
+        return;
+    }
+
+    // Asignar datos globales
+    DATA = allRows;
+    allSectores = [...sectoresSet].sort((a, b) => a.localeCompare(b, 'es'));
+    
+    // Mostrar resumen en consola
+    const resumen = {
+        DIGITAL: allRows.filter(r => r._canal === 'DIGITAL').length,
+        PRINT: allRows.filter(r => r._canal === 'PRINT').length,
+        EVENTOS: allRows.filter(r => r._canal === 'EVENTOS').length
+    };
+    console.log('📊 Resumen de carga:', resumen);
+    console.log('Total: ' + allRows.length + ' filas');
+    console.log('📅 Fechas de archivos:', fileDates);
+    if (errors.length > 0) console.warn('⚠️ Errores:', errors);
+
+    // ← NUEVO: Construir texto con fechas de archivos
+    let dateText = '';
+    if (fileDates.length > 0) {
+        // Verificar si todas las fechas son iguales
+        const allSameDate = fileDates.every(f => f.formatted === fileDates[0].formatted);
+        if (allSameDate) {
+            dateText = ' · Datos del ' + fileDates[0].formatted;
+        } else {
+            dateText = ' · ' + fileDates.map(f => f.name + ': ' + f.formatted).join(' | ');
+        }
+    }
+
+    statusEl.innerHTML = '✅ ' + DATA.length.toLocaleString('es-ES') + ' registros (Digital + Print + Eventos)' + dateText;
+    statusEl.className = 'status-success';
+    document.getElementById('data-info').textContent = '3 archivos Excel';
+    document.getElementById('upload-section').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    
+    populateYears();
+    populateMonths();
+    populateZonas();
+    populateSectores();
+    renderAll();
+}
+
+function loadManualFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('status').innerHTML = '⏳ Procesando archivo...';
+    document.getElementById('status').className = 'status-loading';
+    const reader = new FileReader();
+    reader.onload = (e) => processExcel(e.target.result, file.name);
+    reader.readAsArrayBuffer(file);
+}
+
+function processExcel(buffer, source) {
+    try {
+        const wb = XLSX.read(buffer, { type: 'array' });
+        const sheetName = wb.SheetNames.includes(SHEET_NAME) ? SHEET_NAME : wb.SheetNames[0];
+        const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
+        
+        const sectoresSet = new Set();
+        
+        // Primero mapeamos los datos originales con la columna Detalle
+        const rawMapped = raw.map(row => {
+            const sectorRaw = (row[COL_SECTOR] || '').trim();
+            const sectorClean = cleanSector(sectorRaw);
+            if (sectorClean) sectoresSet.add(sectorClean);
+            
+            // Leer columna Detalle
+            const detalleValue = (row[COL_DETALLE] || row['Detalle'] || '').toString().trim();
+            
+            return {
+                pub: (row[COL_PUB] || '').trim(),
+                mes: (row[COL_MES] || '').trim(),
+                year: String(row[COL_YEAR] || '').trim(),
+                ingreso: parseFloat(row[COL_ING]) || 0,
+                familia: (row[COL_FAM] || '').trim(),
+                area: (row[COL_AREA] || '').trim(),
+                sector: sectorClean,
+                producto: (row[COL_PRODUCTO] || '').trim(),
+                anunciante: (row[COL_ANUNCIANTE] || '').trim(),
+                detalle: detalleValue
+            };
+        }).filter(r => r.pub);
+        
+        // Procesar los datos para crear registros de gourmet y travel
+        // Buscamos en la columna Detalle:
+        // - "IELG" o "www.elle.com/es/gourmet/" → va a www.elle.com/es/gourmet/
+        // - "IELL" o "www.elle.com/es/living/viajes/" → va a www.elle.com/es/travel/
+        const processedData = [];
+        
+        rawMapped.forEach(row => {
+            const pubLower = row.pub.toLowerCase();
+            
+            // Si es www.elle.com/es/, verificar el detalle
+            if (pubLower === 'www.elle.com/es/') {
+                const detalle = row.detalle;
+                const detalleLower = detalle.toLowerCase();
+                
+                // Verificar si es GOURMET (IELG o www.elle.com/es/gourmet/)
+                if (detalle === 'IELG' || detalleLower.includes('ielg') || detalleLower.includes('www.elle.com/es/gourmet')) {
+                    // Crear registro para gourmet (NO añadir a elle principal)
+                    processedData.push({
+                        ...row,
+                        pub: 'www.elle.com/es/gourmet/',
+                        _originalPub: 'www.elle.com/es/',
+                        _category: 'gourmet'
+                    });
+                }
+                // Verificar si es TRAVEL/VIAJES (IELL o www.elle.com/es/living/viajes/)
+                else if (detalle === 'IELL' || detalleLower.includes('iell') || detalleLower.includes('www.elle.com/es/living/viajes')) {
+                    // Crear registro para travel (NO añadir a elle principal)
+                    processedData.push({
+                        ...row,
+                        pub: 'www.elle.com/es/travel/',
+                        _originalPub: 'www.elle.com/es/',
+                        _category: 'travel'
+                    });
+                }
+                // Si no es ni gourmet ni travel, mantener en elle principal
+                else {
+                    processedData.push(row);
+                }
+            } else {
+                // Para todas las demás publicaciones, mantener sin cambios
+                processedData.push(row);
+            }
+        });
+        
+        DATA = processedData;
+        
+        allSectores = [...sectoresSet].sort((a, b) => a.localeCompare(b, 'es'));
+        
+        const fechaMeta = leerFechaDeWorkbook(wb);
+        const dateTextManual = fechaMeta ? ' · Datos del ' + fechaMeta.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+        document.getElementById('status').innerHTML = '✅ ' + DATA.length.toLocaleString('es-ES') + ' registros cargados' + dateTextManual;
+        document.getElementById('status').className = 'status-success';
+        document.getElementById('data-info').textContent = source;
+        document.getElementById('upload-section').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        
+        populateYears();
+        populateMonths();
+        populateZonas();
+        populateSectores();
+        renderAll();
+        
+    } catch (err) {
+        document.getElementById('status').innerHTML = '❌ Error: ' + err.message;
+        document.getElementById('status').className = 'status-error';
+        document.getElementById('upload-section').classList.remove('hidden');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FILTROS
+// ═══════════════════════════════════════════════════════════════════════════════
+function populateYears() {
+    const years = [...new Set(DATA.map(r => r.year))].filter(y => y).sort().reverse();
+    const select = document.getElementById('year-filter');
+    select.innerHTML = '';
+    
+    const currentYear = new Date().getFullYear().toString();
+    
+    years.forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        select.appendChild(opt);
+    });
+    
+    if (years.includes(currentYear)) {
+        select.value = currentYear;
+    } else if (years.length > 0) {
+        select.value = years[0];
+    }
+    
+    updateComparisonInfo();
+}
+
+function updateComparisonInfo() {
+    const year = document.getElementById('year-filter').value;
+    const prevYear = String(parseInt(year) - 1);
+    document.getElementById('comparison-info').textContent = 'Comparando con ' + prevYear;
+}
+
+function populateMonths() {
+    const container = document.getElementById('months-container');
+    container.innerHTML = '';
+    
+    const closedMonthIndex = getClosedMonthIndex();
+    selectedMonths.clear();
+    
+    MESES.forEach((mes, i) => {
+        const label = document.createElement('label');
+        label.className = 'month-checkbox';
+        label.setAttribute('data-mes', mes);
+        
+        if (i <= closedMonthIndex) {
+            label.classList.add('selected');
+            selectedMonths.add(mes);
+        }
+        
+        label.innerHTML = '<input type="checkbox" value="' + mes + '" ' + (i <= closedMonthIndex ? 'checked' : '') + '>' + MESES_CORTO[i];
+        label.onclick = function(e) {
+            e.preventDefault();
+            toggleMonth(mes, label);
+        };
+        container.appendChild(label);
+    });
+}
+
+function populateZonas() {
+    const container = document.getElementById('zonas-container');
+    container.innerHTML = '';
+    
+    selectedZonas.clear();
+    zonasAllMode = true;
+    
+    Object.keys(ZONAS).forEach(zona => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-item';  // Gris al inicio (modo "Todas")
+        label.setAttribute('data-zona', zona);
+        selectedZonas.add(zona);
+        
+        label.innerHTML = '<input type="checkbox" value="' + zona + '" checked>' + zona;
+        label.onclick = function(e) {
+            e.preventDefault();
+            toggleZona(zona, label);
+        };
+        container.appendChild(label);
+    });
+    
+    updateZonaActionButtons();
+}
+
+function populateSectores() {
+    const container = document.getElementById('sectores-container');
+    container.innerHTML = '';
+    
+    selectedSectores.clear();
+    sectoresAllMode = true;
+    
+    allSectores.forEach(sector => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-item';  // Gris al inicio (modo "Todos")
+        label.setAttribute('data-sector', sector);
+        selectedSectores.add(sector);
+        
+        label.innerHTML = '<input type="checkbox" value="' + sector + '" checked>' + sector;
+        label.onclick = function(e) {
+            e.preventDefault();
+            toggleSector(sector, label);
+        };
+        container.appendChild(label);
+    });
+    
+    updateSectorActionButtons();
+}
+
+function toggleMonth(mes, label) {
+    if (selectedMonths.has(mes)) {
+        selectedMonths.delete(mes);
+        label.classList.remove('selected');
+    } else {
+        selectedMonths.add(mes);
+        label.classList.add('selected');
+    }
+    renderAll();
+}
+
+function toggleZona(zona, label) {
+    if (zonasAllMode) {
+        // Salimos del modo "Todas": esta zona pasa a ser la única seleccionada
+        selectedZonas.clear();
+        selectedZonas.add(zona);
+        zonasAllMode = false;
+    } else if (selectedZonas.has(zona)) {
+        selectedZonas.delete(zona);
+    } else {
+        selectedZonas.add(zona);
+    }
+    refreshZonaChips();
+    updateZonaActionButtons();
+    renderAll();
+}
+
+function refreshZonaChips() {
+    document.querySelectorAll('#zonas-container .checkbox-item').forEach(label => {
+        const zona = label.getAttribute('data-zona');
+        if (!zonasAllMode && selectedZonas.has(zona)) {
+            label.classList.add('selected');
+        } else {
+            label.classList.remove('selected');
+        }
+    });
+}
+
+function updateZonaActionButtons() {
+    const todasBtn = document.getElementById('zonas-todas-btn');
+    const ningunaBtn = document.getElementById('zonas-ninguna-btn');
+    if (todasBtn) todasBtn.classList.toggle('active', zonasAllMode);
+    if (ningunaBtn) ningunaBtn.classList.toggle('active', !zonasAllMode && selectedZonas.size === 0);
+}
+
+function toggleSector(sector, label) {
+    if (sectoresAllMode) {
+        // Salimos del modo "Todos": este sector pasa a ser el único seleccionado
+        selectedSectores.clear();
+        selectedSectores.add(sector);
+        sectoresAllMode = false;
+    } else if (selectedSectores.has(sector)) {
+        selectedSectores.delete(sector);
+    } else {
+        selectedSectores.add(sector);
+    }
+    refreshSectorChips();
+    updateSectorActionButtons();
+    renderAll();
+}
+
+function refreshSectorChips() {
+    document.querySelectorAll('#sectores-container .checkbox-item').forEach(label => {
+        const sector = label.getAttribute('data-sector');
+        if (!sectoresAllMode && selectedSectores.has(sector)) {
+            label.classList.add('selected');
+        } else {
+            label.classList.remove('selected');
+        }
+    });
+}
+
+function updateSectorActionButtons() {
+    const todosBtn = document.getElementById('sectores-todos-btn');
+    const ningunoBtn = document.getElementById('sectores-ninguno-btn');
+    if (todosBtn) todosBtn.classList.toggle('active', sectoresAllMode);
+    if (ningunoBtn) ningunoBtn.classList.toggle('active', !sectoresAllMode && selectedSectores.size === 0);
+}
+
+function selectAllMonths() {
+    selectedMonths.clear();
+    MESES.forEach(m => selectedMonths.add(m));
+    document.querySelectorAll('.month-checkbox').forEach(label => {
+        label.classList.add('selected');
+    });
+    renderAll();
+}
+
+function selectNoMonths() {
+    selectedMonths.clear();
+    document.querySelectorAll('.month-checkbox').forEach(label => {
+        label.classList.remove('selected');
+    });
+    renderAll();
+}
+
+function selectClosedMonths() {
+    selectedMonths.clear();
+    const closedMonthIndex = getClosedMonthIndex();
+    document.querySelectorAll('.month-checkbox').forEach((label, i) => {
+        if (i <= closedMonthIndex) {
+            selectedMonths.add(MESES[i]);
+            label.classList.add('selected');
+        } else {
+            label.classList.remove('selected');
+        }
+    });
+    renderAll();
+}
+
+function selectAllZonas() {
+    selectedZonas.clear();
+    Object.keys(ZONAS).forEach(z => selectedZonas.add(z));
+    zonasAllMode = true;
+    refreshZonaChips();
+    updateZonaActionButtons();
+    renderAll();
+}
+
+function selectNoZonas() {
+    selectedZonas.clear();
+    zonasAllMode = false;
+    refreshZonaChips();
+    updateZonaActionButtons();
+    renderAll();
+}
+
+function selectAllSectores() {
+    selectedSectores.clear();
+    allSectores.forEach(s => selectedSectores.add(s));
+    sectoresAllMode = true;
+    refreshSectorChips();
+    updateSectorActionButtons();
+    renderAll();
+}
+
+function selectNoSectores() {
+    selectedSectores.clear();
+    sectoresAllMode = false;
+    refreshSectorChips();
+    updateSectorActionButtons();
+    renderAll();
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+    event.target.classList.add('active');
+    // Activar tab en bloque de publicaciones
+    document.getElementById('tab-' + tab).classList.add('active');
+    // Activar tab en bloque de familias (si existe)
+    const familyTab = document.getElementById('family-' + tab);
+    if (familyTab) familyTab.classList.add('active');
+    
+    // Mostrar/ocultar bloques según el tab activo
+    const tituloPublicaciones = document.getElementById('titulo-publicaciones');
+    const bloqueFamilias = document.getElementById('bloque-familias');
+    
+    if (tab === 'resumen-ejecutivo') {
+        if (tituloPublicaciones) tituloPublicaciones.classList.add('hidden-for-resumen');
+        if (bloqueFamilias) bloqueFamilias.classList.add('hidden-for-resumen');
+    } else {
+        if (tituloPublicaciones) tituloPublicaciones.classList.remove('hidden-for-resumen');
+        if (bloqueFamilias) bloqueFamilias.classList.remove('hidden-for-resumen');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FILTRADO DE DATOS
+// ═══════════════════════════════════════════════════════════════════════════════
+function filterData(data) {
+    return data.filter(r => {
+        // Filtrar por zona
+        const zona = getZonaFromArea(r.area);
+        if (zona && !selectedZonas.has(zona)) return false;
+        if (!zona && selectedZonas.size > 0 && selectedZonas.size < Object.keys(ZONAS).length) {
+            return false;
+        }
+        
+        // Filtrar por sector
+        if (r.sector && !selectedSectores.has(r.sector)) return false;
+        
+        return true;
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDERIZADO
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESUMEN EJECUTIVO - Funciones
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Configuración de productos para cada sección
+const EXECUTIVE_SECTIONS = {
+    'grupo-contenidos': {
+        products: ['Branded Content', 'Branded Content Sindicated', 'Branded Content Video', 'Curated', 'Curated Portada Digital', 'Curated Vídeo', 'Editorial Native'],
+        exactMatch: false,
+        caseSensitive: true,
+        filterByFamily: false
+    },
+    'branded-content': {
+        products: ['Branded Content'],
+        exactMatch: true,
+        caseSensitive: false,
+        filterByFamily: false
+    },
+    'branded-video': {
+        products: ['Branded Content Video'],
+        exactMatch: true,
+        caseSensitive: false,
+        filterByFamily: false
+    },
+    'curated': {
+        products: ['Curated', 'Curated Vídeo', 'Curated Portada Digital'],
+        exactMatch: true,
+        caseSensitive: true,
+        filterByFamily: false
+    },
+    'social': {
+        products: [],
+        exactMatch: false,
+        caseSensitive: false,
+        filterByFamily: true,
+        familyName: 'Social Networks'
+    },
+    'social-paid': {
+        products: ['Facebook (sponsored Post)', 'Instagram (sponsored Post)', 'Tik Tok (sponsored Post)'],
+        exactMatch: false,
+        caseSensitive: false,
+        filterByFamily: false
+    },
+    'social-organic': {
+        products: ['Insider', 'Instagram (Orgánico)', 'Redes sociales orgánicas', 'Redes sociales organicas'],
+        exactMatch: false,
+        caseSensitive: false,
+        filterByFamily: false
+    },
+    'social-intl': {
+        products: ['Content Ignition'],
+        exactMatch: false,
+        caseSensitive: false,
+        filterByFamily: false
+    },
+    'print-branded': {
+        products: ['DOBLE PAGINA BRANDED', 'PAGINA BRANDED'],
+        exactMatch: true,
+        caseSensitive: true,
+        filterByFamily: false
+    },
+    'curated-print': {
+        products: ['CURATED'],
+        exactMatch: true,
+        caseSensitive: true,
+        filterByFamily: false
+    }
+};
+
+function matchesProduct(productName, searchProducts, exactMatch, caseSensitive) {
+    const prodToCompare = caseSensitive ? productName.trim() : productName.toLowerCase().trim();
+    
+    for (const sp of searchProducts) {
+        const spToCompare = caseSensitive ? sp.trim() : sp.toLowerCase().trim();
+        
+        if (exactMatch) {
+            if (prodToCompare === spToCompare) return true;
+        } else {
+            if (prodToCompare.includes(spToCompare) || spToCompare.includes(prodToCompare)) return true;
+        }
+    }
+    return false;
+}
+
+function calculateSectionMetrics(data, sectionKey, currentYear, prevYear) {
+    const config = EXECUTIVE_SECTIONS[sectionKey];
+    const products = config.products;
+    const exactMatch = config.exactMatch;
+    const caseSensitive = config.caseSensitive || false;
+    const filterByFamily = config.filterByFamily;
+    const familyName = config.familyName || '';
+    
+    let currentYearTotal = 0;
+    let prevYearTotal = 0;
+    const anunciantesCurrentYear = new Set();
+    const anunciantesPrevYear = new Set();
+    
+    data.forEach(row => {
+        if (!selectedMonths.has(row.mes)) return;
+        
+        let matches = false;
+        
+        if (filterByFamily) {
+            if (row.familia && row.familia.toLowerCase().trim() === familyName.toLowerCase().trim()) {
+                matches = true;
+            }
+        } else {
+            if (row.producto && matchesProduct(row.producto, products, exactMatch, caseSensitive)) {
+                matches = true;
+            }
+        }
+        
+        if (matches) {
+            if (row.year === currentYear) {
+                currentYearTotal += row.ingreso;
+                if (row.anunciante) anunciantesCurrentYear.add(row.anunciante);
+            } else if (row.year === prevYear) {
+                prevYearTotal += row.ingreso;
+                if (row.anunciante) anunciantesPrevYear.add(row.anunciante);
+            }
+        }
+    });
+    
+    const variation = prevYearTotal !== 0 ? ((currentYearTotal - prevYearTotal) / prevYearTotal * 100) : (currentYearTotal > 0 ? 100 : 0);
+    const difference = currentYearTotal - prevYearTotal;
+    
+    const anunciantesCount = anunciantesCurrentYear.size;
+    const anunciantesPrevCount = anunciantesPrevYear.size;
+    const anunciantesVariation = anunciantesPrevCount !== 0 ? ((anunciantesCount - anunciantesPrevCount) / anunciantesPrevCount * 100) : (anunciantesCount > 0 ? 100 : 0);
+    
+    return {
+        currentYear: currentYearTotal,
+        prevYear: prevYearTotal,
+        variation: variation,
+        difference: difference,
+        anunciantesCount: anunciantesCount,
+        anunciantesPrevCount: anunciantesPrevCount,
+        anunciantesVariation: anunciantesVariation
+    };
+}
+
+function formatCurrency(value) {
+    if (Math.abs(value) >= 1000000) {
+        return (value / 1000000).toFixed(2) + 'M€';
+    } else if (Math.abs(value) >= 1000) {
+        return (value / 1000).toFixed(1) + 'K€';
+    }
+    return value.toFixed(0) + '€';
+}
+
+function formatCurrencyLong(value) {
+    const rounded = Math.round(value);
+    const sign = rounded < 0 ? '-' : '';
+    const digits = Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return sign + digits + '€';
+}
+
+function renderMetricCards(containerId, metrics, currentYear, prevYear) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const isPositive = metrics.difference >= 0;
+    const variationClass = metrics.variation >= 0 ? 'positive' : 'negative';
+    const diffClass = isPositive ? '' : ' loss';
+    
+    const anunciantesIsPositive = metrics.anunciantesVariation >= 0;
+    const anunciantesVarClass = anunciantesIsPositive ? 'positive' : 'negative';
+    const anunciantesVarSign = anunciantesIsPositive ? '+' : '';
+    
+    container.innerHTML = `
+        <div class="metric-card highlight-current">
+            <div class="label">Ingresos ${currentYear}</div>
+            <div class="value">${formatCurrency(metrics.currentYear)}</div>
+            <div class="subtext">Año actual</div>
+        </div>
+        <div class="metric-card highlight-prev">
+            <div class="label">Ingresos ${prevYear}</div>
+            <div class="value">${formatCurrency(metrics.prevYear)}</div>
+            <div class="subtext">Año anterior</div>
+        </div>
+        <div class="metric-card highlight-var">
+            <div class="label">Variación</div>
+            <div class="value ${variationClass}">${metrics.variation >= 0 ? '+' : ''}${metrics.variation.toFixed(1)}%</div>
+            <div class="subtext">vs ${prevYear}</div>
+        </div>
+        <div class="metric-card highlight-diff${diffClass}">
+            <div class="label">${isPositive ? 'Ganado' : 'Perdido'}</div>
+            <div class="value ${variationClass}">${isPositive ? '+' : ''}${formatCurrency(metrics.difference)}</div>
+            <div class="subtext">Diferencia bruta</div>
+        </div>
+        <div class="metric-card highlight-brands">
+            <div class="label">Anunciantes ${currentYear}</div>
+            <div class="value">${metrics.anunciantesCount} <span class="${anunciantesVarClass}" style="font-size:11px;font-weight:600">(${anunciantesVarSign}${metrics.anunciantesVariation.toFixed(1)}%)</span></div>
+            <div class="subtext">${metrics.anunciantesPrevCount} en ${prevYear}</div>
+        </div>
+    `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CARDS GLOBALES - Ingresos, Anunciantes Totales, Ganados, Perdidos
+// ═══════════════════════════════════════════════════════════════════════════════
+function calculateGlobalMetrics(data, currentYear, prevYear) {
+    let currentYearTotal = 0;
+    let prevYearTotal = 0;
+    const anunciantesCurrentYear = new Set();
+    const anunciantesPrevYear = new Set();
+    
+    data.forEach(row => {
+        if (!selectedMonths.has(row.mes)) return;
+        
+        if (row.year === currentYear) {
+            currentYearTotal += row.ingreso;
+            if (row.anunciante) anunciantesCurrentYear.add(row.anunciante);
+        } else if (row.year === prevYear) {
+            prevYearTotal += row.ingreso;
+            if (row.anunciante) anunciantesPrevYear.add(row.anunciante);
+        }
+    });
+    
+    const variation = prevYearTotal !== 0 ? ((currentYearTotal - prevYearTotal) / prevYearTotal * 100) : 0;
+    
+    // Anunciantes ganados: están en currentYear pero NO en prevYear
+    const anunciantesGanados = [...anunciantesCurrentYear].filter(a => !anunciantesPrevYear.has(a));
+    
+    // Anunciantes perdidos: estaban en prevYear pero NO en currentYear
+    const anunciantesPerdidos = [...anunciantesPrevYear].filter(a => !anunciantesCurrentYear.has(a));
+    
+    // Desglose detallado: Anunciante, Publicaciones, Productos, Meses, Ingreso total
+    const perdidosDetail = buildAnuncianteDetail(data, anunciantesPerdidos, prevYear);
+    const ganadosDetail = buildAnuncianteDetail(data, anunciantesGanados, currentYear);
+    
+    return {
+        ingresos: currentYearTotal,
+        ingresosPrevYear: prevYearTotal,
+        variation: variation,
+        anunciantesTotales: anunciantesCurrentYear.size,
+        anunciantesPrevYearTotal: anunciantesPrevYear.size,
+        anunciantesGanados: anunciantesGanados.length,
+        anunciantesPerdidos: anunciantesPerdidos.length,
+        perdidosDetail: perdidosDetail,
+        ganadosDetail: ganadosDetail,
+        currentYear: currentYear,
+        prevYear: prevYear
+    };
+}
+
+// Construye el desglose (Anunciante, Publicaciones, Productos, Meses, Ingreso total) para un año concreto
+function buildAnuncianteDetail(data, anunciantesList, targetYear) {
+    const targetSet = new Set(anunciantesList);
+    const map = {};
+    data.forEach(row => {
+        if (!selectedMonths.has(row.mes)) return;
+        if (row.year !== targetYear) return;
+        if (!row.anunciante || !targetSet.has(row.anunciante)) return;
+        
+        if (!map[row.anunciante]) {
+            map[row.anunciante] = {
+                anunciante: row.anunciante,
+                publicaciones: new Set(),
+                productos: new Set(),
+                meses: new Set(),
+                ingreso: 0
+            };
+        }
+        const item = map[row.anunciante];
+        if (row.pub) item.publicaciones.add(row.pub);
+        if (row.producto) {
+            const fam = (row.familia || '').toUpperCase().trim();
+            const productoLabel = (fam === 'PROGRAMATICA' || fam === 'PROGRAMÁTICA' || fam === 'DISPLAY') ? 'Display' : row.producto;
+            item.productos.add(productoLabel);
+        }
+        if (row.mes) item.meses.add(row.mes);
+        item.ingreso += row.ingreso;
+    });
+    
+    return Object.values(map)
+        .map(item => ({
+            anunciante: item.anunciante,
+            publicaciones: [...item.publicaciones].sort((a, b) => a.localeCompare(b, 'es')),
+            productos: [...item.productos].sort((a, b) => a.localeCompare(b, 'es')),
+            meses: [...item.meses].sort((a, b) => MESES.indexOf(a) - MESES.indexOf(b)),
+            ingreso: item.ingreso
+        }))
+        .sort((a, b) => b.ingreso - a.ingreso);
+}
+
+function renderGlobalCards(data, currentYear, prevYear) {
+    const container = document.getElementById('cards-global-summary');
+    if (!container) return;
+    
+    const metrics = calculateGlobalMetrics(data, currentYear, prevYear);
+    const variationClass = metrics.variation >= 0 ? 'positive' : 'negative';
+    const variationSign = metrics.variation >= 0 ? '+' : '';
+    
+    lastPerdidosDetail = metrics.perdidosDetail;
+    lastPerdidosPrevYear = metrics.prevYear;
+    lastGanadosDetail = metrics.ganadosDetail;
+    lastGanadosYear = metrics.currentYear;
+    
+    container.innerHTML = `
+        <div class="metric-card global-ingresos">
+            <div class="label">Ingresos Netos</div>
+            <div class="value">${formatCurrencyLong(metrics.ingresos)}</div>
+            <div class="variation-badge ${variationClass}">${variationSign}${metrics.variation.toFixed(1)}%</div>
+            <div class="prev-year-value"><strong>${metrics.prevYear}:</strong> ${formatCurrencyLong(metrics.ingresosPrevYear)}</div>
+        </div>
+        <div class="metric-card global-anunciantes">
+            <div class="label">Anunciantes Totales</div>
+            <div class="value">${metrics.anunciantesTotales}</div>
+            <div class="subtext">con ingreso en selección</div>
+            <div class="prev-year-value"><strong>${metrics.prevYear}:</strong> ${metrics.anunciantesPrevYearTotal}</div>
+        </div>
+        <div class="metric-card global-ganados">
+            <div class="label">Anunciantes Ganados</div>
+            <div class="perdidos-row">
+                <div>
+                    <div class="value" style="color: var(--green)">${metrics.anunciantesGanados}</div>
+                    <div class="subtext">vs ${metrics.prevYear}</div>
+                </div>
+                ${metrics.anunciantesGanados > 0 ? '<button class="card-detail-btn card-detail-btn-green" onclick="showGanadosModal()">Ver desglose</button>' : ''}
+            </div>
+        </div>
+        <div class="metric-card global-perdidos">
+            <div class="label">Anunciantes Perdidos</div>
+            <div class="perdidos-row">
+                <div>
+                    <div class="value" style="color: var(--red)">${metrics.anunciantesPerdidos}</div>
+                    <div class="subtext">vs ${metrics.prevYear}</div>
+                </div>
+                ${metrics.anunciantesPerdidos > 0 ? '<button class="card-detail-btn" onclick="showPerdidosModal()">Ver desglose</button>' : ''}
+            </div>
+        </div>
+        <div class="nota-metodologica" style="grid-column: 1 / -1; margin-top: 12px; padding: 14px 18px; background: linear-gradient(135deg, rgba(148, 163, 184, 0.06) 0%, rgba(99, 102, 241, 0.04) 100%); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; font-size: 11px; color: var(--text3); line-height: 1.6;">
+            <span style="color: var(--text2); font-weight: 600;">ℹ️ Nota metodológica:</span> Los anunciantes <span style="color: var(--green); font-weight: 600;">ganados</span> y <span style="color: var(--red); font-weight: 600;">perdidos</span> corresponden a aquellos que, en la selección actual de meses, <strong style="color: var(--text2);">no registran ingresos en ${metrics.currentYear}</strong> pero sí los tuvieron en <strong style="color: var(--text2);">${metrics.prevYear}</strong> (o viceversa). Esto no implica necesariamente que dicha inversión no pueda materializarse en los meses restantes del ejercicio. <em style="opacity: 0.85;">Se incluyen activaciones a coste 0€.</em>
+        </div>
+    `;
+}
+
+let lastPerdidosDetail = [];
+let lastPerdidosPrevYear = '';
+let lastGanadosDetail = [];
+let lastGanadosYear = '';
+
+function truncateList(arr) {
+    if (!arr || arr.length === 0) return '—';
+    if (arr.length <= 2) return arr.join(', ');
+    return arr.slice(0, 2).join(', ') + '...';
+}
+
+function showPerdidosModal() {
+    const overlay = document.getElementById('perdidos-modal-overlay');
+    const body = document.getElementById('perdidos-modal-body');
+    document.getElementById('perdidos-modal-year').textContent = lastPerdidosPrevYear;
+    
+    if (!lastPerdidosDetail || lastPerdidosDetail.length === 0) {
+        body.innerHTML = '<p style="padding:16px 0;color:var(--text3)">No hay anunciantes perdidos en la selección actual.</p>';
+    } else {
+        const totalIngreso = lastPerdidosDetail.reduce((sum, item) => sum + item.ingreso, 0);
+        
+        const totalRow = `
+            <tr class="total-row">
+                <td>TOTAL PERDIDO</td>
+                <td>${lastPerdidosDetail.length} anunciantes</td>
+                <td>—</td>
+                <td>—</td>
+                <td class="mono" style="text-align:right; white-space:nowrap">${formatCurrencyLong(totalIngreso)}</td>
+            </tr>
+        `;
+        
+        const rows = lastPerdidosDetail.map(item => `
+            <tr>
+                <td>${item.anunciante}</td>
+                <td>${truncateList(item.publicaciones)}</td>
+                <td>${truncateList(item.productos)}</td>
+                <td>${truncateList(item.meses.map(m => MESES_CORTO[MESES.indexOf(m)]))}</td>
+                <td class="mono" style="text-align:right; white-space:nowrap">${formatCurrencyLong(item.ingreso)}</td>
+            </tr>
+        `).join('');
+        
+        body.innerHTML = `
+            <table class="modal-table">
+                <colgroup>
+                    <col class="col-anunciante">
+                    <col class="col-pubs">
+                    <col class="col-productos">
+                    <col class="col-meses">
+                    <col class="col-ingreso">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Anunciante</th>
+                        <th>Publicación(es)</th>
+                        <th>Producto(s)</th>
+                        <th>Mes(es)</th>
+                        <th style="text-align:right">Ingreso total ${lastPerdidosPrevYear}</th>
+                    </tr>
+                </thead>
+                <tbody>${totalRow}${rows}</tbody>
+            </table>
+        `;
+    }
+    
+    overlay.classList.add('active');
+}
+
+function closePerdidosModal() {
+    document.getElementById('perdidos-modal-overlay').classList.remove('active');
+}
+
+function printPerdidosModal() {
+    if (!lastPerdidosDetail || lastPerdidosDetail.length === 0) return;
+    
+    const totalIngreso = lastPerdidosDetail.reduce((sum, item) => sum + item.ingreso, 0);
+    
+    const rows = lastPerdidosDetail.map(item => `
+        <tr>
+            <td>${item.anunciante}</td>
+            <td>${item.publicaciones.join(', ') || '—'}</td>
+            <td>${item.productos.join(', ') || '—'}</td>
+            <td>${item.meses.map(m => MESES_CORTO[MESES.indexOf(m)]).join(', ') || '—'}</td>
+            <td>${formatCurrencyLong(item.ingreso)}</td>
+        </tr>
+    `).join('');
+    
+    const html = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Anunciantes Perdidos ${lastPerdidosPrevYear}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 24px; color: #1a1a2e; }
+                h1 { font-size: 16px; margin-bottom: 4px; }
+                .subtitle { font-size: 11px; color: #666; margin-bottom: 18px; }
+                table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                th, td { padding: 7px 8px; border-bottom: 1px solid #ddd; text-align: left; }
+                th { text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; color: #666; border-bottom: 2px solid #999; }
+                td:first-child { font-weight: 700; }
+                th:nth-child(2), th:nth-child(3), th:nth-child(4),
+                td:nth-child(2), td:nth-child(3), td:nth-child(4) { text-align: center; }
+                th:last-child, td:last-child { text-align: right; }
+                tr.total-row { background: #fdecea; font-weight: 700; color: #b91c1c; }
+                @media print {
+                    body { padding: 12px; }
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Desglose de Anunciantes Perdidos</h1>
+            <div class="subtitle">Anunciantes con ingreso en ${lastPerdidosPrevYear} sin ingreso en la selección actual</div>
+            <div style="margin: 14px 0 18px 0; padding: 12px 16px; background: #fef2f2; border-left: 3px solid #dc2626; border-radius: 0 6px 6px 0; font-size: 10px; color: #666; line-height: 1.5;">
+                <strong style="color: #991b1b;">📌 Nota metodológica:</strong> Esto no implica que dicha inversión no pueda materializarse en los meses restantes del ejercicio. Se incluyen activaciones a coste 0€.
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Anunciante</th>
+                        <th>Publicación(es)</th>
+                        <th>Producto(s)</th>
+                        <th>Mes(es)</th>
+                        <th>Ingreso total ${lastPerdidosPrevYear}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="total-row">
+                        <td>TOTAL PERDIDO</td>
+                        <td>${lastPerdidosDetail.length} anunciantes</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>${formatCurrencyLong(totalIngreso)}</td>
+                    </tr>
+                    ${rows}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = function() {
+        printWindow.focus();
+        printWindow.print();
+    };
+}
+
+function showGanadosModal() {
+    const overlay = document.getElementById('ganados-modal-overlay');
+    const body = document.getElementById('ganados-modal-body');
+    document.getElementById('ganados-modal-year').textContent = lastGanadosYear;
+    
+    if (!lastGanadosDetail || lastGanadosDetail.length === 0) {
+        body.innerHTML = '<p style="padding:16px 0;color:var(--text3)">No hay anunciantes ganados en la selección actual.</p>';
+    } else {
+        const totalIngreso = lastGanadosDetail.reduce((sum, item) => sum + item.ingreso, 0);
+        
+        const totalRow = `
+            <tr class="total-row-green">
+                <td>TOTAL GANADO</td>
+                <td>${lastGanadosDetail.length} anunciantes</td>
+                <td>—</td>
+                <td>—</td>
+                <td class="mono" style="text-align:right; white-space:nowrap">${formatCurrencyLong(totalIngreso)}</td>
+            </tr>
+        `;
+        
+        const rows = lastGanadosDetail.map(item => `
+            <tr>
+                <td>${item.anunciante}</td>
+                <td>${truncateList(item.publicaciones)}</td>
+                <td>${truncateList(item.productos)}</td>
+                <td>${truncateList(item.meses.map(m => MESES_CORTO[MESES.indexOf(m)]))}</td>
+                <td class="mono" style="text-align:right; white-space:nowrap">${formatCurrencyLong(item.ingreso)}</td>
+            </tr>
+        `).join('');
+        
+        body.innerHTML = `
+            <table class="modal-table">
+                <colgroup>
+                    <col class="col-anunciante">
+                    <col class="col-pubs">
+                    <col class="col-productos">
+                    <col class="col-meses">
+                    <col class="col-ingreso">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Anunciante</th>
+                        <th>Publicación(es)</th>
+                        <th>Producto(s)</th>
+                        <th>Mes(es)</th>
+                        <th style="text-align:right">Ingreso total ${lastGanadosYear}</th>
+                    </tr>
+                </thead>
+                <tbody>${totalRow}${rows}</tbody>
+            </table>
+        `;
+    }
+    
+    overlay.classList.add('active');
+}
+
+function closeGanadosModal() {
+    document.getElementById('ganados-modal-overlay').classList.remove('active');
+}
+
+function printGanadosModal() {
+    if (!lastGanadosDetail || lastGanadosDetail.length === 0) return;
+    
+    const totalIngreso = lastGanadosDetail.reduce((sum, item) => sum + item.ingreso, 0);
+    
+    const rows = lastGanadosDetail.map(item => `
+        <tr>
+            <td>${item.anunciante}</td>
+            <td>${item.publicaciones.join(', ') || '—'}</td>
+            <td>${item.productos.join(', ') || '—'}</td>
+            <td>${item.meses.map(m => MESES_CORTO[MESES.indexOf(m)]).join(', ') || '—'}</td>
+            <td>${formatCurrencyLong(item.ingreso)}</td>
+        </tr>
+    `).join('');
+    
+    const html = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Anunciantes Ganados ${lastGanadosYear}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 24px; color: #1a1a2e; }
+                h1 { font-size: 16px; margin-bottom: 4px; }
+                .subtitle { font-size: 11px; color: #666; margin-bottom: 18px; }
+                table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                th, td { padding: 7px 8px; border-bottom: 1px solid #ddd; text-align: left; }
+                th { text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; color: #666; border-bottom: 2px solid #999; }
+                td:first-child { font-weight: 700; }
+                th:nth-child(2), th:nth-child(3), th:nth-child(4),
+                td:nth-child(2), td:nth-child(3), td:nth-child(4) { text-align: center; }
+                th:last-child, td:last-child { text-align: right; }
+                tr.total-row { background: #eafaf0; font-weight: 700; color: #15803d; }
+                @media print {
+                    body { padding: 12px; }
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Desglose de Anunciantes Ganados</h1>
+            <div class="subtitle">Anunciantes con ingreso en ${lastGanadosYear} que no tenían ingreso el año anterior</div>
+            <div style="margin: 14px 0 18px 0; padding: 12px 16px; background: #f0fdf4; border-left: 3px solid #16a34a; border-radius: 0 6px 6px 0; font-size: 10px; color: #666; line-height: 1.5;">
+                <strong style="color: #166534;">📌 Nota metodológica:</strong> Esto no implica que dicha inversión no pueda materializarse en los meses restantes del ejercicio. Se incluyen activaciones a coste 0€.
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Anunciante</th>
+                        <th>Publicación(es)</th>
+                        <th>Producto(s)</th>
+                        <th>Mes(es)</th>
+                        <th>Ingreso total ${lastGanadosYear}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="total-row">
+                        <td>TOTAL GANADO</td>
+                        <td>${lastGanadosDetail.length} anunciantes</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>${formatCurrencyLong(totalIngreso)}</td>
+                    </tr>
+                    ${rows}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = function() {
+        printWindow.focus();
+        printWindow.print();
+    };
+}
+
+function renderExecutiveSummary(data, currentYear, prevYear) {
+    // Renderizar cards globales
+    renderGlobalCards(data, currentYear, prevYear);
+    
+    // Renderizar cada sección
+    Object.keys(EXECUTIVE_SECTIONS).forEach(sectionKey => {
+        const metrics = calculateSectionMetrics(data, sectionKey, currentYear, prevYear);
+        renderMetricCards('cards-' + sectionKey, metrics, currentYear, prevYear);
+    });
+}
+
+
+function renderAll() {
+    const year = document.getElementById('year-filter').value;
+    const search = document.getElementById('search-filter').value.toLowerCase().trim();
+    const prevYear = String(parseInt(year) - 1);
+    
+    updateComparisonInfo();
+    
+    const filteredData = filterData(DATA);
+    
+    const digitalData = filteredData.filter(r => r._canal === 'DIGITAL');
+    const printData = filteredData.filter(r => r._canal === 'PRINT');
+    
+    // Bloque: Resumen Ejecutivo
+    renderExecutiveSummary(filteredData, year, prevYear);
+    
+    // Bloque: Ingresos por Publicación - Total Hearst (unificado)
+    document.getElementById('total-hearst-table').innerHTML = buildUnifiedTable(filteredData, year, prevYear, search, 'total-hearst-table');
+    
+    // Bloque: Ingresos por Publicación - Digital y Print
+    document.getElementById('digital-mes-table').innerHTML = buildTable(digitalData, year, prevYear, search, 'mes', 'digital-mes-table');
+    document.getElementById('digital-acum-table').innerHTML = buildTable(digitalData, year, prevYear, search, 'acum', 'digital-acum-table');
+    document.getElementById('print-mes-table').innerHTML = buildTable(printData, year, prevYear, search, 'mes', 'print-mes-table');
+    document.getElementById('print-acum-table').innerHTML = buildTable(printData, year, prevYear, search, 'acum', 'print-acum-table');
+    
+    // Bloque: Eventos (Acumulado) - Solo familia Eventos
+    const eventosData = filteredData.filter(r => r._canal === 'EVENTOS');
+    document.getElementById('eventos-acum-table').innerHTML = buildTable(eventosData, year, prevYear, search, 'acum', 'eventos-acum-table');
+    
+    // Bloque: Ingresos por Familia - Eventos (Acumulado)
+    document.getElementById('family-eventos-acum-table').innerHTML = buildFamilyTable(eventosData, year, prevYear, search, 'acum', 'family-eventos-acum-table');
+    
+    // Bloque: Ingresos por Familia - Total Hearst (unificado)
+    document.getElementById('family-total-hearst-table').innerHTML = buildUnifiedFamilyTable(filteredData, year, prevYear, search, 'family-total-hearst-table');
+    
+    // Bloque: Ingresos por Familia - Digital y Print
+    document.getElementById('family-digital-mes-table').innerHTML = buildFamilyTable(digitalData, year, prevYear, search, 'mes', 'family-digital-mes-table');
+    document.getElementById('family-digital-acum-table').innerHTML = buildFamilyTable(digitalData, year, prevYear, search, 'acum', 'family-digital-acum-table');
+    document.getElementById('family-print-mes-table').innerHTML = buildFamilyTable(printData, year, prevYear, search, 'mes', 'family-print-mes-table');
+    document.getElementById('family-print-acum-table').innerHTML = buildFamilyTable(printData, year, prevYear, search, 'acum', 'family-print-acum-table');
+}
+
+function buildTable(data, currentYear, prevYear, searchFilter, mode, tableId) {
+    const pubMap = {};
+    data.forEach(r => {
+        if (r.year !== currentYear && r.year !== prevYear) return;
+        if (!pubMap[r.pub]) pubMap[r.pub] = { cur: {}, prev: {} };
+        const target = r.year === currentYear ? 'cur' : 'prev';
+        if (!pubMap[r.pub][target][r.mes]) pubMap[r.pub][target][r.mes] = 0;
+        pubMap[r.pub][target][r.mes] += r.ingreso;
+    });
+    
+    let pubs = Object.keys(pubMap).sort((a, b) => a.localeCompare(b, 'es'));
+    
+    // FORZAR que aparezcan www.elle.com/es/gourmet/ y www.elle.com/es/travel/ en tablas Digital
+    if (tableId.includes('digital')) {
+        const forcedPubs = ['www.elle.com/es/gourmet/', 'www.elle.com/es/travel/'];
+        forcedPubs.forEach(fp => {
+            if (!pubs.includes(fp)) {
+                pubs.push(fp);
+                // Crear entrada vacía en pubMap para que no dé error
+                pubMap[fp] = { cur: {}, prev: {} };
+            }
+        });
+        // Re-ordenar después de añadir
+        pubs = pubs.sort((a, b) => a.localeCompare(b, 'es'));
+    }
+    
+    if (searchFilter) {
+        pubs = pubs.filter(p => p.toLowerCase().includes(searchFilter));
+    }
+    
+    if (pubs.length === 0) {
+        return '<p style="color:var(--text3);padding:20px">No hay datos para mostrar.</p>';
+    }
+    
+    let html = '<table>';
+    
+    html += '<thead>';
+    html += '<tr>';
+    html += '<th style="min-width:200px">Publicación</th>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        let headerClass = '';
+        if (mode === 'mes') {
+            headerClass = isSelected ? 'section-header' : 'faded-header';
+        } else {
+            headerClass = isSelected ? 'section-header-acum' : 'faded-acum-header';
+        }
+        html += '<th class="' + headerClass + '" style="min-width:85px">' + MESES_CORTO[i] + '</th>';
+    });
+    html += '</tr>';
+    html += '</thead>';
+    
+    html += '<tbody>';
+    
+    // FILA TOTAL - Suma de todas las publicaciones
+    const totalId = 'total-' + tableId;
+    let totalCur = {}, totalPrev = {};
+    let totalAcumCur = [], totalAcumPrev = [];
+    
+    // Calcular totales de todas las publicaciones
+    pubs.forEach(pub => {
+        const curData = pubMap[pub].cur;
+        const prevData = pubMap[pub].prev;
+        MESES.forEach(m => {
+            totalCur[m] = (totalCur[m] || 0) + (curData[m] || 0);
+            totalPrev[m] = (totalPrev[m] || 0) + (prevData[m] || 0);
+        });
+    });
+    
+    // Calcular acumulados del total
+    let sumTotalCur = 0, sumTotalPrev = 0;
+    MESES.forEach((m, i) => {
+        sumTotalCur += totalCur[m] || 0;
+        sumTotalPrev += totalPrev[m] || 0;
+        totalAcumCur[i] = sumTotalCur;
+        totalAcumPrev[i] = sumTotalPrev;
+    });
+    
+    // Fila TOTAL principal
+    html += '<tr class="total-row pub-header" data-pub-id="' + totalId + '" onclick="togglePub(\'' + totalId + '\', \'' + tableId + '\')">';
+    html += '<td><span class="toggle-icon">▶</span>📊 TOTAL</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        let varHtml = '';
+        if (mode === 'mes') {
+            varHtml = calcVarTotal(totalCur[m] || 0, totalPrev[m] || 0);
+        } else {
+            varHtml = calcVarTotal(totalAcumCur[i], totalAcumPrev[i]);
+        }
+        const fadedClass = isSelected ? '' : 'faded';
+        html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+    });
+    html += '</tr>';
+    
+    // Fila detalle TOTAL - Año actual
+    html += '<tr class="total-detail-row detail-row" data-parent="' + totalId + '">';
+    html += '<td>📅 ' + currentYear + '</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const fadedClass = isSelected ? '' : 'faded';
+        if (mode === 'mes') {
+            const val = totalCur[m] || 0;
+            html += '<td class="mono ' + fadedClass + '">' + (val ? fmtK(val) : '-') + '</td>';
+        } else {
+            const val = totalAcumCur[i];
+            html += '<td class="mono ' + fadedClass + '">' + (val ? fmtK(val) : '-') + '</td>';
+        }
+    });
+    html += '</tr>';
+    
+    // Fila detalle TOTAL - Año anterior
+    html += '<tr class="total-detail-row detail-row" data-parent="' + totalId + '">';
+    html += '<td style="color:var(--text3)">📅 ' + prevYear + '</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const fadedClass = isSelected ? '' : 'faded';
+        if (mode === 'mes') {
+            const val = totalPrev[m] || 0;
+            html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (val ? fmtK(val) : '-') + '</td>';
+        } else {
+            const val = totalAcumPrev[i];
+            html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (val ? fmtK(val) : '-') + '</td>';
+        }
+    });
+    html += '</tr>';
+    
+    // Separador después del TOTAL
+    html += '<tr style="height:4px"><td colspan="13" style="background:#fcd34d;border:none;padding:0"></td></tr>';
+    
+    pubs.forEach((pub, pubIndex) => {
+        const curData = pubMap[pub].cur;
+        const prevData = pubMap[pub].prev;
+        const pubId = 'pub-' + pubIndex + '-' + tableId;
+        
+        let acumCur = [], acumPrev = [];
+        let sumCur = 0, sumPrev = 0;
+        
+        MESES.forEach((m, i) => {
+            sumCur += curData[m] || 0;
+            sumPrev += prevData[m] || 0;
+            acumCur[i] = sumCur;
+            acumPrev[i] = sumPrev;
+        });
+        
+        html += '<tr class="pub-header" data-pub-id="' + pubId + '" onclick="togglePub(\'' + pubId + '\', \'' + tableId + '\')">';
+        html += '<td><span class="toggle-icon">▶</span>' + pub + '</td>';
+        MESES.forEach((m, i) => {
+            const isSelected = selectedMonths.has(m);
+            let varHtml = '';
+            if (mode === 'mes') {
+                const cur = curData[m] || 0;
+                const prev = prevData[m] || 0;
+                varHtml = calcVar(cur, prev);
+            } else {
+                varHtml = calcVar(acumCur[i], acumPrev[i]);
+            }
+            const fadedClass = isSelected ? '' : 'faded';
+            html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+        });
+        html += '</tr>';
+        
+        html += '<tr class="detail-row year-row" data-parent="' + pubId + '">';
+        html += '<td>📅 ' + currentYear + '</td>';
+        MESES.forEach((m, i) => {
+            const isSelected = selectedMonths.has(m);
+            const fadedClass = isSelected ? '' : 'faded';
+            if (mode === 'mes') {
+                const val = curData[m] || 0;
+                html += '<td class="mono ' + fadedClass + '">' + (val ? fmtK(val) : '-') + '</td>';
+            } else {
+                const val = acumCur[i];
+                html += '<td class="mono ' + fadedClass + '">' + (val ? fmtK(val) : '-') + '</td>';
+            }
+        });
+        html += '</tr>';
+        
+        html += '<tr class="detail-row year-row" data-parent="' + pubId + '">';
+        html += '<td style="color:var(--text3)">📅 ' + prevYear + '</td>';
+        MESES.forEach((m, i) => {
+            const isSelected = selectedMonths.has(m);
+            const fadedClass = isSelected ? '' : 'faded';
+            if (mode === 'mes') {
+                const val = prevData[m] || 0;
+                html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (val ? fmtK(val) : '-') + '</td>';
+            } else {
+                const val = acumPrev[i];
+                html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (val ? fmtK(val) : '-') + '</td>';
+            }
+        });
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BLOQUE: INGRESOS POR FAMILIA
+// ═══════════════════════════════════════════════════════════════════════════════
+function toggleFamily(familyId, tableId) {
+    const table = document.getElementById(tableId);
+    const headerRow = table.querySelector('[data-family-id="' + familyId + '"]');
+    const detailRows = table.querySelectorAll('[data-family-parent="' + familyId + '"]');
+    
+    const isExpanded = headerRow.classList.contains('expanded');
+    
+    if (isExpanded) {
+        headerRow.classList.remove('expanded');
+        detailRows.forEach(row => row.classList.remove('visible'));
+    } else {
+        headerRow.classList.add('expanded');
+        detailRows.forEach(row => row.classList.add('visible'));
+    }
+}
+
+function expandAllFamilies(tableId) {
+    const container = document.getElementById(tableId);
+    const table = container.querySelector('.table-wrapper table');
+    if (!table) return;
+    table.querySelectorAll('.family-header').forEach(row => {
+        row.classList.add('expanded');
+    });
+    table.querySelectorAll('.product-row').forEach(row => {
+        row.classList.add('visible');
+    });
+}
+
+function collapseAllFamilies(tableId) {
+    const container = document.getElementById(tableId);
+    const table = container.querySelector('.table-wrapper table');
+    if (!table) return;
+    table.querySelectorAll('.family-header').forEach(row => {
+        row.classList.remove('expanded');
+    });
+    table.querySelectorAll('.product-row').forEach(row => {
+        row.classList.remove('visible');
+    });
+}
+
+function buildFamilyTable(data, currentYear, prevYear, searchFilter, mode, tableId) {
+    // Agrupar por Familia > Producto > Año > Mes
+    const familyMap = {};
+    
+    data.forEach(r => {
+        if (r.year !== currentYear && r.year !== prevYear) return;
+        if (!r.familia) return;
+        
+        if (!familyMap[r.familia]) {
+            familyMap[r.familia] = { productos: {}, totals: { cur: {}, prev: {} } };
+        }
+        
+        // Totales de la familia
+        const familyTarget = r.year === currentYear ? 'cur' : 'prev';
+        if (!familyMap[r.familia].totals[familyTarget][r.mes]) {
+            familyMap[r.familia].totals[familyTarget][r.mes] = 0;
+        }
+        familyMap[r.familia].totals[familyTarget][r.mes] += r.ingreso;
+        
+        // Por producto
+        if (r.producto) {
+            if (!familyMap[r.familia].productos[r.producto]) {
+                familyMap[r.familia].productos[r.producto] = { cur: {}, prev: {} };
+            }
+            const prodTarget = r.year === currentYear ? 'cur' : 'prev';
+            if (!familyMap[r.familia].productos[r.producto][prodTarget][r.mes]) {
+                familyMap[r.familia].productos[r.producto][prodTarget][r.mes] = 0;
+            }
+            familyMap[r.familia].productos[r.producto][prodTarget][r.mes] += r.ingreso;
+        }
+    });
+    
+    let families = Object.keys(familyMap).sort((a, b) => a.localeCompare(b, 'es'));
+    
+    if (searchFilter) {
+        families = families.filter(f => f.toLowerCase().includes(searchFilter));
+    }
+    
+    if (families.length === 0) {
+        return '<p style="color:var(--text3);padding:20px">No hay datos para mostrar.</p>';
+    }
+    
+    let html = '<table>';
+    
+    // Header
+    html += '<thead>';
+    html += '<tr>';
+    html += '<th style="min-width:250px">Familia / Producto</th>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        let headerClass = '';
+        if (mode === 'mes') {
+            headerClass = isSelected ? 'section-header' : 'faded-header';
+        } else {
+            headerClass = isSelected ? 'section-header-acum' : 'faded-acum-header';
+        }
+        html += '<th class="' + headerClass + '" style="min-width:85px">' + MESES_CORTO[i] + '</th>';
+    });
+    html += '</tr>';
+    html += '</thead>';
+    
+    html += '<tbody>';
+    
+    // FILA TOTAL - Suma de todas las familias
+    const totalId = 'total-' + tableId;
+    let totalCur = {}, totalPrev = {};
+    let totalAcumCur = [], totalAcumPrev = [];
+    
+    // Calcular totales de todas las familias
+    families.forEach(familia => {
+        const familyData = familyMap[familia];
+        MESES.forEach(m => {
+            totalCur[m] = (totalCur[m] || 0) + (familyData.totals.cur[m] || 0);
+            totalPrev[m] = (totalPrev[m] || 0) + (familyData.totals.prev[m] || 0);
+        });
+    });
+    
+    // Calcular acumulados del total
+    let sumTotalCur = 0, sumTotalPrev = 0;
+    MESES.forEach((m, i) => {
+        sumTotalCur += totalCur[m] || 0;
+        sumTotalPrev += totalPrev[m] || 0;
+        totalAcumCur[i] = sumTotalCur;
+        totalAcumPrev[i] = sumTotalPrev;
+    });
+    
+    // Fila TOTAL principal
+    html += '<tr class="total-row family-header" data-family-id="' + totalId + '" onclick="toggleFamily(\'' + totalId + '\', \'' + tableId + '\')">';
+    html += '<td><span class="toggle-icon">▶</span>📊 TOTAL</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        let varHtml = '';
+        if (mode === 'mes') {
+            varHtml = calcVar(totalCur[m] || 0, totalPrev[m] || 0);
+        } else {
+            varHtml = calcVar(totalAcumCur[i], totalAcumPrev[i]);
+        }
+        const fadedClass = isSelected ? '' : 'faded';
+        html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+    });
+    html += '</tr>';
+    
+    // Fila detalle TOTAL - Año actual
+    html += '<tr class="total-detail-row product-row" data-family-parent="' + totalId + '">';
+    html += '<td style="padding-left:30px">📅 ' + currentYear + '</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const fadedClass = isSelected ? '' : 'faded';
+        if (mode === 'mes') {
+            const val = totalCur[m] || 0;
+            html += '<td class="mono ' + fadedClass + '">' + (val ? fmtK(val) : '-') + '</td>';
+        } else {
+            const val = totalAcumCur[i];
+            html += '<td class="mono ' + fadedClass + '">' + (val ? fmtK(val) : '-') + '</td>';
+        }
+    });
+    html += '</tr>';
+    
+    // Fila detalle TOTAL - Año anterior
+    html += '<tr class="total-detail-row product-row" data-family-parent="' + totalId + '">';
+    html += '<td style="padding-left:30px;color:var(--text3)">📅 ' + prevYear + '</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const fadedClass = isSelected ? '' : 'faded';
+        if (mode === 'mes') {
+            const val = totalPrev[m] || 0;
+            html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (val ? fmtK(val) : '-') + '</td>';
+        } else {
+            const val = totalAcumPrev[i];
+            html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (val ? fmtK(val) : '-') + '</td>';
+        }
+    });
+    html += '</tr>';
+    
+    // Separador después del TOTAL
+    html += '<tr style="height:4px"><td colspan="13" style="background:#fcd34d;border:none;padding:0"></td></tr>';
+    
+    families.forEach((familia, familyIndex) => {
+        const familyData = familyMap[familia];
+        const familyId = 'family-' + familyIndex + '-' + tableId;
+        
+        // Calcular acumulados de la familia
+        let acumCur = [], acumPrev = [];
+        let sumCur = 0, sumPrev = 0;
+        
+        MESES.forEach((m, i) => {
+            sumCur += familyData.totals.cur[m] || 0;
+            sumPrev += familyData.totals.prev[m] || 0;
+            acumCur[i] = sumCur;
+            acumPrev[i] = sumPrev;
+        });
+        
+        // FILA DE FAMILIA (cabecera expandible)
+        html += '<tr class="family-header pub-header" data-family-id="' + familyId + '" onclick="toggleFamily(\'' + familyId + '\', \'' + tableId + '\')">';
+        html += '<td><span class="toggle-icon">▶</span><strong>' + familia + '</strong></td>';
+        MESES.forEach((m, i) => {
+            const isSelected = selectedMonths.has(m);
+            let varHtml = '';
+            if (mode === 'mes') {
+                const cur = familyData.totals.cur[m] || 0;
+                const prev = familyData.totals.prev[m] || 0;
+                varHtml = calcVar(cur, prev);
+            } else {
+                varHtml = calcVar(acumCur[i], acumPrev[i]);
+            }
+            const fadedClass = isSelected ? '' : 'faded';
+            html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+        });
+        html += '</tr>';
+        
+        // FILAS DE PRODUCTOS (ocultas por defecto)
+        const productos = Object.keys(familyData.productos).sort((a, b) => a.localeCompare(b, 'es'));
+        
+        productos.forEach(producto => {
+            const prodData = familyData.productos[producto];
+            
+            // Calcular acumulados del producto
+            let prodAcumCur = [], prodAcumPrev = [];
+            let prodSumCur = 0, prodSumPrev = 0;
+            
+            MESES.forEach((m, i) => {
+                prodSumCur += prodData.cur[m] || 0;
+                prodSumPrev += prodData.prev[m] || 0;
+                prodAcumCur[i] = prodSumCur;
+                prodAcumPrev[i] = prodSumPrev;
+            });
+            
+            html += '<tr class="product-row" data-family-parent="' + familyId + '">';
+            html += '<td style="padding-left:30px;color:var(--text2)">└ ' + producto + '</td>';
+            MESES.forEach((m, i) => {
+                const isSelected = selectedMonths.has(m);
+                let varHtml = '';
+                if (mode === 'mes') {
+                    const cur = prodData.cur[m] || 0;
+                    const prev = prodData.prev[m] || 0;
+                    varHtml = calcVar(cur, prev);
+                } else {
+                    varHtml = calcVar(prodAcumCur[i], prodAcumPrev[i]);
+                }
+                const fadedClass = isSelected ? '' : 'faded';
+                html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+            });
+            html += '</tr>';
+        });
+    });
+    
+    html += '</tbody></table>';
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BLOQUE: TOTAL HEARST - PUBLICACIONES UNIFICADAS
+// ═══════════════════════════════════════════════════════════════════════════════
+function buildUnifiedTable(data, currentYear, prevYear, searchFilter, tableId) {
+    // En Total Hearst mostramos TODO (incluyendo Eventos)
+    const filteredData = data;
+    
+    // Agrupar por grupo unificado
+    const groupMap = {};
+    
+    filteredData.forEach(r => {
+        if (r.year !== currentYear && r.year !== prevYear) return;
+        
+        const group = getUnifiedGroup(r.pub);
+        if (!group) return; // Si no pertenece a ningún grupo, lo ignoramos
+        
+        if (!groupMap[group]) groupMap[group] = { cur: {}, prev: {} };
+        const target = r.year === currentYear ? 'cur' : 'prev';
+        if (!groupMap[group][target][r.mes]) groupMap[group][target][r.mes] = 0;
+        groupMap[group][target][r.mes] += r.ingreso;
+    });
+    
+    let groups = Object.keys(groupMap).sort((a, b) => a.localeCompare(b, 'es'));
+    
+    if (searchFilter) {
+        groups = groups.filter(g => g.toLowerCase().includes(searchFilter));
+    }
+    
+    if (groups.length === 0) {
+        return '<p style="color:var(--text3);padding:20px">No hay datos para mostrar.</p>';
+    }
+    
+    let html = '<table>';
+    
+    // Header
+    html += '<thead>';
+    html += '<tr>';
+    html += '<th style="min-width:200px">Publicación (Total)</th>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const headerClass = isSelected ? 'section-header-acum' : 'faded-acum-header';
+        html += '<th class="' + headerClass + '" style="min-width:85px">' + MESES_CORTO[i] + '</th>';
+    });
+    html += '</tr>';
+    html += '</thead>';
+    
+    html += '<tbody>';
+    
+    // FILA TOTAL
+    const totalId = 'total-' + tableId;
+    let totalCur = {}, totalPrev = {};
+    let totalAcumCur = [], totalAcumPrev = [];
+    
+    groups.forEach(group => {
+        const groupData = groupMap[group];
+        MESES.forEach(m => {
+            totalCur[m] = (totalCur[m] || 0) + (groupData.cur[m] || 0);
+            totalPrev[m] = (totalPrev[m] || 0) + (groupData.prev[m] || 0);
+        });
+    });
+    
+    let sumTotalCur = 0, sumTotalPrev = 0;
+    MESES.forEach((m, i) => {
+        sumTotalCur += totalCur[m] || 0;
+        sumTotalPrev += totalPrev[m] || 0;
+        totalAcumCur[i] = sumTotalCur;
+        totalAcumPrev[i] = sumTotalPrev;
+    });
+    
+    html += '<tr class="total-row pub-header" data-pub-id="' + totalId + '" onclick="togglePub(\'' + totalId + '\', \'' + tableId + '\')">';
+    html += '<td><span class="toggle-icon">▶</span>📊 TOTAL HEARST</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const varHtml = calcVarTotal(totalAcumCur[i], totalAcumPrev[i]);
+        const fadedClass = isSelected ? '' : 'faded';
+        html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+    });
+    html += '</tr>';
+    
+    html += '<tr class="total-detail-row detail-row" data-parent="' + totalId + '">';
+    html += '<td style="padding-left:30px">📅 ' + currentYear + '</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const fadedClass = isSelected ? '' : 'faded';
+        html += '<td class="mono ' + fadedClass + '">' + (totalAcumCur[i] ? fmtK(totalAcumCur[i]) : '-') + '</td>';
+    });
+    html += '</tr>';
+    
+    html += '<tr class="total-detail-row detail-row" data-parent="' + totalId + '">';
+    html += '<td style="padding-left:30px;color:var(--text3)">📅 ' + prevYear + '</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const fadedClass = isSelected ? '' : 'faded';
+        html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (totalAcumPrev[i] ? fmtK(totalAcumPrev[i]) : '-') + '</td>';
+    });
+    html += '</tr>';
+    
+    html += '<tr style="height:4px"><td colspan="13" style="background:#fcd34d;border:none;padding:0"></td></tr>';
+    
+    // Filas por grupo unificado
+    groups.forEach((group, groupIndex) => {
+        const groupData = groupMap[group];
+        const groupId = 'group-' + groupIndex + '-' + tableId;
+        
+        let acumCur = [], acumPrev = [];
+        let sumCur = 0, sumPrev = 0;
+        
+        MESES.forEach((m, i) => {
+            sumCur += groupData.cur[m] || 0;
+            sumPrev += groupData.prev[m] || 0;
+            acumCur[i] = sumCur;
+            acumPrev[i] = sumPrev;
+        });
+        
+        html += '<tr class="pub-header" data-pub-id="' + groupId + '" onclick="togglePub(\'' + groupId + '\', \'' + tableId + '\')">';
+        html += '<td><span class="toggle-icon">▶</span>' + group + '</td>';
+        MESES.forEach((m, i) => {
+            const isSelected = selectedMonths.has(m);
+            const varHtml = calcVar(acumCur[i], acumPrev[i]);
+            const fadedClass = isSelected ? '' : 'faded';
+            html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+        });
+        html += '</tr>';
+        
+        html += '<tr class="detail-row year-row" data-parent="' + groupId + '">';
+        html += '<td>📅 ' + currentYear + '</td>';
+        MESES.forEach((m, i) => {
+            const isSelected = selectedMonths.has(m);
+            const fadedClass = isSelected ? '' : 'faded';
+            html += '<td class="mono ' + fadedClass + '">' + (acumCur[i] ? fmtK(acumCur[i]) : '-') + '</td>';
+        });
+        html += '</tr>';
+        
+        html += '<tr class="detail-row year-row" data-parent="' + groupId + '">';
+        html += '<td style="color:var(--text3)">📅 ' + prevYear + '</td>';
+        MESES.forEach((m, i) => {
+            const isSelected = selectedMonths.has(m);
+            const fadedClass = isSelected ? '' : 'faded';
+            html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (acumPrev[i] ? fmtK(acumPrev[i]) : '-') + '</td>';
+        });
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    return html;
+}
+
+function buildUnifiedFamilyTable(data, currentYear, prevYear, searchFilter, tableId) {
+    // En Total Hearst mostramos TODO (incluyendo Eventos)
+    const filteredData = data;
+    
+    // Agrupar por Familia > Producto
+    const familyMap = {};
+    
+    filteredData.forEach(r => {
+        if (r.year !== currentYear && r.year !== prevYear) return;
+        if (!r.familia) return;
+        
+        if (!familyMap[r.familia]) {
+            familyMap[r.familia] = { productos: {}, totals: { cur: {}, prev: {} } };
+        }
+        
+        const familyTarget = r.year === currentYear ? 'cur' : 'prev';
+        if (!familyMap[r.familia].totals[familyTarget][r.mes]) {
+            familyMap[r.familia].totals[familyTarget][r.mes] = 0;
+        }
+        familyMap[r.familia].totals[familyTarget][r.mes] += r.ingreso;
+        
+        if (r.producto) {
+            if (!familyMap[r.familia].productos[r.producto]) {
+                familyMap[r.familia].productos[r.producto] = { cur: {}, prev: {} };
+            }
+            const prodTarget = r.year === currentYear ? 'cur' : 'prev';
+            if (!familyMap[r.familia].productos[r.producto][prodTarget][r.mes]) {
+                familyMap[r.familia].productos[r.producto][prodTarget][r.mes] = 0;
+            }
+            familyMap[r.familia].productos[r.producto][prodTarget][r.mes] += r.ingreso;
+        }
+    });
+    
+    let families = Object.keys(familyMap).sort((a, b) => a.localeCompare(b, 'es'));
+    
+    if (searchFilter) {
+        families = families.filter(f => f.toLowerCase().includes(searchFilter));
+    }
+    
+    if (families.length === 0) {
+        return '<p style="color:var(--text3);padding:20px">No hay datos para mostrar.</p>';
+    }
+    
+    let html = '<table>';
+    
+    html += '<thead>';
+    html += '<tr>';
+    html += '<th style="min-width:250px">Familia / Producto</th>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const headerClass = isSelected ? 'section-header-acum' : 'faded-acum-header';
+        html += '<th class="' + headerClass + '" style="min-width:85px">' + MESES_CORTO[i] + '</th>';
+    });
+    html += '</tr>';
+    html += '</thead>';
+    
+    html += '<tbody>';
+    
+    // FILA TOTAL
+    const totalId = 'total-' + tableId;
+    let totalCur = {}, totalPrev = {};
+    let totalAcumCur = [], totalAcumPrev = [];
+    
+    families.forEach(familia => {
+        const familyData = familyMap[familia];
+        MESES.forEach(m => {
+            totalCur[m] = (totalCur[m] || 0) + (familyData.totals.cur[m] || 0);
+            totalPrev[m] = (totalPrev[m] || 0) + (familyData.totals.prev[m] || 0);
+        });
+    });
+    
+    let sumTotalCur = 0, sumTotalPrev = 0;
+    MESES.forEach((m, i) => {
+        sumTotalCur += totalCur[m] || 0;
+        sumTotalPrev += totalPrev[m] || 0;
+        totalAcumCur[i] = sumTotalCur;
+        totalAcumPrev[i] = sumTotalPrev;
+    });
+    
+    html += '<tr class="total-row family-header" data-family-id="' + totalId + '" onclick="toggleFamily(\'' + totalId + '\', \'' + tableId + '\')">';
+    html += '<td><span class="toggle-icon">▶</span>📊 TOTAL HEARST</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const varHtml = calcVarTotal(totalAcumCur[i], totalAcumPrev[i]);
+        const fadedClass = isSelected ? '' : 'faded';
+        html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+    });
+    html += '</tr>';
+    
+    html += '<tr class="total-detail-row product-row" data-family-parent="' + totalId + '">';
+    html += '<td style="padding-left:30px">📅 ' + currentYear + '</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const fadedClass = isSelected ? '' : 'faded';
+        html += '<td class="mono ' + fadedClass + '">' + (totalAcumCur[i] ? fmtK(totalAcumCur[i]) : '-') + '</td>';
+    });
+    html += '</tr>';
+    
+    html += '<tr class="total-detail-row product-row" data-family-parent="' + totalId + '">';
+    html += '<td style="padding-left:30px;color:var(--text3)">📅 ' + prevYear + '</td>';
+    MESES.forEach((m, i) => {
+        const isSelected = selectedMonths.has(m);
+        const fadedClass = isSelected ? '' : 'faded';
+        html += '<td class="mono ' + fadedClass + '" style="' + (isSelected ? 'color:var(--text3)' : '') + '">' + (totalAcumPrev[i] ? fmtK(totalAcumPrev[i]) : '-') + '</td>';
+    });
+    html += '</tr>';
+    
+    html += '<tr style="height:4px"><td colspan="13" style="background:#fcd34d;border:none;padding:0"></td></tr>';
+    
+    // Filas por familia
+    families.forEach((familia, familyIndex) => {
+        const familyData = familyMap[familia];
+        const familyId = 'family-' + familyIndex + '-' + tableId;
+        
+        let acumCur = [], acumPrev = [];
+        let sumCur = 0, sumPrev = 0;
+        
+        MESES.forEach((m, i) => {
+            sumCur += familyData.totals.cur[m] || 0;
+            sumPrev += familyData.totals.prev[m] || 0;
+            acumCur[i] = sumCur;
+            acumPrev[i] = sumPrev;
+        });
+        
+        html += '<tr class="family-header pub-header" data-family-id="' + familyId + '" onclick="toggleFamily(\'' + familyId + '\', \'' + tableId + '\')">';
+        html += '<td><span class="toggle-icon">▶</span><strong>' + familia + '</strong></td>';
+        MESES.forEach((m, i) => {
+            const isSelected = selectedMonths.has(m);
+            const varHtml = calcVar(acumCur[i], acumPrev[i]);
+            const fadedClass = isSelected ? '' : 'faded';
+            html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+        });
+        html += '</tr>';
+        
+        const productos = Object.keys(familyData.productos).sort((a, b) => a.localeCompare(b, 'es'));
+        
+        productos.forEach(producto => {
+            const prodData = familyData.productos[producto];
+            
+            let prodAcumCur = [], prodAcumPrev = [];
+            let prodSumCur = 0, prodSumPrev = 0;
+            
+            MESES.forEach((m, i) => {
+                prodSumCur += prodData.cur[m] || 0;
+                prodSumPrev += prodData.prev[m] || 0;
+                prodAcumCur[i] = prodSumCur;
+                prodAcumPrev[i] = prodSumPrev;
+            });
+            
+            html += '<tr class="product-row" data-family-parent="' + familyId + '">';
+            html += '<td style="padding-left:30px;color:var(--text2)">└ ' + producto + '</td>';
+            MESES.forEach((m, i) => {
+                const isSelected = selectedMonths.has(m);
+                const varHtml = calcVar(prodAcumCur[i], prodAcumPrev[i]);
+                const fadedClass = isSelected ? '' : 'faded';
+                html += '<td class="' + fadedClass + '">' + varHtml + '</td>';
+            });
+            html += '</tr>';
+        });
+    });
+    
+    html += '</tbody></table>';
+    return html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INICIO
+// ═══════════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', loadFromSharePoint);
+</script>
+</body>
+</html>

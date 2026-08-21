@@ -1,0 +1,449 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Patrones de ingresos</title><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script><style>
+:root{--navy:#0b2a47;--blue:#00677f;--bg:#f4f6f8;--line:#dce2e8;--muted:#6b7280}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:#1f2937}.wrap{max-width:1380px;margin:auto;padding:24px}.head{background:var(--navy);color:white;padding:22px 26px;border-radius:12px}.head h1{margin:0 0 6px;font-size:25px}.head p{margin:0;opacity:.8;font-size:13px}.card{background:white;border:1px solid var(--line);border-radius:12px;margin-top:16px;padding:18px}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.ctrl label{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase}.ctrl select{height:36px;border:1px solid #cfd7df;border-radius:7px;padding:0 10px;background:white;font-weight:700}.status{margin-left:auto;font-size:12px;color:var(--muted)}.years{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}.year{border:1px solid #cbd5df;background:white;border-radius:20px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer}.year.off{opacity:.35}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}.kpi{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:12px}.kpi b{display:block;font-size:18px;color:var(--navy);margin-top:4px}.kpi span{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700}.chart{overflow-x:auto}.chart svg{min-width:900px;width:100%;height:370px}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin:8px 0 0}.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px}.tablewrap{overflow:visible;max-height:none}table{border-collapse:collapse;width:100%;font-size:11px}th{position:sticky;top:0;background:var(--navy);color:white;padding:12px 8px;white-space:nowrap}td{padding:7px 8px;border-bottom:1px solid #edf0f2;text-align:right}td:first-child{text-align:left;font-weight:700}.note{font-size:11px;color:var(--muted);line-height:1.5}.warn{color:#9a6700}.error{color:#b42318}@media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.status{width:100%;margin:0}}</style>
+<style id="table-layout-v2">
+/* V2 · tabla completa sin scroll horizontal y columnas/cabeceras centradas */
+.table-wrap,
+.table-container,
+.table-scroll,
+.data-table-wrap {
+  
+  
+  max-width: none !important;
+  width: 100% !important;
+}
+table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+}
+table th,
+table td {
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+table th {
+  text-align: center !important;
+}
+</style>
+
+
+<style id="table-layout-v3">
+/* V3 · la caja crece con la tabla: sin scroll interno vertical ni horizontal */
+.table-wrap,
+.table-container,
+.table-scroll,
+.data-table-wrap {
+  
+  
+  
+  
+  
+  min-
+  width: 100% !important;
+  max-width: none !important;
+}
+table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+}
+table th,
+table td {
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+table th { text-align: center !important; }
+
+/* Solo cuerpo: MEDIA y RANGO con fondos suaves. La cabecera conserva su estilo original. */
+table tbody td:nth-last-child(2) {
+  background: #eef7f3 !important;
+}
+table tbody td:last-child {
+  background: #f7f2fb !important;
+}
+</style>
+
+
+<style id="responsive-layout-v4">
+/* V4 · aprovechar pantallas grandes y eliminar scroll interno de la tabla */
+:root { --dashboard-max-width: 1680px; }
+
+/* Contenedor principal adaptativo: ocupa casi todo el viewport en pantallas grandes */
+.dashboard,
+.dashboard-shell,
+.app-shell,
+.main-shell,
+.page-shell,
+.container,
+.main-container,
+.content,
+main {
+  width: min(96vw, var(--dashboard-max-width)) !important;
+  max-width: var(--dashboard-max-width) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* La caja que contiene la tabla crece con todas sus filas */
+.table-card,
+.table-wrap,
+.table-container,
+.table-scroll,
+.data-table-wrap,
+#tableWrap,
+#tableContainer,
+#historicalTable,
+#historicalTableWrap {
+  
+  min-
+  
+  
+  
+  
+  clip: auto !important;
+}
+
+/* Neutralizar cualquier altura/scroll aplicado a descendientes inmediatos de la caja */
+.table-card > div,
+.table-wrap > div,
+.table-container > div,
+.table-scroll > div,
+.data-table-wrap > div {
+  
+  
+  
+}
+
+/* Tabla completa y centrada */
+table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+}
+table th,
+table td {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* MEDIA: verde muy suave. RANGO: azul muy suave para diferenciarlo del fondo del dashboard.
+   Solo cuerpo; la cabecera permanece intacta. */
+table tbody td:nth-last-child(2) {
+  background: #edf7f1 !important;
+}
+table tbody td:last-child {
+  background: #eef5fb !important;
+}
+
+/* En pantallas muy grandes dejamos aún más aire útil a los datos */
+@media (min-width: 1600px) {
+  :root { --dashboard-max-width: 1840px; }
+  .dashboard,
+  .dashboard-shell,
+  .app-shell,
+  .main-shell,
+  .page-shell,
+  .container,
+  .main-container,
+  .content,
+  main {
+    width: 94vw !important;
+  }
+}
+
+/* En portátil/tablet mantiene márgenes razonables sin provocar scroll horizontal */
+@media (max-width: 1100px) {
+  .dashboard,
+  .dashboard-shell,
+  .app-shell,
+  .main-shell,
+  .page-shell,
+  .container,
+  .main-container,
+  .content,
+  main {
+    width: 98vw !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+</style>
+
+
+<style id="actual-table-wrapper-fix">
+.card.tablewrap {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+.card.tablewrap table {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+</style>
+
+
+<style id="v5-final-and-info">
+.mini-info{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:17px;height:17px;margin-left:5px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.65);background:rgba(255,255,255,.12);
+  color:#fff;font-size:10px;font-weight:900;line-height:1;cursor:help;
+  position:relative;vertical-align:middle;padding:0;
+}
+.mini-info:hover::after{
+  content:attr(data-tip);position:absolute;z-index:30;top:24px;right:0;
+  width:290px;padding:9px 11px;border-radius:7px;background:#17324d;color:#fff;
+  font-size:10.5px;font-weight:600;line-height:1.45;text-align:left;
+  box-shadow:0 6px 18px rgba(15,35,55,.22);white-space:normal;
+}
+.final-row td{font-weight:800;border-top:2px solid #b8c5d2 !important;}
+.final-row td:first-child{color:#0b2a47;}
+</style>
+
+
+<style id="v7-table-full-page">
+/* La tabla no tiene viewport propio: forma parte del documento y muestra todas sus filas. */
+.card.tablewrap{
+  display:block !important;
+  height:max-content !important;
+  min-height:max-content !important;
+  max-height:none !important;
+  overflow:visible !important;
+  overflow-x:visible !important;
+  overflow-y:visible !important;
+  position:static !important;
+}
+.card.tablewrap table{
+  display:table !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+}
+.card.tablewrap tbody{
+  display:table-row-group !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+}
+.card.tablewrap tr{display:table-row !important;}
+.card.tablewrap td,
+.card.tablewrap th{position:static !important;}
+.card.tablewrap tbody td:first-child{
+  font-weight:400 !important;
+}
+.card.tablewrap .final-row td:first-child{
+  font-weight:600 !important;
+}
+/* Evitar cualquier sticky que pueda dar sensación de ventana con scroll. */
+.card.tablewrap thead,
+.card.tablewrap thead th{
+  position:static !important;
+  top:auto !important;
+}
+</style>
+
+<style id="v8-title-last-year-dividers">
+/* Título del bloque de tabla */
+.table-title{
+  margin:0 0 12px;
+  font-size:17px;
+  font-weight:800;
+  color:var(--navy);
+  text-align:center;
+}
+.chart-title{
+  margin:0 0 10px;
+  font-size:17px;
+  font-weight:800;
+  color:var(--navy);
+  text-align:center;
+}
+/* Rayas divisorias: antes de Media y antes de Rango (cabecera y cuerpo) */
+#table th:nth-last-of-type(2),
+#table td:nth-last-of-type(2),
+#table th:nth-last-of-type(1),
+#table td:nth-last-of-type(1){
+  border-left:2px solid #d7e0e8 !important;
+}
+/* Línea también a la derecha de Rango, para cerrar el bloque */
+#table th:nth-last-of-type(1),
+#table td:nth-last-of-type(1){
+  border-right:2px solid #d7e0e8 !important;
+}
+/* Último año siempre en negrita */
+#table tbody td:nth-last-child(3){
+  font-weight:800 !important;
+}
+</style>
+
+
+</head><body><div class="wrap"><div class="head"><h1>Patrones históricos de ingresos</h1><p>Digital · Print · Eventos · datos vivos desde SharePoint</p></div>
+<div class="card"><div class="controls"><div class="ctrl"><label>Canal</label><select id="channel"><option>Digital</option><option>Print</option><option>Eventos</option></select></div><div class="ctrl" id="monthCtrl"><label>Mes</label><select id="month"></select></div><div class="ctrl"><label>Eje temporal</label><select id="axis"><option value="business">Días hábiles calendario</option><option value="natural">Días naturales</option><option value="firstday">Primer día del mes</option></select></div><div class="ctrl"><label>Vista</label><select id="viewMode"><option value="cum">Acumulado</option><option value="daily">Día a día</option></select></div><div class="status" id="status">Cargando Excel…</div></div><div class="years" id="years"></div></div>
+<div class="kpis"><div class="kpi"><span>Años disponibles</span><b id="kYears">—</b></div><div class="kpi"><span>Cierre medio</span><b id="kAvg">—</b></div><div class="kpi"><span>Mediana cierre</span><b id="kMed">—</b></div><div class="kpi"><span>Mejor convergencia</span><b id="kConv">—</b></div></div>
+<div class="card"><h3 class="chart-title">Evolución del cierre por corte</h3><div class="chart"><svg id="chart" viewBox="0 0 1100 370"></svg></div><div class="legend" id="legend"></div></div>
+<div class="card"><div class="note" id="reading"></div></div><div class="card tablewrap"><h3 class="table-title">Detalle por corte</h3><table id="table"></table></div>
+<div class="card note">En Digital se excluyen automáticamente las cuatro familias programáticas. En “días hábiles de ingreso”, cada DH corresponde a un día hábil calendario de lunes a viernes. Los fines de semana no crean un DH nuevo y sus movimientos quedan incorporados al siguiente corte hábil. El último DH del mes incluye todo lo registrado hasta el último día natural del mes. El cierre definitivo incluye todas las líneas del mes de inserción aunque se hayan dado de alta posteriormente. En “Primer día del mes” aparecen los 12 meses a la vez. Cada fila es independiente: por ejemplo, “1 Marzo” suma únicamente los ingresos cuyo mes de inserción es Marzo y que ya estaban cargados antes del 1 de marzo; esa cantidad se divide entre el cierre definitivo completo de Marzo de ese año. Así se ve qué porcentaje del ingreso final de cada mes ya estaba en el sistema antes de comenzar el mes.</div></div>
+<script>
+const URLS={Digital:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y',Print:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU',Eventos:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU'};
+const MN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];const MNS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];const COLORS=['#00677f','#7657a6','#d97706','#2563eb','#16a34a','#dc2626','#9333ea','#0891b2','#4d7c0f','#be123c'];const PROG=['programatica display directo','programatica display indirecto','video programatico directo','video programatico indirecto'];let DB={},selected=new Set();
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+function find(h,names){let a=h.map(norm);return a.findIndex(x=>names.some(n=>x===n||x.includes(n)))}function month(v){let s=String(v||'');let n=parseInt(s,10);if(n>=1&&n<=12)return n;let x=norm(s);return MN.map(norm).findIndex(z=>x.includes(z))+1||null}function dateVal(v){if(v instanceof Date)return v;if(typeof v==='number'){let p=XLSX.SSF.parse_date_code(v);return p?new Date(p.y,p.m-1,p.d):null}let d=new Date(v);return isNaN(d)?null:d}function eur(v){return Math.round(v).toLocaleString('es-ES')+' €'}function convLabel(axis,x){return axis==='firstday'?'1 '+MN[x-1]:(axis==='business'?'DH '+x:'día '+x)}function pct(v){return (v*100).toFixed(1).replace('.',',')+'%'}
+function monthFinished(y,m){
+  let now=new Date(),end=new Date(y,m,0,23,59,59,999);
+  return end<now;
+}
+function cutFinished(p){
+  if(!p||!p.cutoff)return true;
+  return p.cutoff<=new Date();
+}
+
+async function load(c){document.querySelector('#status').textContent='Cargando '+c+'…';try{let r=await fetch(URLS[c]);if(!r.ok)throw Error('HTTP '+r.status);let b=await r.arrayBuffer(),w=XLSX.read(b,{type:'array'}),sn=w.SheetNames.find(n=>norm(n)!=='meta'&&norm(n)!=='objetivos')||w.SheetNames[0],rows=XLSX.utils.sheet_to_json(w.Sheets[sn],{header:1,defval:'',raw:true}),h=rows[0];let iy=find(h,['año insercion','ano insercion','año']),im=find(h,['mes insercion','mes']),id=find(h,['dias','dia','fecha alta','fecha de alta']),ii=find(h,['imp.neto a comisionar','imp neto a comisionar']),ifam=find(h,['familia']);let out=[];for(let i=1;i<rows.length;i++){let y=parseInt(rows[i][iy],10),m=month(rows[i][im]),d=dateVal(rows[i][id]),v=parseFloat(String(rows[i][ii]).replace(',','.'))||0,f=ifam>=0?norm(rows[i][ifam]):'';if(!y||!m||!d||!v)continue;if(c==='Digital'&&PROG.some(p=>f===p||f.includes(p)))continue;out.push({y,m,d,v})}DB[c]=out;document.querySelector('#status').textContent='✓ '+out.length.toLocaleString('es-ES')+' movimientos';render()}catch(e){document.querySelector('#status').innerHTML='<span class="error">No se pudo cargar SharePoint: '+e.message+'</span>'}}
+function curves(){
+  let c=document.querySelector('#channel').value,
+      m=+document.querySelector('#month').value,
+      axis=document.querySelector('#axis').value,
+      allRows=(DB[c]||[]),
+      rows=axis==='firstday'?allRows:allRows.filter(x=>x.m===m),
+      ys=[...new Set(rows.map(x=>x.y))].sort(),
+      res={};
+
+  ys.forEach(y=>{
+    let rr=rows.filter(x=>x.y===y),
+        tot=rr.reduce((a,x)=>a+x.v,0),
+        points=[];
+
+    if(axis==='firstday'){
+      // 12 cortes independientes. Para cada mes:
+      // numerador = ingreso de ESE mes ya cargado antes del día 1;
+      // denominador = cierre definitivo de ESE mismo mes.
+      for(let i=1;i<=12;i++){
+        let monthRows=rr.filter(x=>x.m===i),
+            monthTotal=monthRows.reduce((a,x)=>a+x.v,0),
+            cut=new Date(y,i-1,1,0,0,0,0),
+            preMonth=monthRows.filter(x=>x.d<cut).reduce((a,x)=>a+x.v,0);
+        points.push({
+          x:i,label:'1 '+MN[i-1],displayLabel:'1 '+MN[i-1],
+          date:cut,cutoff:cut,
+          share:monthTotal?preMonth/monthTotal:null,
+          amount:preMonth,monthTotal:monthTotal,
+          incomplete:!monthFinished(y,i)
+        });
+      }
+    }else if(axis==='business'){
+      // DH = día hábil calendario (lunes-viernes), no "día con movimiento".
+      // Los movimientos de fin de semana quedan absorbidos en el siguiente corte hábil.
+      let lastDay=new Date(y,m,0).getDate(),
+          businessDates=[];
+      for(let d=1;d<=lastDay;d++){
+        let dt=new Date(y,m-1,d,23,59,59);
+        if(dt.getDay()>0&&dt.getDay()<6) businessDates.push(dt);
+      }
+      businessDates.forEach((dt,i)=>{
+        // El último DH representa el cierre natural completo del mes:
+        // su corte se extiende hasta el último día natural a las 23:59:59.
+        let cut=(i===businessDates.length-1)
+          ? new Date(y,m-1,lastDay,23,59,59)
+          : dt;
+        points.push({
+          x:i+1,
+          label:'DH'+(i+1),
+          displayLabel:'DH '+(i+1)+' · '+String(dt.getDate()).padStart(2,'0')+'/'+String(m).padStart(2,'0'),
+          date:dt,
+          cutoff:cut,
+          share:rr.filter(x=>x.d<=cut).reduce((a,x)=>a+x.v,0)/tot,
+          incomplete:!monthFinished(y,m)
+        });
+      });
+    }else{
+      let last=new Date(y,m,0).getDate();
+      for(let d=1;d<=last;d++){
+        let cut=new Date(y,m-1,d,23,59,59);
+        points.push({
+          x:d,label:String(d),displayLabel:'Día '+d,date:cut,cutoff:cut,
+          share:rr.filter(x=>x.d<=cut).reduce((a,x)=>a+x.v,0)/tot,incomplete:!monthFinished(y,m)
+        });
+      }
+    }
+
+    if(axis!=='firstday') points.push({x:points.length+1,label:'Cierre final',displayLabel:'Cierre final',date:null,cutoff:null,share:1,isFinal:true});
+    res[y]={total:tot,points};
+  });
+  return {ys,res};
+}
+function toDailyPoints(points){
+  let out=[],prev=0;
+  points.forEach(p=>{
+    let delta=Number.isFinite(p.share)?p.share-prev:null;
+    out.push({...p,share:delta});
+    if(Number.isFinite(p.share))prev=p.share;
+  });
+  return out;
+}
+function render(){let {ys,res}=curves();if(!ys.length)return; if(!selected.size)ys.forEach(y=>selected.add(y));selected=new Set([...selected].filter(y=>ys.includes(y)));document.querySelector('#years').innerHTML=ys.map(y=>`<button class="year ${selected.has(y)?'':'off'}" onclick="toggle(${y})">${y}</button>`).join('');let active=ys.filter(y=>selected.has(y));let totals=active.map(y=>res[y].total);document.querySelector('#kYears').textContent=active.length;document.querySelector('#kAvg').textContent=totals.length?eur(totals.reduce((a,b)=>a+b,0)/totals.length):'—';document.querySelector('#kMed').textContent=totals.length?eur([...totals].sort((a,b)=>a-b)[Math.floor(totals.length/2)]):'—';let maxX=Math.max(...active.map(y=>res[y].points.length)),best=null;for(let x=3;x<=maxX;x++){let vs=active.map(y=>res[y].points[x-1]?.share).filter(v=>Number.isFinite(v));if(vs.length>=3){let avg=vs.reduce((a,b)=>a+b,0)/vs.length,sd=Math.sqrt(vs.reduce((a,v)=>a+(v-avg)**2,0)/vs.length);if(!best||sd<best.sd)best={x,sd,avg}}}document.querySelector('#kConv').textContent=best?convLabel(document.querySelector('#axis').value,best.x)+' · σ '+pct(best.sd):'—';let axisSel=document.querySelector('#axis').value;let mode=axisSel==='firstday'?'cum':(document.querySelector('#viewMode')?.value||'cum');let resView=res;if(mode==='daily'){resView={};ys.forEach(y=>{resView[y]={total:res[y].total,points:toDailyPoints(res[y].points)}})}draw(active,resView,maxX);table(active,resView,maxX);document.querySelector('#reading').innerHTML=best?`La menor dispersión entre los años seleccionados aparece en <b>${convLabel(document.querySelector('#axis').value,best.x).toLowerCase()}</b>: en promedio ya se había registrado el <b>${pct(best.avg)}</b> del cierre definitivo, con una desviación entre años de ${pct(best.sd)}. Esta señal es descriptiva; conviene validarla con backtesting antes de usarla como regla de estimación.`:'No hay suficientes años comparables.'}
+function draw(active,res,maxX){let svg=document.querySelector('#chart'),W=1100,H=370,L=55,R=25,T=25,B=40,cw=W-L-R,ch=H-T-B,html='';for(let i=0;i<=5;i++){let y=T+ch-i*ch/5;html+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="#e5e7eb"/><text x="${L-8}" y="${y+4}" text-anchor="end" font-size="10" fill="#6b7280">${i*20}%</text>`}active.forEach((yr,k)=>{let pts=res[yr].points.map(p=>`${L+(p.x-1)/(Math.max(2,maxX)-1)*cw},${T+(1-p.share)*ch}`).join(' ');html+=`<polyline fill="none" stroke="${COLORS[k%COLORS.length]}" stroke-width="2.3" points="${pts}"/>`});let axisNow=document.querySelector('#axis').value,step=axisNow==='firstday'?1:Math.max(1,Math.ceil(maxX/12));for(let x=1;x<=maxX;x+=step){let xx=L+(x-1)/(Math.max(2,maxX)-1)*cw,lbl=axisNow==='firstday'?MNS[x-1]:(x===maxX?'Final':(axisNow==='business'?'DH'+x:x));html+=`<text x="${xx}" y="${H-15}" text-anchor="middle" font-size="10" fill="#6b7280">${lbl}</text>`}svg.innerHTML=html;document.querySelector('#legend').innerHTML=active.map((y,k)=>`<span><i class="dot" style="background:${COLORS[k%COLORS.length]}"></i>${y}</span>`).join('')}
+function table(active,res,maxX){
+  let h='<thead><tr><th>Corte</th>'+active.map(y=>'<th>'+y+'</th>').join('')+
+    '<th>Media <button class="mini-info" type="button" data-tip="Promedio del porcentaje de cierre alcanzado por todos los años seleccionados en ese corte.">i</button></th>'+
+    '<th>Desvío último año <button class="mini-info" type="button" data-tip="Diferencia entre el porcentaje del último año seleccionado y la media de todos los años en ese corte. Positivo: el último año va por delante de la media. Negativo: va por detrás.">i</button></th></tr></thead><tbody>';
+
+  let axisVal=document.querySelector('#axis').value;
+  // Cada año puede tener un nº distinto de cortes (DH varía según el año: 22, 23, 24...).
+  // El cierre final se trata siempre aparte, como una única fila al final de la tabla,
+  // igual en días hábiles que en días naturales.
+  let maxCuts=axisVal==='firstday'?maxX:maxX-1;
+
+  for(let x=1;x<=maxCuts;x++){
+    let ps=active.map(y=>{let pts=res[y].points;return x<=pts.length-1?pts[x-1]:null}),
+        vs=ps.map(p=>p?.share),
+        nums=vs.filter((v,k)=>Number.isFinite(v)&&!(axisVal==='firstday'&&ps[k]?.incomplete)),
+        av=nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:null,
+        lastVal=vs.length?vs[vs.length-1]:null,
+        diff=(av!==null&&Number.isFinite(lastVal)&&!(axisVal==='firstday'&&ps[ps.length-1]?.incomplete))?lastVal-av:null,
+        label;
+
+    if(axisVal==='business'){
+      // Las fechas cambian según el año; mostramos el rango natural equivalente.
+      // Si un año no llega a este DH (mes con menos días hábiles), su columna queda en blanco.
+      let latestPoint=null;
+      for(let i=ps.length-1;i>=0;i--){if(ps[i]?.date){latestPoint=ps[i];break;}}
+      let day=latestPoint?latestPoint.date.getDate():null;
+      label='DH '+x+(day!==null?' · '+day+'/'+String(+document.querySelector('#month').value).padStart(2,'0'):'');
+    }else if(axisVal==='firstday'){
+      label='1 '+MN[x-1];
+    }else{
+      label='Día '+x;
+    }
+
+    h+='<tr><td>'+label+'</td>'+
+      ps.map((p,k)=>{let v=vs[k],gray=!!p?.incomplete;return '<td'+(gray?' style="color:#aeb6c0" title="Mes no finalizado: dato provisional"':'')+'>'+(Number.isFinite(v)?pct(v):'—')+'</td>'}).join('')+
+      '<td>'+(av!==null?pct(av):'—')+'</td><td'+(diff!==null&&diff<0?' style="color:#b42318"':'')+'>'+(diff!==null?(diff>=0?'+':'')+pct(diff):'—')+'</td></tr>';
+  }
+
+  if(axisVal!=='firstday'){
+    // Fila de cierre final solo para días naturales / DH.
+    let finalPs=active.map(y=>{let pts=res[y].points;return pts[pts.length-1]}),
+        finalVs=finalPs.map(p=>p?.share),
+        finalNums=finalVs.filter(Number.isFinite),
+        finalAv=finalNums.length?finalNums.reduce((a,b)=>a+b,0)/finalNums.length:null,
+        finalLast=finalVs.length?finalVs[finalVs.length-1]:null,
+        finalDiff=(finalAv!==null&&Number.isFinite(finalLast))?finalLast-finalAv:null;
+    h+='<tr class="final-row"><td>Cierre final</td>'+
+      finalVs.map(v=>'<td>'+(Number.isFinite(v)?pct(v):'—')+'</td>').join('')+
+      '<td>'+(finalAv!==null?pct(finalAv):'—')+'</td><td'+(finalDiff!==null&&finalDiff<0?' style="color:#b42318"':'')+'>'+(finalDiff!==null?(finalDiff>=0?'+':'')+pct(finalDiff):'—')+'</td></tr>';
+  }
+
+  document.querySelector('#table').innerHTML=h+'</tbody>';
+}
+window.toggle=y=>{selected.has(y)?selected.delete(y):selected.add(y);render()};document.querySelector('#month').innerHTML=MN.map((n,i)=>`<option value="${i+1}">${n}</option>`).join('');document.querySelector('#channel').onchange=e=>{selected.clear();DB[e.target.value]?render():load(e.target.value)};document.querySelector('#month').onchange=()=>{selected.clear();render()};function toggleMonthCtrl(){let isFirst=document.querySelector('#axis').value==='firstday',ctrl=document.querySelector('#monthCtrl'),vm=document.querySelector('#viewMode'),vmCtrl=vm.closest('.ctrl');document.querySelector('#month').disabled=isFirst;ctrl.style.opacity=isFirst?.4:1;ctrl.title=isFirst?'No aplica: esta vista muestra los 12 primeros de mes a la vez':'';vm.disabled=isFirst;if(vmCtrl){vmCtrl.style.opacity=isFirst?.4:1;vmCtrl.title=isFirst?'No aplica: esta vista ya muestra el porcentaje previo al inicio de cada mes':''}}
+document.querySelector('#axis').onchange=()=>{toggleMonthCtrl();render()};document.querySelector('#viewMode').onchange=render;toggleMonthCtrl();load('Digital');
+</script></body></html>

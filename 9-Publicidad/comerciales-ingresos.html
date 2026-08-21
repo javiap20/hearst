@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Ingresos por Comercial</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --navy:#0d2340;
+    --navy-light:#16345f;
+    --accent:#00a3e0;
+    --green:#1f9d55;
+    --red:#d64545;
+    --bg:#f4f6f9;
+    --border:#e2e6ec;
+    --text:#1f2937;
+    --muted:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Arial,sans-serif;
+    font-size:13px;
+    background:var(--bg);
+    color:var(--text);
+  }
+  header{
+    background:linear-gradient(90deg,var(--navy),var(--navy-light));
+    color:#fff;
+    padding:20px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  header h1{margin:0;font-size:20px;font-weight:600;letter-spacing:.3px;}
+  header .subtitle{font-size:13px;color:#c9d6e8;margin-top:4px;}
+  .fechas-wrap{display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;}
+  .fecha-canal{font-size:11px;color:#c9d6e8;}
+  .fecha-canal span{color:#fff;font-weight:600;}
+  .upload-wrap{display:flex;align-items:center;gap:10px;}
+  .upload-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+  .up-multi-sub{font-size:12px;color:#c9d6e8;}
+  .up-cards{display:flex;gap:12px;flex-wrap:wrap;}
+  .up-card{
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);
+    border-radius:8px;padding:8px 14px;cursor:pointer;transition:.15s;
+    display:flex;align-items:center;gap:8px;min-width:160px;
+  }
+  .up-card:hover{background:rgba(255,255,255,0.15);}
+  .up-card.loaded{background:rgba(31,157,85,0.25);border-color:#1f9d55;}
+  .up-icon{font-size:16px;}
+  .up-canal-name{font-size:13px;font-weight:700;color:#fff;}
+  .up-mini-status{font-size:11px;color:#c9d6e8;margin-left:auto;}
+  .up-card.loaded .up-mini-status{color:#2ecc71;font-weight:600;}
+  main{padding:24px 32px 60px;max-width:1300px;margin:0 auto;}
+  .toolbar{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:14px;flex-wrap:wrap;gap:10px;
+  }
+  .toolbar input[type=text]{
+    padding:8px 12px;border:1px solid var(--border);
+    border-radius:6px;font-size:13px;width:240px;
+  }
+  .sort-select{
+    padding:8px 10px;border:1px solid var(--border);
+    border-radius:6px;font-size:13px;background:#fff;
+  }
+  .month-filter{
+    display:none;align-items:center;gap:10px;margin-bottom:14px;
+    flex-wrap:wrap;background:#fff;border:1px solid var(--border);
+    border-radius:8px;padding:9px 12px;
+  }
+  .mf-label{font-size:12.5px;font-weight:600;color:var(--muted);margin-right:2px;white-space:nowrap;}
+  .mf-chips{display:flex;gap:4px;flex-wrap:wrap;}
+  .mf-chip{
+    padding:5px 10px;border-radius:14px;border:1px solid var(--border);
+    background:#f4f6f9;font-size:12px;cursor:pointer;color:var(--text);
+    user-select:none;transition:.15s;
+  }
+  .mf-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .mf-chip:hover{border-color:var(--accent);}
+  .mf-actions{display:flex;gap:6px;margin-left:auto;}
+  .mf-btn{
+    padding:5px 12px;border-radius:6px;border:1px solid var(--border);
+    background:#fff;font-size:12px;cursor:pointer;color:var(--navy);font-weight:600;white-space:nowrap;
+  }
+  .mf-btn:hover{background:#eef2f7;}
+  .empty-state{
+    background:#fff;border:1px dashed var(--border);border-radius:10px;
+    padding:60px 20px;text-align:center;color:var(--muted);
+  }
+  .empty-state b{color:var(--text);}
+
+  /* TEAM BLOCKS */
+  .team-block{margin-bottom:32px;}
+  .team-header{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:10px;cursor:pointer;user-select:none;
+  }
+  .team-title{font-size:16px;font-weight:700;color:var(--navy);letter-spacing:.2px;}
+  .team-badge{
+    background:var(--accent);color:#fff;font-size:11px;
+    font-weight:700;padding:2px 9px;border-radius:12px;
+  }
+  .team-toggle{margin-left:auto;font-size:12px;color:var(--muted);font-weight:600;}
+  .team-divider{height:3px;background:linear-gradient(90deg,var(--accent),transparent);border-radius:2px;margin-bottom:10px;}
+
+  table{
+    width:100%;border-collapse:collapse;background:#fff;
+    border-radius:10px;overflow:hidden;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+    font-size:12.5px;table-layout:fixed;
+  }
+  thead th{
+    background:var(--navy);color:#fff;text-align:center;
+    padding:12px 8px;font-weight:600;white-space:nowrap;
+    width:110px;min-width:110px;max-width:110px;
+  }
+  thead th:first-child{
+    text-align:left;
+    width:220px;min-width:220px;max-width:220px;
+  }
+  thead th.pct{background:var(--navy);color:#fff;font-size:11px;}
+   thead th.comparable{background:var(--navy);color:#fff;font-size:11px;}
+  tbody td{
+    padding:10px 8px;text-align:center;
+    border-bottom:1px solid var(--border);white-space:nowrap;
+    width:110px;min-width:110px;max-width:110px;
+  }
+  tbody td:first-child{
+    text-align:left;font-weight:600;color:var(--navy);
+    width:220px;min-width:220px;max-width:220px;
+  }
+  tbody tr:hover{background:#f8fafc;}
+  td.pct{font-size:11.5px;font-weight:600;background:#eef6ff;color:#1a3a5c;}
+  td.up{color:var(--green);}
+  td.down{color:var(--red);}
+  td.flat{color:var(--muted);}
+  .team-total-row td.up{color:var(--green) !important;}
+  .team-total-row td.down{color:var(--red) !important;}
+  .team-total-row td.flat{color:var(--muted) !important;}
+  td.col-divider{border-left:1px solid var(--border);}
+  td.comparable{background:#fff;}
+  th.col-divider{border-left:1px solid rgba(255,255,255,.15);}
+
+  .total-row td{background:#eef2f7;font-weight:700;color:var(--navy);border-top:2px solid var(--border);}
+  .team-total-row td{background:#e8f4fb;font-weight:700;color:#0a5a7a;border-top:2px solid #b8d9ec;font-size:13px;}
+
+  /* Footnote */
+  .team-footnote{
+    font-size:11px;color:var(--muted);margin-top:6px;padding:0 4px;
+    font-style:italic;
+  }
+
+  /* Canal/Sector breakdown */
+  .toggle-canal{cursor:pointer;font-size:11px;color:var(--accent);margin-right:6px;user-select:none;display:inline-block;width:14px;text-align:center;}
+  .breakdown-row{display:none;}
+  .breakdown-row td{background:#fff8f0;font-size:11.5px;color:var(--muted);border-top:none !important;}
+  .breakdown-row td:first-child{padding-left:28px;font-weight:600;color:var(--text);}
+  .breakdown-row.visible{display:table-row !important;}
+  .canal-digital td:first-child{color:#00a3e0;}
+  .canal-print td:first-child{color:#e67e22;}
+  .canal-eventos td:first-child{color:#8e44ad;}
+  .sector-row td:first-child{color:#27ae60;}
+  .breakdown-tabs{display:none;gap:6px;margin-bottom:4px;}
+  .breakdown-tabs.visible{display:flex;}
+  .breakdown-tab{padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:11px;cursor:pointer;color:var(--navy);font-weight:600;transition:.15s;}
+  .breakdown-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .breakdown-tab:hover{border-color:var(--accent);}
+
+  /* MAIN TABS (Ingresos / Nuevos Anunciantes) */
+  .main-tabs{display:flex;justify-content:center;gap:8px;margin-bottom:14px;}
+  .main-tab{
+    padding:9px 18px;border-radius:8px;border:1px solid var(--border);
+    background:#fff;font-size:13.5px;cursor:pointer;color:var(--navy);
+    font-weight:600;transition:.15s;
+  }
+  .main-tab:hover{border-color:var(--accent);}
+  .main-tab.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+  .new-adv-income{font-size:10px;color:var(--muted);font-weight:400;margin-left:3px;}
+  td.new-adv-count{font-weight:700;color:var(--navy);}
+  td.new-adv-empty{color:var(--muted);font-weight:400;}
+  .anun-warning{
+    background:#fff3cd;border:1px solid #ffe08a;color:#8a6100;
+    border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:14px;
+  }
+  .nuevos-footnote{
+    margin-top:16px;padding:10px 14px;font-size:11.5px;color:var(--muted);
+    border-top:1px solid var(--border);line-height:1.5;
+  }
+  .shared-adv-mark{color:#c9a227;font-weight:800;cursor:help;}
+  .detail-table{width:100%;border-collapse:collapse;background:#fff;font-size:11.5px;border-radius:6px;overflow:hidden;table-layout:auto;}
+  .detail-table th{background:#eef2f7;color:var(--navy);font-weight:700;padding:6px 8px;text-align:left;white-space:normal;width:auto;min-width:0;max-width:none;}
+  .detail-table td{padding:6px 8px;border-bottom:1px solid var(--border);white-space:normal;color:var(--text);text-align:left;width:auto;min-width:0;max-width:none;}
+  .detail-table tr:last-child td{border-bottom:none;}
+  .detail-table th:first-child{width:60px;min-width:0;max-width:none;text-align:left;background:#eef2f7;color:var(--navy);}
+  .detail-table td:first-child{width:auto;min-width:0;max-width:none;text-align:left;font-weight:400;color:var(--text);}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Ingresos por Comercial</h1>
+    <div class="subtitle" id="subtitle">Carga el Excel para ver el desglose por año</div>
+    <div class="fechas-wrap" id="fechasWrap" style="display:none;margin-top:6px;display:flex;gap:16px;flex-wrap:wrap;"></div>
+  </div>
+  <div class="upload-wrap" id="uploadWrap">
+    <div class="up-multi-sub" id="up-multi-sub">Cargando automáticamente los 3 Excel desde SharePoint…</div>
+    <div class="up-cards">
+      <div class="up-card" id="up-card-Digital" onclick="document.getElementById('fileDigital').click()">
+        <span class="up-icon">💻</span>
+        <span class="up-canal-name">Digital</span>
+        <div class="up-mini-status" id="up-status-Digital">Buscando en SharePoint…</div>
+        <input type="file" id="fileDigital" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Digital')">
+      </div>
+      <div class="up-card" id="up-card-Print" onclick="document.getElementById('filePrint').click()">
+        <span class="up-icon">📰</span>
+        <span class="up-canal-name">Print</span>
+        <div class="up-mini-status" id="up-status-Print">Buscando en SharePoint…</div>
+        <input type="file" id="filePrint" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Print')">
+      </div>
+      <div class="up-card" id="up-card-Eventos" onclick="document.getElementById('fileEventos').click()">
+        <span class="up-icon">🎤</span>
+        <span class="up-canal-name">Eventos</span>
+        <div class="up-mini-status" id="up-status-Eventos">Buscando en SharePoint…</div>
+        <input type="file" id="fileEventos" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Eventos')">
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="monthFilter" class="month-filter">
+    <span class="mf-label">Meses:</span>
+    <div class="mf-chips" id="mfChips"></div>
+    <div class="mf-actions">
+      <button class="mf-btn" id="mfClosed">Meses cerrados</button>
+      <button class="mf-btn" id="mfAll">Todos</button>
+    </div>
+  </div>
+
+  <div class="main-tabs" id="mainTabs" style="display:none">
+    <button class="main-tab active" id="mtab-ingresos" onclick="switchMainTab('ingresos')">💶 Ingresos</button>
+    <button class="main-tab" id="mtab-nuevos" onclick="switchMainTab('nuevos')">🆕 Nuevos Anunciantes</button>
+  </div>
+
+  <div class="toolbar" id="toolbar" style="display:none">
+    <input type="text" id="searchBox" placeholder="&#128269; Buscar comercial..." oninput="render()">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <select class="sort-select" id="sortSelect" onchange="render()">
+        <option value="growth-desc">Ordenar: Mayor crecimiento</option>
+        <option value="growth-asc">Ordenar: Menor crecimiento</option>
+        <option value="total-desc">Ordenar: Total desc.</option>
+        <option value="total-asc">Ordenar: Total asc.</option>
+        <option value="az">Ordenar: A-Z</option>
+      </select>
+      <button class="mf-btn" id="exportBtn" onclick="exportComercialesXLSX()">📥 Exportar Excel</button>
+    </div>
+  </div>
+
+  <div id="output">
+    <div class="empty-state">
+      <p>&#128202; <b>Sin datos</b></p>
+      <p>Sube el Excel de ventas (mismo formato de siempre) usando el botón <b>"Cargar Excel"</b>.<br>
+      Se detectan automáticamente las columnas <b>Comercial</b>, <b>Áreas</b>, <b>Año inserción</b>, <b>Mes inserción</b>, <b>Clase de orden</b> e <b>Imp.Neto a Comisionar</b>.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+let DATA = [];
+let YEARS = [];
+let hasMesColumn = false;
+let selectedMonths = new Set();
+let activeMainTab = 'ingresos'; // 'ingresos' | 'nuevos'
+const ANUNCIANTE_COL_MISSING = new Set(); // canales donde no se detectó la columna Anunciantes
+
+const TEAMS_ORDER = ['Madrid', 'Barcelona', 'Internacional', 'Programática', 'Sin Asignar'];
+
+const TEAM_COLORS = {
+  'Madrid':        '#c0392b',
+  'Barcelona':     '#2980b9',
+  'Internacional': '#27ae60',
+  'Programática':  '#8e44ad',
+  'Sin Asignar':   '#7f8c8d'
+};
+
+// Paleta de colores para distinguir cada año en el desplegable de detalle
+// de la pestaña "Nuevos Anunciantes". Se asigna dinámicamente según el año
+// más reciente hacia atrás (el último año siempre coge el primer color, etc.)
+// para que el color de cada año sea estable año tras año.
+const NUEVOS_ANUN_YEAR_PALETTE = [
+  {bg:'#eaf5ff', border:'#2980b9', text:'#1c5c86'}, // azul
+  {bg:'#eafbf0', border:'#1f9d55', text:'#166b3a'}, // verde
+  {bg:'#fff4e5', border:'#e0821f', text:'#a35c12'}, // naranja
+  {bg:'#fdeeee', border:'#d64545', text:'#a12f2f'}, // rojo
+  {bg:'#f3ecfb', border:'#8e44ad', text:'#652f7d'}  // morado
+];
+function nuevosYearStyle(anio, visibleYearsDesc){
+  const idx = visibleYearsDesc.indexOf(anio);
+  return NUEVOS_ANUN_YEAR_PALETTE[idx % NUEVOS_ANUN_YEAR_PALETTE.length];
+}
+
+// Comerciales forzados siempre en Sin Asignar
+const FORCED_SIN_ASIGNAR = ['MARCOS MARTIN MOYANO SERRANO'];
+
+// Comerciales forzados a Madrid en clase K
+const FORCED_MADRID_LOCAL = ['MARIA MORUNO'];
+
+// Comerciales forzados siempre a Barcelona (al final)
+const FORCED_BARCELONA = ['LUZ ROCA'];
+
+// Comerciales forzados siempre a Madrid (al final)
+const FORCED_MADRID_PINNED = ['ANA BELÉN CRUZ DE DIEGO'];
+
+// Comerciales que siempre van al FINAL de su grupo (en el orden que aparecen aquí)
+const PINNED_BOTTOM = ['AMPARO BASTIT', 'NORA RECIO LOPEZ TRIVIÑO', 'LUZ ROCA', 'ANA BELÉN CRUZ DE DIEGO'];
+
+const MES_ABBR    = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MES_NOMBRES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+const HEADER_ALIASES = {
+  comercial:  ['comercial'],
+  area:       ['áreas','areas','área','area','equipo','team'],
+  claseOrden: ['clase de orden','clase orden','claseorden','clase_orden','order class','order type'],
+  anio:       ['año inserción','ano insercion','año insercion','ano inserción','año'],
+  mes:        ['mes inserción','mes insercion','mes'],
+  importe:    ['imp.neto a comisionar','imp neto a comisionar','importe neto a comisionar','imp.neto comisionar'],
+  sector:     ['sector'],
+  anunciante: ['anunciantes','anunciante','cliente'],
+  marca:      ['marca'],
+  publicacion:['publicación','publicacion','revista','cabecera'],
+  producto:   ['producto','producto/servicio','tipo de producto','tipo producto']
+};
+
+function normalize(str){
+  return String(str||'')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .trim();
+}
+
+function findColIndex(headerRow, aliases){
+  const normalizedHeaders = headerRow.map(normalize);
+  for(const alias of aliases){
+    const target = normalize(alias);
+    const idx = normalizedHeaders.findIndex(h => h === target || h.includes(target));
+    if(idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function parseMonth(raw){
+  if(raw === '' || raw === null || raw === undefined) return null;
+  if(typeof raw === 'number'){
+    if(raw >= 1 && raw <= 12) return Math.round(raw);
+    return null;
+  }
+  const s = normalize(raw);
+  const byName = MES_NOMBRES.findIndex(m => s.includes(m));
+  if(byName !== -1) return byName + 1;
+  const num = parseInt(s, 10);
+  if(!isNaN(num) && num >= 1 && num <= 12) return num;
+  return null;
+}
+
+function formatEUR(n){
+  const abs = Math.round(Math.abs(n));
+  const str = abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (n < 0 ? '-' : '') + str + '\u00A0\u20AC';
+}
+
+function formatPct(p){
+  if(p === null) return '—';
+  const sign = p > 0 ? '+' : '';
+  const abs = Math.abs(p);
+  const neg = p < 0 ? '-' : '';
+  return neg + sign + abs.toLocaleString('es-ES', {minimumFractionDigits:1, maximumFractionDigits:1, useGrouping:true}) + '%';
+}
+
+function getLocalTeam(rawArea, comercialName){
+  if(FORCED_SIN_ASIGNAR.some(f => normalize(f) === normalize(comercialName || ''))) return 'Sin Asignar';
+  const n = normalize(rawArea || '');
+  if(n.includes('brand experience'))            return 'Madrid';
+  if(n.includes('client experience lifestyle')) return 'Madrid';
+  if(n.includes('client experience lujo'))      return 'Madrid';
+  if(n.includes('barcelona'))                   return 'Barcelona';
+  if(n.includes('internacional') || n.includes('international')) return 'Internacional';
+  if(n.includes('programat'))                   return 'Programática';
+  return 'Sin Asignar';
+}
+
+function computeDefaultMonths(){
+  const s = new Set();
+  if(!hasMesColumn || YEARS.length === 0) return s;
+  const lastYear = YEARS[YEARS.length - 1];
+  const now = new Date();
+  const realYear = now.getFullYear();
+  const realMonth = now.getMonth() + 1;
+  if(lastYear === realYear){
+    for(let m = 1; m < realMonth; m++) s.add(m);
+  } else {
+    for(let m = 1; m <= 12; m++) s.add(m);
+  }
+  return s;
+}
+
+function monthsRangeLabel(monthsSet){
+  if(!monthsSet || monthsSet.size === 0) return '';
+  const sorted = [...monthsSet].sort((a,b)=>a-b);
+  if(sorted.length === 1) return MES_ABBR[sorted[0]-1];
+  return MES_ABBR[sorted[0]-1] + '-' + MES_ABBR[sorted[sorted.length-1]-1];
+}
+
+function renderMonthFilterUI(){
+  const chipsContainer = document.getElementById('mfChips');
+  chipsContainer.innerHTML = '';
+  MES_ABBR.forEach((label, i) => {
+    const m = i + 1;
+    const chip = document.createElement('div');
+    chip.className = 'mf-chip' + (selectedMonths.has(m) ? ' active' : '');
+    chip.textContent = label;
+    chip.addEventListener('click', () => {
+      if(selectedMonths.has(m)) selectedMonths.delete(m);
+      else selectedMonths.add(m);
+      renderMonthFilterUI();
+      render();
+    });
+    chipsContainer.appendChild(chip);
+  });
+}
+
+document.getElementById('mfAll').addEventListener('click', () => {
+  selectedMonths = new Set([1,2,3,4,5,6,7,8,9,10,11,12]);
+  renderMonthFilterUI();
+  render();
+});
+document.getElementById('mfClosed').addEventListener('click', () => {
+  selectedMonths = computeDefaultMonths();
+  renderMonthFilterUI();
+  render();
+});
+
+// URLs SharePoint
+const EXCEL_URLS = {
+  Digital:  'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y',
+  Print:    'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU',
+  Eventos:  'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU'
+};
+
+// Canal data store
+const CANAL_DATA = { Digital: null, Print: null, Eventos: null };
+const CANAL_FECHAS = { Digital: null, Print: null, Eventos: null };
+
+// Carga automática desde SharePoint
+async function autoLoadFromServer(){
+  const canales = ['Digital','Print','Eventos'];
+  await Promise.all(canales.map(async canal => {
+    try {
+      const res = await fetch(EXCEL_URLS[canal], {cache:'no-cache'});
+      if(!res.ok) throw new Error('No encontrado');
+      const buffer = await res.arrayBuffer();
+      processWorkbook(new Uint8Array(buffer), canal, 'PRODUCCION '+canal.toUpperCase()+'.xlsx');
+    } catch(e) {
+      markCanalPending(canal);
+    }
+  }));
+}
+
+function markCanalLoaded(canal, filename, fecha){
+  const card   = document.getElementById('up-card-' + canal);
+  const status = document.getElementById('up-status-' + canal);
+  if(card)   card.classList.add('loaded');
+  if(status) status.textContent = '✓ ' + filename + (fecha ? ' · ' + fecha : '');
+  updateFechasHeader();
+}
+
+function updateFechasHeader(){
+  const wrap = document.getElementById('fechasWrap');
+  if(!wrap) return;
+  const icons = {Digital:'💻', Print:'📰', Eventos:'🎤'};
+  const parts = ['Digital','Print','Eventos']
+    .filter(c => CANAL_FECHAS[c])
+    .map(c => `<div class="fecha-canal">${icons[c]} ${c}: <span>${CANAL_FECHAS[c]}</span></div>`);
+  if(parts.length > 0){
+    wrap.innerHTML = parts.join('');
+    wrap.style.display = 'flex';
+  }
+}
+function markCanalPending(canal){
+  const card   = document.getElementById('up-card-' + canal);
+  const status = document.getElementById('up-status-' + canal);
+  if(card)   card.classList.remove('loaded');
+  if(status) status.textContent = 'No disponible · pulsa para subirlo manualmente';
+}
+
+function processWorkbook(data, canal, filename){
+  const wb = XLSX.read(data, {type:'array'});
+
+  // Leer fecha de hoja META (B1)
+  const metaSheet = wb.Sheets['META'] || wb.Sheets['Meta'] || wb.Sheets['meta'];
+  let fecha = null;
+  if(metaSheet && metaSheet['B1']){
+    const raw = metaSheet['B1'].v;
+    if(typeof raw === 'number'){
+      // Número de serie de Excel → fecha
+      const date = new Date(Math.round((raw - 25569) * 86400 * 1000));
+      const d = date.getUTCDate().toString().padStart(2,'0');
+      const m = (date.getUTCMonth()+1).toString().padStart(2,'0');
+      const y = date.getUTCFullYear();
+      fecha = `${d}/${m}/${y}`;
+    } else {
+      fecha = String(raw);
+    }
+  }
+  CANAL_FECHAS[canal] = fecha;
+
+  // Leer primera hoja que no sea META
+  const dataSheetName = wb.SheetNames.find(n => n.toUpperCase() !== 'META') || wb.SheetNames[0];
+  const sheet = wb.Sheets[dataSheetName];
+  const rows  = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+
+  if(rows.length < 2){ markCanalPending(canal); return; }
+
+  const headerRow    = rows[0];
+  const colComercial = findColIndex(headerRow, HEADER_ALIASES.comercial);
+  const colArea      = findColIndex(headerRow, HEADER_ALIASES.area);
+  const colClase     = findColIndex(headerRow, HEADER_ALIASES.claseOrden);
+  const colAnio      = findColIndex(headerRow, HEADER_ALIASES.anio);
+  const colMes       = findColIndex(headerRow, HEADER_ALIASES.mes);
+  const colImporte   = findColIndex(headerRow, HEADER_ALIASES.importe);
+  const colSector    = findColIndex(headerRow, HEADER_ALIASES.sector);
+  const colAnunciante= findColIndex(headerRow, HEADER_ALIASES.anunciante);
+  const colMarca      = findColIndex(headerRow, HEADER_ALIASES.marca);
+  const colPublicacion= findColIndex(headerRow, HEADER_ALIASES.publicacion);
+  const colProducto   = findColIndex(headerRow, HEADER_ALIASES.producto);
+
+  if(colComercial === -1 || colAnio === -1 || colImporte === -1){
+    markCanalPending(canal); return;
+  }
+  if(colAnunciante === -1) ANUNCIANTE_COL_MISSING.add(canal); else ANUNCIANTE_COL_MISSING.delete(canal);
+
+  const canalRows = [];
+  for(let i = 1; i < rows.length; i++){
+    const row       = rows[i];
+    const comercial = String(row[colComercial]||'').trim();
+    const rawArea   = colArea  !== -1 ? String(row[colArea]||'').trim()  : '';
+    const rawClase  = colClase !== -1 ? String(row[colClase]||'').trim() : '';
+    const anio      = parseInt(row[colAnio], 10);
+    const mes       = colMes !== -1 ? parseMonth(row[colMes]) : null;
+    const importe   = parseFloat(String(row[colImporte]).replace(',','.')) || 0;
+    const rawSector = colSector !== -1 ? String(row[colSector]||'').trim() : '';
+    const sector    = rawSector.replace(/^[\d\s*]+\*?\s*/, '').trim() || 'Sin sector';
+    const rawAnunciante = colAnunciante !== -1 ? String(row[colAnunciante]||'').trim() : '';
+    const anuncianteNorm = normalize(rawAnunciante);
+    const marca       = colMarca       !== -1 ? String(row[colMarca]||'').trim()       : '';
+    const publicacion = colPublicacion !== -1 ? String(row[colPublicacion]||'').trim() : '';
+    const producto     = colProducto    !== -1 ? String(row[colProducto]||'').trim()    : '';
+
+    if(!comercial || isNaN(anio) || anio < 2000 || anio > 2100) continue;
+
+    const claseNorm = normalize(rawClase);
+    const esIntl    = claseNorm.includes('j - pago internacional') || claseNorm.includes('pago internacional directo');
+
+    const isForcedMadrid = FORCED_MADRID_LOCAL.some(f => normalize(f) === normalize(comercial));
+    let localTeam = getLocalTeam(rawArea, comercial);
+    if(isForcedMadrid && !esIntl) localTeam = 'Madrid';
+
+    if(esIntl){
+      canalRows.push({comercial, comercialKey: comercial + '__INTL', area: rawArea, team: 'Internacional', anio, mes, importe, canal, sector, anunciante: rawAnunciante, anuncianteNorm, marca, publicacion, producto});
+    } else {
+      canalRows.push({comercial, comercialKey: comercial, area: rawArea, team: localTeam, anio, mes, importe, canal, sector, anunciante: rawAnunciante, anuncianteNorm, marca, publicacion, producto});
+    }
+  }
+
+  CANAL_DATA[canal] = canalRows;
+  markCanalLoaded(canal, filename, fecha);
+  rebuildData();
+}
+
+function onFileInputCanal(inp, canal){
+  const file = inp.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => processWorkbook(new Uint8Array(e.target.result), canal, file.name);
+  reader.readAsArrayBuffer(file);
+}
+
+function rebuildData(){
+  DATA = [];
+  const hasMes = Object.values(CANAL_DATA).some(d => d && d.some(r => r.mes !== null));
+  hasMesColumn = hasMes;
+
+  Object.values(CANAL_DATA).forEach(rows => {
+    if(rows) DATA = DATA.concat(rows);
+  });
+
+  if(DATA.length === 0) return;
+
+  const yearsSet = new Set();
+  DATA.forEach(d => yearsSet.add(d.anio));
+  YEARS = [...yearsSet].sort((a,b)=>a-b);
+  selectedMonths = computeDefaultMonths();
+
+  const monthFilterEl = document.getElementById('monthFilter');
+  if(hasMesColumn && YEARS.length > 1){
+    monthFilterEl.style.display = 'flex';
+    renderMonthFilterUI();
+  } else {
+    monthFilterEl.style.display = 'none';
+  }
+
+  const loaded = Object.entries(CANAL_DATA).filter(([,v])=>v).map(([k])=>k).join(', ');
+  document.getElementById('subtitle').textContent =
+    `${DATA.length.toLocaleString('es-ES')} líneas cargadas · Canales: ${loaded} · Años: ${YEARS.join(', ')}` +
+    (hasMesColumn ? '' : ' · columna de mes no detectada');
+  document.getElementById('toolbar').style.display = 'flex';
+  document.getElementById('mainTabs').style.display = 'flex';
+
+  // Actualizar sub-estado
+  const faltan = ['Digital','Print','Eventos'].filter(c => !CANAL_DATA[c]);
+  const sub = document.getElementById('up-multi-sub');
+  if(sub){
+    if(faltan.length === 0) sub.textContent = 'Todos los archivos cargados ✓';
+    else sub.textContent = faltan.length + ' archivo(s) pendiente(s): ' + faltan.join(', ') + ' · pulsa la tarjeta para subirlo manualmente';
+  }
+
+  render();
+}
+
+// Arrancar carga automática al cargar la página
+window.addEventListener('DOMContentLoaded', () => { autoLoadFromServer(); });
+
+function buildSectorAggregates(){
+  // map[comercialKey][sector][anio] = importe
+  const map = {};
+  DATA.forEach(d => {
+    if(!map[d.comercialKey]) map[d.comercialKey] = {};
+    const sec = d.sector || 'Sin sector';
+    if(!map[d.comercialKey][sec]) map[d.comercialKey][sec] = {};
+    map[d.comercialKey][sec][d.anio] = (map[d.comercialKey][sec][d.anio]||0) + d.importe;
+  });
+  return map;
+}
+
+function buildSectorMonthlyAggregates(){
+  const map = {};
+  DATA.forEach(d => {
+    if(!map[d.comercialKey]) map[d.comercialKey] = {};
+    const sec = d.sector || 'Sin sector';
+    if(!map[d.comercialKey][sec]) map[d.comercialKey][sec] = {};
+    if(!map[d.comercialKey][sec][d.anio]) map[d.comercialKey][sec][d.anio] = {};
+    map[d.comercialKey][sec][d.anio][d.mes] = (map[d.comercialKey][sec][d.anio][d.mes]||0) + d.importe;
+  });
+  return map;
+}
+
+function buildCanalAggregates(){
+  // map[comercialKey][canal][anio] = importe
+  const map = {};
+  DATA.forEach(d => {
+    if(!map[d.comercialKey]) map[d.comercialKey] = {};
+    const canal = d.canal || 'Digital';
+    if(!map[d.comercialKey][canal]) map[d.comercialKey][canal] = {};
+    map[d.comercialKey][canal][d.anio] = (map[d.comercialKey][canal][d.anio]||0) + d.importe;
+  });
+  return map;
+}
+
+function buildCanalMonthlyAggregates(){
+  const map = {};
+  DATA.forEach(d => {
+    if(!map[d.comercialKey]) map[d.comercialKey] = {};
+    const canal = d.canal || 'Digital';
+    if(!map[d.comercialKey][canal]) map[d.comercialKey][canal] = {};
+    if(!map[d.comercialKey][canal][d.anio]) map[d.comercialKey][canal][d.anio] = {};
+    map[d.comercialKey][canal][d.anio][d.mes] = (map[d.comercialKey][canal][d.anio][d.mes]||0) + d.importe;
+  });
+  return map;
+}
+
+function buildAggregates(){
+  const map = {};
+  DATA.forEach(d => {
+    if(!map[d.comercialKey]) map[d.comercialKey] = {team: d.team, label: d.comercial};
+    map[d.comercialKey][d.anio] = (map[d.comercialKey][d.anio]||0) + d.importe;
+  });
+  return map;
+}
+
+function buildMonthlyAggregates(){
+  const map = {};
+  DATA.forEach(d => {
+    if(!map[d.comercialKey]) map[d.comercialKey] = {team: d.team, label: d.comercial};
+    if(!map[d.comercialKey][d.anio]) map[d.comercialKey][d.anio] = {};
+    map[d.comercialKey][d.anio][d.mes] = (map[d.comercialKey][d.anio][d.mes]||0) + d.importe;
+  });
+  return map;
+}
+
+function sumMonths(monthlyMap, key, anio, monthsSet){
+  const yearData = (monthlyMap[key] || {})[anio] || {};
+  let total = 0;
+  monthsSet.forEach(m => { total += yearData[m] || 0; });
+  return total;
+}
+
+function calcPct(val, prevVal){
+  if(prevVal > 0) return ((val - prevVal) / prevVal) * 100;
+  if(val > 0) return 100;
+  return null;
+}
+
+function getMadridDualKeys(allKeys, agg){
+  const madridKeys = new Set(allKeys.filter(k => (agg[k].team === 'Madrid') && !k.endsWith('__INTL')));
+  const intlKeys   = new Set(allKeys.filter(k => k.endsWith('__INTL')));
+  const dual = new Set();
+  madridKeys.forEach(k => {
+    if(intlKeys.has(k + '__INTL')) dual.add(k);
+  });
+  return dual;
+}
+
+// Separa una lista de keys en [normales (ordenadas), pinned (en orden de PINNED_BOTTOM)]
+function splitPinned(keys, agg){
+  const pinnedNorm = PINNED_BOTTOM.map(normalize);
+  const pinned = [];
+  const normal = [];
+  keys.forEach(k => {
+    const lbl = normalize(agg[k].label || k);
+    const pinnedIdx = pinnedNorm.indexOf(lbl);
+    if(pinnedIdx !== -1){
+      pinned[pinnedIdx] = k; // mantiene el orden de PINNED_BOTTOM
+    } else {
+      normal.push(k);
+    }
+  });
+  // Filtra huecos (pinned que no aparecen en este grupo)
+  return { normal, pinned: pinned.filter(x => x !== undefined) };
+}
+
+function buildTableHTML(keys, agg, monthlyAgg, canalAgg, canalMonthlyAgg, sectorAgg, sectorMonthlyAgg, lastIdx, lastYear, prevYear, showComparable, monthsLabel, teamName, dualKeys){
+  const lastYearVal = k => showComparable
+    ? sumMonths(monthlyAgg, k, lastYear, selectedMonths)
+    : (agg[k][lastYear] || 0);
+
+  const teamYearTotals = {};
+  YEARS.forEach(y => teamYearTotals[y] = 0);
+  let teamComparableTotal = 0;
+
+  const lastYearLabel = showComparable ? `${lastYear} (${monthsLabel})` : `${lastYear}`;
+
+  let html = '<table><thead><tr><th>Comercial</th>';
+  // Nº real de columnas de datos (además de "Comercial"), para usarlo como colspan exacto
+  // en la fila de tabs Canales/Sectores. Usar colspan="100" rompía table-layout:fixed al
+  // desplegar: el navegador contaba esa fila como si tuviera 100 columnas reales y
+  // recalculaba el ancho de todas las demás, encogiéndolas y añadiendo una columna fantasma.
+  let totalDataCols = 0;
+  YEARS.forEach((y, idx) => {
+    const isLast = idx === lastIdx;
+    if(isLast && showComparable) totalDataCols++;
+    totalDataCols++;
+    if(idx > 0) totalDataCols++;
+  });
+  const totalCols = totalDataCols + 1; // +1 por la columna "Comercial"
+  YEARS.forEach((y, idx) => {
+
+    const isLast = idx === lastIdx;
+    if(isLast && showComparable){
+      html += `<th class="col-divider comparable">${prevYear} (${monthsLabel})</th>`;
+    }
+    const colLabel = isLast ? lastYearLabel : `${y}`;
+    html += `<th class="col-divider">${colLabel}</th>`;
+    if(idx > 0){
+      html += (isLast && showComparable)
+        ? `<th class="pct">% vs ${prevYear} (${monthsLabel})</th>`
+        : `<th class="pct">% vs ${YEARS[idx-1]}</th>`;
+    }
+  });
+  html += '</tr></thead><tbody>';
+
+  let hasDual = false;
+
+  // Separar pinned del resto
+  const { normal, pinned } = splitPinned(keys, agg);
+  const orderedKeys = [...normal, ...pinned];
+
+  orderedKeys.forEach(k => {
+    const isDual = dualKeys && dualKeys.has(k);
+    if(isDual) hasDual = true;
+    const rawLabel = agg[k].label || k;
+    const label = isDual ? `${rawLabel} **` : rawLabel;
+
+    const rowId = 'canal-' + k.replace(/[^a-zA-Z0-9]/g,'_');
+    html += `<tr><td title="${isDual ? 'También aparece en el grupo Internacional' : ''}"><span class="toggle-canal" data-rowid="${rowId}" onclick="toggleCanal('${rowId}')">▶</span>${label}</td>`;
+    YEARS.forEach((y, idx) => {
+      const isLast = idx === lastIdx;
+      let compVal = null;
+      if(isLast && showComparable){
+        compVal = sumMonths(monthlyAgg, k, prevYear, selectedMonths);
+        teamComparableTotal += compVal;
+        html += `<td class="col-divider comparable">${formatEUR(compVal)}</td>`;
+      }
+      const val = (isLast && showComparable) ? sumMonths(monthlyAgg, k, y, selectedMonths) : (agg[k][y] || 0);
+      teamYearTotals[y] += val;
+      html += `<td class="col-divider">${formatEUR(val)}</td>`;
+      if(idx > 0){
+        const prevVal = (isLast && showComparable) ? compVal : (agg[k][YEARS[idx-1]] || 0);
+        const pct = calcPct(val, prevVal);
+        const cls = pct === null ? 'flat' : (pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'flat'));
+        html += `<td class="pct ${cls}">${formatPct(pct)}</td>`;
+      }
+    });
+    html += '</tr>';
+
+    // Tabs CANALES / SECTORES + sub-filas
+    const tabsId = 'tabs-' + rowId;
+    html += `<tr class="breakdown-row" data-group="${rowId}" data-type="tabs">
+      <td colspan="${totalCols}" style="padding:6px 12px 2px 28px;background:#fff8f0;border-top:none;">
+        <div class="breakdown-tabs visible" id="${tabsId}">
+          <button class="breakdown-tab active" onclick="switchBreakdown('${rowId}','canales',this)">📡 Canales</button>
+          <button class="breakdown-tab" onclick="switchBreakdown('${rowId}','sectores',this)">🏷️ Sectores</button>
+        </div>
+      </td>
+    </tr>`;
+
+    // Sub-filas de CANALES
+    const CANALES_LIST = [{key:'Digital',cls:'canal-digital',icon:'💻'},{key:'Print',cls:'canal-print',icon:'📰'},{key:'Eventos',cls:'canal-eventos',icon:'🎤'}];
+    CANALES_LIST.forEach(({key:canal, cls:canalCls, icon}) => {
+      const canalData = (canalAgg[k] && canalAgg[k][canal]) ? canalAgg[k][canal] : null;
+      const canalMonData = (canalMonthlyAgg && canalMonthlyAgg[k] && canalMonthlyAgg[k][canal]) ? canalMonthlyAgg[k][canal] : null;
+      html += `<tr class="breakdown-row ${canalCls}" data-group="${rowId}" data-view="canales"><td>${icon} ${canal}</td>`;
+      YEARS.forEach((y, idx) => {
+        const isLast = idx === lastIdx;
+        let compVal = null;
+        if(isLast && showComparable){
+          compVal = canalMonData ? [...selectedMonths].reduce((s,m)=>s+((canalMonData[prevYear]||{})[m]||0),0) : 0;
+          html += `<td class="col-divider comparable">${formatEUR(compVal)}</td>`;
+        }
+        const val = (isLast && showComparable)
+          ? (canalMonData ? [...selectedMonths].reduce((s,m)=>s+((canalMonData[y]||{})[m]||0),0) : 0)
+          : (canalData ? (canalData[y]||0) : 0);
+        html += `<td class="col-divider">${formatEUR(val)}</td>`;
+        if(idx > 0){
+          const prevVal = (isLast && showComparable) ? compVal : (canalData ? (canalData[YEARS[idx-1]]||0) : 0);
+          const pct = calcPct(val, prevVal);
+          const cls = pct === null ? 'flat' : (pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'flat'));
+          html += `<td class="pct ${cls}">${formatPct(pct)}</td>`;
+        }
+      });
+      html += '</tr>';
+    });
+
+    // Sub-filas de SECTORES
+    const secData = sectorAgg[k] || {};
+    const secMonData = sectorMonthlyAgg ? (sectorMonthlyAgg[k] || {}) : {};
+    const sectores = Object.keys(secData).sort();
+    sectores.forEach(sec => {
+      const secYearData = secData[sec] || {};
+      const secMonYearData = secMonData[sec] || {};
+      html += `<tr class="breakdown-row sector-row" data-group="${rowId}" data-view="sectores"><td>🏷️ ${sec}</td>`;
+      YEARS.forEach((y, idx) => {
+        const isLast = idx === lastIdx;
+        let compVal = null;
+        if(isLast && showComparable){
+          compVal = [...selectedMonths].reduce((s,m)=>s+((secMonYearData[prevYear]||{})[m]||0),0);
+          html += `<td class="col-divider comparable">${formatEUR(compVal)}</td>`;
+        }
+        const val = (isLast && showComparable)
+          ? [...selectedMonths].reduce((s,m)=>s+((secMonYearData[y]||{})[m]||0),0)
+          : (secYearData[y]||0);
+        html += `<td class="col-divider">${formatEUR(val)}</td>`;
+        if(idx > 0){
+          const prevVal = (isLast && showComparable) ? compVal : (secYearData[YEARS[idx-1]]||0);
+          const pct = calcPct(val, prevVal);
+          const cls = pct === null ? 'flat' : (pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'flat'));
+          html += `<td class="pct ${cls}">${formatPct(pct)}</td>`;
+        }
+      });
+      html += '</tr>';
+    });
+  });
+
+  // Team total row
+  html += `<tr class="team-total-row"><td>📊 Total ${teamName}</td>`;
+  YEARS.forEach((y, idx) => {
+    const isLast = idx === lastIdx;
+    if(isLast && showComparable) html += `<td class="col-divider comparable">${formatEUR(teamComparableTotal)}</td>`;
+    html += `<td class="col-divider">${formatEUR(teamYearTotals[y])}</td>`;
+    if(idx > 0){
+      const prevY   = YEARS[idx-1];
+      const prevVal = (isLast && showComparable) ? teamComparableTotal : teamYearTotals[prevY];
+      const val     = teamYearTotals[y];
+      const pct     = calcPct(val, prevVal);
+      const cls     = pct === null ? 'flat' : (pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'flat'));
+      html += `<td class="pct ${cls}">${formatPct(pct)}</td>`;
+    }
+  });
+  html += '</tr></tbody></table>';
+
+  // Footnote si hay comerciales duales
+  if(hasDual){
+    html += `<div class="team-footnote">** Esta comercial también aparece en el grupo Internacional con los ingresos de clase J - Pago Internacional Directo (que corresponden a ingresos de Internacional).</div>`;
+  }
+
+  return html;
+}
+
+// Agrupa un conjunto de comercialKeys en equipos, aplicando las mismas reglas
+// (reasignación a "Sin Asignar" si no hay ingreso reciente, forzados, etc.)
+// que usa la pestaña de Ingresos. Se reutiliza en la pestaña Nuevos Anunciantes
+// para que ambas pestañas muestren exactamente los mismos equipos/comerciales.
+function assignTeamsForKeys(allKeys, agg){
+  const teamMap = {};
+  TEAMS_ORDER.forEach(t => teamMap[t] = []);
+
+  allKeys.forEach(k => {
+    const ingresoUltimoAnio = YEARS.length > 0 ? (agg[k][YEARS[YEARS.length-1]] || 0) : 1;
+    let team = (agg[k] && agg[k].team) ? agg[k].team : 'Sin Asignar';
+    if(ingresoUltimoAnio === 0) {
+      if(team === 'Internacional') {
+        const _lastY = YEARS[YEARS.length - 1];
+        const _prevY = YEARS.length > 1 ? YEARS[YEARS.length - 2] : null;
+        const _ingLast = (agg[k][_lastY] || 0);
+        const _ingPrev = _prevY ? (agg[k][_prevY] || 0) : 0;
+        if(_ingLast === 0 && _ingPrev === 0) team = 'Sin Asignar';
+      } else {
+        team = 'Sin Asignar';
+      }
+    }
+    // Forzar equipo independientemente de ingresos
+    if(FORCED_BARCELONA.some(f => normalize(f) === normalize(agg[k].label || ''))) team = 'Barcelona';
+    if(FORCED_MADRID_PINNED.some(f => normalize(f) === normalize(agg[k].label || ''))) team = 'Madrid';
+
+    if(teamMap[team]) teamMap[team].push(k);
+    else teamMap['Sin Asignar'].push(k);
+  });
+
+  return teamMap;
+}
+
+function switchMainTab(tab){
+  activeMainTab = tab;
+  document.getElementById('mtab-ingresos').classList.toggle('active', tab === 'ingresos');
+  document.getElementById('mtab-nuevos').classList.toggle('active', tab === 'nuevos');
+  // El filtro de meses y la exportación solo aplican a la pestaña de Ingresos:
+  // Nuevos Anunciantes siempre compara años completos.
+  const mf = document.getElementById('monthFilter');
+  if(mf) mf.style.display = (tab === 'ingresos' && hasMesColumn && YEARS.length > 1) ? 'flex' : 'none';
+  const exportBtn = document.getElementById('exportBtn');
+  if(exportBtn){
+    exportBtn.style.display = '';
+    exportBtn.onclick = (tab === 'ingresos') ? exportComercialesXLSX : exportNuevosAnunciantesXLSX;
+  }
+  const sortSelect = document.getElementById('sortSelect');
+  if(sortSelect){
+    const opts = sortSelect.options;
+    if(tab === 'ingresos'){
+      opts[0].textContent = 'Ordenar: Mayor crecimiento';
+      opts[1].textContent = 'Ordenar: Menor crecimiento';
+      opts[2].textContent = 'Ordenar: Total desc.';
+      opts[3].textContent = 'Ordenar: Total asc.';
+    } else {
+      opts[0].textContent = 'Ordenar: Más nuevos anunciantes';
+      opts[1].textContent = 'Ordenar: Menos nuevos anunciantes';
+      opts[2].textContent = 'Ordenar: Ingreso nuevos desc.';
+      opts[3].textContent = 'Ordenar: Ingreso nuevos asc.';
+    }
+  }
+  render();
+}
+
+// Para cada año presente en el Excel, el conjunto (normalizado) de anunciantes
+// que tuvieron alguna línea ese año, sin importar comercial/canal/equipo.
+// Se usa para decidir si un anunciante es "nuevo" comparando SIEMPRE con el año
+// natural anterior completo (nunca con los meses seleccionados en el filtro).
+function buildAnuncianteYearSets(){
+  const map = {};
+  DATA.forEach(d => {
+    if(!d.anuncianteNorm) return;
+    if(!map[d.anio]) map[d.anio] = new Set();
+    map[d.anio].add(d.anuncianteNorm);
+  });
+  return map;
+}
+
+// Para cada comercial y año, calcula:
+//  - agg[key][anio] = {count, income} de anunciantes nuevos (o null si no se puede determinar)
+//  - detail[key][anio] = lista de {anunciante, marca, publicacion, producto, importe} de esos anunciantes nuevos
+//    (si un anunciante tiene varias líneas, se suman en una sola fila y marca/publicación/producto
+//    listan todos los valores distintos que aparecen)
+function buildNewAdvertisersData(){
+  const yearSets = buildAnuncianteYearSets();
+  const perKey = {}; // [comercialKey][anio][anuncianteNorm] = {label, marcas:Set, publicaciones:Set, productos:Set, importe}
+
+  DATA.forEach(d => {
+    if(!d.anuncianteNorm) return;
+    if(!perKey[d.comercialKey]) perKey[d.comercialKey] = {team: d.team, label: d.comercial, years: {}};
+    const entry = perKey[d.comercialKey];
+    if(!entry.years[d.anio]) entry.years[d.anio] = {};
+    const yearMap = entry.years[d.anio];
+    if(!yearMap[d.anuncianteNorm]) yearMap[d.anuncianteNorm] = {label: d.anunciante, marcas: new Set(), publicaciones: new Set(), productos: new Set(), importe: 0};
+    const adv = yearMap[d.anuncianteNorm];
+    if(d.marca) adv.marcas.add(d.marca);
+    if(d.publicacion) adv.publicaciones.add(d.publicacion);
+    if(d.producto) adv.productos.add(d.producto);
+    adv.importe += d.importe;
+  });
+
+  const agg = {}, detail = {};
+  const shared = {}; // shared[anio][anuncianteNorm] = Set(comercialLabel) que lo tienen como nuevo ese año
+  Object.entries(perKey).forEach(([key, entry]) => {
+    agg[key] = {team: entry.team, label: entry.label};
+    detail[key] = {};
+    Object.keys(entry.years).forEach(anioStr => {
+      const anio = parseInt(anioStr, 10);
+      const prevSet = yearSets[anio - 1];
+      if(!prevSet){
+        agg[key][anio] = null;
+        detail[key][anio] = null;
+        return;
+      }
+      let count = 0, income = 0;
+      const list = [];
+      Object.entries(entry.years[anio]).forEach(([anun, adv]) => {
+        if(prevSet.has(anun)) return;
+        count++; income += adv.importe;
+        list.push({
+          anunciante: adv.label,
+          anuncianteNorm: anun,
+          marca: [...adv.marcas].sort().join(', ') || '—',
+          publicacion: [...adv.publicaciones].sort().join(', ') || '—',
+          producto: [...adv.productos].sort().join(', ') || '—',
+          importe: adv.importe
+        });
+        if(!shared[anio]) shared[anio] = {};
+        if(!shared[anio][anun]) shared[anio][anun] = new Set();
+        shared[anio][anun].add(entry.label);
+      });
+      list.sort((a,b) => b.importe - a.importe);
+      agg[key][anio] = {count, income};
+      detail[key][anio] = list;
+    });
+  });
+  return {agg, detail, shared};
+}
+
+function toggleNuevoDetail(rowId){
+  const row = document.querySelector(`tr.breakdown-row[data-group="${rowId}"]`);
+  const toggle = document.querySelector(`[data-rowid="${rowId}"]`);
+  if(!row) return;
+  const isVisible = row.classList.contains('visible');
+  row.classList.toggle('visible', !isVisible);
+  if(toggle) toggle.textContent = isVisible ? '▶' : '▼';
+}
+
+function render(){
+  if(activeMainTab === 'nuevos'){ renderNuevosAnunciantes(); return; }
+  const agg             = buildAggregates();
+  const monthlyAgg      = hasMesColumn ? buildMonthlyAggregates() : null;
+  const canalAgg         = buildCanalAggregates();
+  const canalMonthlyAgg  = hasMesColumn ? buildCanalMonthlyAggregates() : null;
+  const sectorAgg        = buildSectorAggregates();
+  const sectorMonthlyAgg = hasMesColumn ? buildSectorMonthlyAggregates() : null;
+  let allKeys      = Object.keys(agg);
+
+  const search = normalize(document.getElementById('searchBox').value);
+  if(search) allKeys = allKeys.filter(k => normalize(agg[k].label || k).includes(search));
+
+  const lastIdx  = YEARS.length - 1;
+  const lastYear = YEARS[lastIdx];
+  const prevYear = lastIdx > 0 ? YEARS[lastIdx-1] : null;
+  const showComparable = hasMesColumn && prevYear !== null && selectedMonths.size > 0;
+  const monthsLabel = showComparable ? monthsRangeLabel(selectedMonths) : '';
+
+  const sortMode = document.getElementById('sortSelect').value;
+
+  const lastYearVal = k => showComparable
+    ? sumMonths(monthlyAgg, k, lastYear, selectedMonths)
+    : (agg[k][lastYear] || 0);
+  const prevYearVal = k => showComparable
+    ? sumMonths(monthlyAgg, k, prevYear, selectedMonths)
+    : (prevYear ? (agg[k][prevYear] || 0) : 0);
+  const growthOf = k => {
+    const cur  = lastYearVal(k);
+    const prev = prevYearVal(k);
+    if(prev > 0) return ((cur - prev) / prev) * 100;
+    if(cur > 0)  return 100;
+    return -Infinity;
+  };
+  const totalOf = k => YEARS.slice(0,-1).reduce((s,y)=> s+(agg[k][y]||0), 0) + (YEARS.length ? lastYearVal(k) : 0);
+
+  if(sortMode === 'growth-desc') allKeys.sort((a,b)=> growthOf(b) - growthOf(a));
+  else if(sortMode === 'growth-asc') allKeys.sort((a,b)=> growthOf(a) - growthOf(b));
+  else if(sortMode === 'total-desc') allKeys.sort((a,b)=> totalOf(b) - totalOf(a));
+  else if(sortMode === 'total-asc')  allKeys.sort((a,b)=> totalOf(a) - totalOf(b));
+  else allKeys.sort((a,b)=> (agg[a].label||a).localeCompare(agg[b].label||b,'es'));
+
+  const dualKeys = getMadridDualKeys(allKeys, agg);
+
+  // Group by team
+  const teamMap = assignTeamsForKeys(allKeys, agg);
+
+  // Grand totals
+  const grandYearTotals = {};
+  YEARS.forEach(y => grandYearTotals[y] = 0);
+  allKeys.forEach(k => {
+    YEARS.forEach(y => { grandYearTotals[y] += (agg[k][y]||0); });
+  });
+
+  // Grand total comparable (monthly filter)
+  const grandComparableTotal = {};
+  if(showComparable){
+    grandComparableTotal[lastYear] = 0;
+    grandComparableTotal[prevYear] = 0;
+    allKeys.forEach(k => {
+      grandComparableTotal[lastYear] += sumMonths(monthlyAgg, k, lastYear, selectedMonths);
+      grandComparableTotal[prevYear] += sumMonths(monthlyAgg, k, prevYear, selectedMonths);
+    });
+  }
+
+  let outputHTML = '';
+
+  TEAMS_ORDER.forEach(teamName => {
+    const members = teamMap[teamName];
+    if(members.length === 0) return;
+    const color = TEAM_COLORS[teamName] || '#0d2340';
+    const tid   = 'team-' + teamName.replace(/\s/g,'_');
+    const teamDualKeys = teamName === 'Madrid' ? dualKeys : null;
+    outputHTML += `
+      <div class="team-block" id="${tid}">
+        <div class="team-header" onclick="toggleTeam('${tid}')">
+          <span class="team-title" style="color:${color}">&#9679; ${teamName}</span>
+          <span class="team-badge" style="background:${color}">${members.length} comercial${members.length!==1?'es':''}</span>
+          <span class="team-toggle" id="toggle-${tid}">▲ Ocultar</span>
+        </div>
+        <div class="team-divider" style="background:linear-gradient(90deg,${color},transparent)"></div>
+        <div class="team-content" id="content-${tid}">
+          ${buildTableHTML(members, agg, monthlyAgg, canalAgg, canalMonthlyAgg, sectorAgg, sectorMonthlyAgg, lastIdx, lastYear, prevYear, showComparable, monthsLabel, teamName, teamDualKeys)}
+        </div>
+      </div>`;
+  });
+
+  // Grand total
+  outputHTML += `
+    <div class="team-block" style="text-align:center;">
+      <div class="team-header" style="justify-content:center;">
+        <span class="team-title" style="color:var(--navy)">&#128202; TOTAL GLOBAL</span>
+      </div>
+      <div class="team-divider"></div>
+      <table style="margin:0 auto;width:700px;table-layout:fixed;">
+        <thead><tr>
+          <th style="text-align:center;width:100px;">Año</th>
+          <th style="text-align:center;width:280px;">Total</th>
+          <th style="text-align:center;width:320px;">Variación</th>
+        </tr></thead>
+        <tbody>`;
+  YEARS.forEach((y, idx) => {
+    const val = showComparable && idx === YEARS.length - 1 ? grandComparableTotal[y] : grandYearTotals[y];
+    const label = (showComparable && idx === YEARS.length - 1) ? `${y} (${monthsLabel})` : `${y}`;
+    let pctHTML = '<td style="text-align:center;color:var(--muted)">—</td>';
+    if(idx > 0){
+      const prevY = YEARS[idx - 1];
+      const prevVal = showComparable && idx === YEARS.length - 1 ? grandComparableTotal[prevY] : grandYearTotals[prevY];
+      const diff = val - prevVal;
+      const pct = prevVal > 0 ? ((diff / prevVal) * 100) : (val > 0 ? 100 : null);
+      if(pct !== null){
+        const sign = diff >= 0 ? '+' : '';
+        const color = diff >= 0 ? 'var(--green)' : 'var(--red)';
+        const arrow = diff >= 0 ? '▲' : '▼';
+        pctHTML = `<td style="text-align:center;font-weight:700;color:${color}">${arrow} ${sign}${Math.abs(pct).toLocaleString('es-ES', {minimumFractionDigits:1, maximumFractionDigits:1, useGrouping:true})}% <span style="font-weight:400;font-size:11px;">(${sign}${formatEUR(diff)})</span></td>`;
+      }
+    }
+    outputHTML += `<tr>
+      <td style="text-align:center;font-weight:600;">${label}</td>
+      <td style="text-align:center;font-weight:700;">${formatEUR(val)}</td>
+      ${pctHTML}
+    </tr>`;
+  });
+  outputHTML += '</tbody></table></div>';
+
+  document.getElementById('output').innerHTML = outputHTML;
+}
+
+function renderNuevosAnunciantes(){
+  const agg      = buildAggregates(); // misma fuente que Ingresos: mismos comerciales, mismos equipos
+  const { agg: newAgg, detail: detailAgg, shared: sharedMap } = buildNewAdvertisersData();
+  const yearSets = buildAnuncianteYearSets();
+
+  let allKeys = Object.keys(agg);
+  const search = normalize(document.getElementById('searchBox').value);
+  if(search) allKeys = allKeys.filter(k => normalize(agg[k].label || k).includes(search));
+
+  const sortMode = document.getElementById('sortSelect').value;
+  const lastYear = YEARS[YEARS.length - 1];
+  const totalIncomeOf  = k => YEARS.reduce((s,y)=> s + ((newAgg[k] && newAgg[k][y]) ? newAgg[k][y].income : 0), 0);
+  const lastYearCountOf = k => (newAgg[k] && newAgg[k][lastYear]) ? newAgg[k][lastYear].count : 0;
+
+  if(sortMode === 'growth-desc') allKeys.sort((a,b)=> lastYearCountOf(b) - lastYearCountOf(a));
+  else if(sortMode === 'growth-asc') allKeys.sort((a,b)=> lastYearCountOf(a) - lastYearCountOf(b));
+  else if(sortMode === 'total-desc') allKeys.sort((a,b)=> totalIncomeOf(b) - totalIncomeOf(a));
+  else if(sortMode === 'total-asc')  allKeys.sort((a,b)=> totalIncomeOf(a) - totalIncomeOf(b));
+  else allKeys.sort((a,b)=> (agg[a].label||a).localeCompare(agg[b].label||b,'es'));
+
+  const teamMap = assignTeamsForKeys(allKeys, agg);
+
+  let outputHTML = '';
+  if(ANUNCIANTE_COL_MISSING.size > 0){
+    outputHTML += `<div class="anun-warning">⚠️ No se ha detectado la columna <b>Anunciantes</b> en: ${[...ANUNCIANTE_COL_MISSING].join(', ')}. Esas líneas no se cuentan en Nuevos Anunciantes.</div>`;
+  }
+
+  TEAMS_ORDER.forEach(teamName => {
+    const members = teamMap[teamName];
+    if(members.length === 0) return;
+    const color = TEAM_COLORS[teamName] || '#0d2340';
+    const tid   = 'teamn-' + teamName.replace(/\s/g,'_');
+    outputHTML += `
+      <div class="team-block" id="${tid}">
+        <div class="team-header" onclick="toggleTeam('${tid}')">
+          <span class="team-title" style="color:${color}">&#9679; ${teamName}</span>
+          <span class="team-badge" style="background:${color}">${members.length} comercial${members.length!==1?'es':''}</span>
+          <span class="team-toggle" id="toggle-${tid}">▲ Ocultar</span>
+        </div>
+        <div class="team-divider" style="background:linear-gradient(90deg,${color},transparent)"></div>
+        <div class="team-content" id="content-${tid}">
+          ${buildNuevosTableHTML(members, agg, newAgg, detailAgg, yearSets, teamName, sharedMap)}
+        </div>
+      </div>`;
+  });
+
+  // Total global
+  const grandCountTotals = {}, grandIncomeTotals = {};
+  YEARS.forEach(y => { grandCountTotals[y] = 0; grandIncomeTotals[y] = 0; });
+  allKeys.forEach(k => {
+    YEARS.forEach(y => {
+      const cell = newAgg[k] && newAgg[k][y];
+      if(cell){ grandCountTotals[y] += cell.count; grandIncomeTotals[y] += cell.income; }
+    });
+  });
+
+  outputHTML += `
+    <div class="team-block" style="text-align:center;">
+      <div class="team-header" style="justify-content:center;">
+        <span class="team-title" style="color:var(--navy)">&#128202; TOTAL GLOBAL &middot; Nuevos Anunciantes</span>
+      </div>
+      <div class="team-divider"></div>
+      <table style="margin:0 auto;width:600px;table-layout:fixed;">
+        <thead><tr>
+          <th style="text-align:center;width:120px;">Año</th>
+          <th style="text-align:center;width:480px;">Nuevos anunciantes</th>
+        </tr></thead>
+        <tbody>`;
+  YEARS.filter(y => !!yearSets[y-1]).forEach(y => {
+    const cellHTML = `${grandCountTotals[y]}${grandCountTotals[y]>0 ? `<span class="new-adv-income">(${formatEUR(grandIncomeTotals[y])})</span>` : ''}`;
+    outputHTML += `<tr>
+      <td style="text-align:center;font-weight:600;">${y}</td>
+      <td style="text-align:center;font-weight:700;">${cellHTML}</td>
+    </tr>`;
+  });
+  outputHTML += '</tbody></table></div>';
+
+  outputHTML += `
+    <div class="nuevos-footnote">
+      * Los anunciantes nuevos marcados con <span class="shared-adv-mark">*</span> en el detalle de cada comercial se imputan simultáneamente a dos comerciales, al tratarse de cuentas compartidas al 50% entre ambos. En estos casos, el anunciante se contabiliza como nuevo para los dos comerciales implicados.
+    </div>`;
+
+  document.getElementById('output').innerHTML = outputHTML;
+}
+
+function buildNuevosTableHTML(keys, agg, newAgg, detailAgg, yearSets, teamName, sharedMap){
+  const teamCountTotals = {}, teamIncomeTotals = {};
+  YEARS.forEach(y => { teamCountTotals[y] = 0; teamIncomeTotals[y] = 0; });
+
+  // Años con datos reales para "nuevos anunciantes" (se excluye el primer año
+  // disponible, p.ej. 2023, porque al no tener el año anterior en el Excel no
+  // se puede calcular y esa columna quedaría siempre vacía).
+  const visibleYears = YEARS.filter(y => !!yearSets[y-1]);
+  const visibleYearsDesc = [...visibleYears].sort((a,b)=> b-a);
+
+  const totalCols = visibleYears.length + 1;
+  let html = '<table><thead><tr><th>Comercial</th>';
+  visibleYears.forEach(y => { html += `<th class="col-divider">${y}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  const { normal, pinned } = splitPinned(keys, agg);
+  const orderedKeys = [...normal, ...pinned];
+
+  orderedKeys.forEach(k => {
+    const label = agg[k].label || k;
+    const rowId = 'nuevo-' + k.replace(/[^a-zA-Z0-9]/g,'_');
+
+    // Detalle combinado de todos los años para este comercial
+    const detailRows = [];
+    visibleYears.forEach(y => {
+      const list = detailAgg[k] && detailAgg[k][y];
+      if(Array.isArray(list)) list.forEach(item => detailRows.push(Object.assign({anio: y}, item)));
+    });
+    detailRows.sort((a,b) => b.anio - a.anio || b.importe - a.importe);
+    const hasDetail = detailRows.length > 0;
+
+    html += `<tr><td>${hasDetail
+      ? `<span class="toggle-canal" data-rowid="${rowId}" onclick="toggleNuevoDetail('${rowId}')">▶</span>`
+      : `<span style="display:inline-block;width:14px;"></span>`}${label}</td>`;
+    visibleYears.forEach(y => {
+      const cell = (newAgg[k] && newAgg[k][y]) ? newAgg[k][y] : {count:0, income:0};
+      teamCountTotals[y] += cell.count;
+      teamIncomeTotals[y] += cell.income;
+      html += `<td class="col-divider new-adv-count">${cell.count}${cell.count>0 ? `<span class="new-adv-income">(${formatEUR(cell.income)})</span>` : ''}</td>`;
+    });
+    html += '</tr>';
+
+    if(hasDetail){
+      html += `<tr class="breakdown-row" data-group="${rowId}"><td colspan="${totalCols}" style="padding:8px 12px 12px 28px;background:#fff8f0;border-top:none;">
+        <table class="detail-table"><thead><tr>
+          <th style="width:60px;">Año</th><th>Anunciante</th><th>Marca</th><th>Publicación</th><th>Producto</th><th style="width:110px;">Ingreso total</th>
+        </tr></thead><tbody>`;
+      detailRows.forEach(item => {
+        const st = nuevosYearStyle(item.anio, visibleYearsDesc);
+        const tdBg = `background:${st.bg};`;
+        const sharers = sharedMap && sharedMap[item.anio] && sharedMap[item.anio][item.anuncianteNorm];
+        const isShared = sharers && sharers.size >= 2;
+        let anuncianteHTML = item.anunciante;
+        if(isShared){
+          const otros = [...sharers].filter(nombre => nombre !== label);
+          const tip = `Cuenta compartida al 50% también con: ${otros.join(', ') || 'otro comercial'}`;
+          anuncianteHTML = `${item.anunciante}<span class="shared-adv-mark" title="${tip.replace(/"/g,'&quot;')}">&nbsp;*</span>`;
+        }
+        html += `<tr style="border-left:3px solid ${st.border};">`
+          + `<td style="${tdBg}color:${st.text};font-weight:700;">${item.anio}</td>`
+          + `<td style="${tdBg}">${anuncianteHTML}</td>`
+          + `<td style="${tdBg}">${item.marca}</td>`
+          + `<td style="${tdBg}">${item.publicacion}</td>`
+          + `<td style="${tdBg}">${item.producto}</td>`
+          + `<td style="${tdBg}">${formatEUR(item.importe)}</td>`
+          + `</tr>`;
+      });
+      html += `</tbody></table></td></tr>`;
+    }
+  });
+
+  html += `<tr class="team-total-row"><td>📊 Total ${teamName}</td>`;
+  visibleYears.forEach(y => {
+    html += `<td class="col-divider">${teamCountTotals[y]}${teamCountTotals[y]>0 ? `<span class="new-adv-income">(${formatEUR(teamIncomeTotals[y])})</span>` : ''}</td>`;
+  });
+  html += '</tr></tbody></table>';
+  return html;
+}
+
+function sanitizeFilename(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'Comerciales';
+}
+
+async function exportComercialesXLSX(){
+  if(DATA.length === 0) return;
+
+  const agg        = buildAggregates();
+  const monthlyAgg = hasMesColumn ? buildMonthlyAggregates() : null;
+  let allKeys       = Object.keys(agg);
+
+  const searchVal = document.getElementById('searchBox').value.trim();
+  const search    = normalize(searchVal);
+  if(search) allKeys = allKeys.filter(k => normalize(agg[k].label || k).includes(search));
+
+  // Algunos comerciales tienen dos entradas (misma persona): una con su equipo local
+  // (Madrid, Barcelona...) y otra con clave "...__INTL" para sus ingresos de Pago
+  // Internacional Directo (equipo "Internacional"). Las emparejamos para sumarlas y
+  // que salgan en una sola fila en vez de dos líneas separadas.
+  const normalKeys = allKeys.filter(k => !k.endsWith('__INTL'));
+  const intlKeySet = new Set(allKeys.filter(k => k.endsWith('__INTL')));
+  const usedIntlKeys = new Set();
+
+  let combos = [];
+  normalKeys.forEach(k => {
+    const dualKey = k + '__INTL';
+    if(intlKeySet.has(dualKey)){
+      combos.push({baseKey:k, dualKey});
+      usedIntlKeys.add(dualKey);
+    } else {
+      combos.push({baseKey:k, dualKey:null});
+    }
+  });
+  // Las entradas de Internacional sin pareja local se mantienen como fila propia
+  intlKeySet.forEach(dk => { if(!usedIntlKeys.has(dk)) combos.push({baseKey:dk, dualKey:null}); });
+
+  // Excluimos a los comerciales del equipo "Sin Asignar" (según el equipo de la entrada
+  // base/local); el resto de equipos (Madrid, Barcelona, Internacional, Programática)
+  // se mantienen todos.
+  combos = combos.filter(c => (agg[c.baseKey].team || 'Sin Asignar') !== 'Sin Asignar');
+
+  const lastIdx  = YEARS.length - 1;
+  const lastYear = YEARS[lastIdx];
+  const prevYear = lastIdx > 0 ? YEARS[lastIdx-1] : null;
+  const showComparable = hasMesColumn && prevYear !== null && selectedMonths.size > 0;
+  const monthsLabel = showComparable ? monthsRangeLabel(selectedMonths) : '';
+
+  const comboYearRaw = (combo, y) => (agg[combo.baseKey][y] || 0) + (combo.dualKey ? (agg[combo.dualKey][y] || 0) : 0);
+  const comboYearComparable = (combo, y) => sumMonths(monthlyAgg, combo.baseKey, y, selectedMonths)
+    + (combo.dualKey ? sumMonths(monthlyAgg, combo.dualKey, y, selectedMonths) : 0);
+
+  const comboLastVal = combo => showComparable ? comboYearComparable(combo, lastYear) : comboYearRaw(combo, lastYear);
+  const comboPrevVal = combo => showComparable ? comboYearComparable(combo, prevYear)
+    : (prevYear !== null ? comboYearRaw(combo, prevYear) : 0);
+
+  // La clasificación Negativo/Positivo se basa siempre en el último año vs el anterior
+  // (mismo criterio que se usa en pantalla y en el resto de dashboards).
+  // Comerciales que nunca deben aparecer en el Excel exportado (bajas, duplicados, etc.)
+  const EXPORT_EXCLUDED_NAMES = new Set(['AMPARO BASTIT', 'LUZ ROCA', 'NORA RECIO LOPEZ TRIVIÑO', 'ANA BELÉN CRUZ DE DIEGO']);
+
+  const items = combos.map(combo => {
+    const last = comboLastVal(combo);
+    const prev = comboPrevVal(combo);
+    return {
+      combo,
+      label: agg[combo.baseKey].label || combo.baseKey,
+      team:  agg[combo.baseKey].team || 'Sin Asignar',
+      last, prev,
+      pct: calcPct(last, prev)
+    };
+  }).filter(it => it.last !== 0 && !EXPORT_EXCLUDED_NAMES.has(it.label));
+
+  if(items.length === 0) return;
+
+  // Orden dentro de cada sección: primero por equipo (Madrid, Barcelona, Programática
+  // y el resto al final) y, dentro de cada equipo, de más a menos por el % de variación
+  // del último año.
+  const TEAM_ORDER_EXPORT = ['Madrid','Barcelona','Programática'];
+  const teamRank = team => {
+    const idx = TEAM_ORDER_EXPORT.indexOf(team);
+    return idx === -1 ? TEAM_ORDER_EXPORT.length : idx;
+  };
+  const sortByTeamThenPct = list => list.sort((a,b) => {
+    const teamDiff = teamRank(a.team) - teamRank(b.team);
+    if(teamDiff !== 0) return teamDiff;
+    const pa = a.pct===null ? -Infinity : a.pct;
+    const pb = b.pct===null ? -Infinity : b.pct;
+    return pb - pa;
+  });
+
+  const negItems = sortByTeamThenPct(items.filter(it => (it.last - it.prev) < 0));
+  const posItems = sortByTeamThenPct(items.filter(it => (it.last - it.prev) >= 0));
+
+  // Construimos la cabecera dinámica igual que en pantalla: por cada año, su columna de
+  // importe (con la columna comparable del año anterior justo delante si el filtro de
+  // meses está activo en el último año) y, a partir del segundo año, su "% vs año anterior".
+  const headerCells = ['', 'Comercial', 'Equipo'];
+  const colTypes = []; // 'eur' | 'pct', uno por cada columna de datos a partir de la C (Equipo)
+  colTypes.push('text'); // Equipo
+  YEARS.forEach((y, idx) => {
+    const isLast = idx === lastIdx;
+    if(isLast && showComparable){
+      headerCells.push(`${prevYear} (${monthsLabel})`);
+      colTypes.push('eur');
+    }
+    const yLabel = (isLast && showComparable) ? `${y} (${monthsLabel})` : `${y}`;
+    headerCells.push(yLabel);
+    colTypes.push('eur');
+    if(idx > 0){
+      headerCells.push((isLast && showComparable) ? `% vs ${prevYear} (${monthsLabel})` : `% vs ${YEARS[idx-1]}`);
+      colTypes.push('pct');
+    }
+  });
+
+  function colLetter(idx0){ // idx0: 0-based → 0='A',1='B'...
+    let n = idx0+1, s = '';
+    while(n > 0){ const rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+    return s;
+  }
+  const COLS = colTypes.map((_,i) => colLetter(i+2)); // +2: saltamos col A (aire) y col B (Comercial)
+
+  function buildRowValues(combo){
+    const vals = [agg[combo.baseKey] ? (agg[combo.baseKey].team||'Sin Asignar') : 'Sin Asignar'];
+    YEARS.forEach((y, idx) => {
+      const isLast = idx === lastIdx;
+      let cVal = null;
+      if(isLast && showComparable){
+        cVal = comboYearComparable(combo, prevYear);
+        vals.push(Math.round(cVal));
+      }
+      const val = (isLast && showComparable) ? comboYearComparable(combo, y) : comboYearRaw(combo, y);
+      vals.push(Math.round(val));
+      if(idx > 0){
+        const prevValForPct = (isLast && showComparable) ? cVal : comboYearRaw(combo, YEARS[idx-1]);
+        const pct = calcPct(val, prevValForPct);
+        vals.push(pct===null ? null : pct/100);
+      }
+    });
+    return vals;
+  }
+
+  // Columna A vacía y estrecha (aire visual); los datos empiezan en la columna B.
+  const aoa = [];
+  aoa.push(['', 'Ingresos por Comercial']);
+  aoa.push(['', `${search?`Búsqueda: "${searchVal}" · `:''}Años: ${YEARS.join(', ')}`]);
+  aoa.push([]);
+  aoa.push(headerCells);
+
+  const rowMeta = [];
+  const thinRowIdxs = [];
+  const sectionRowIdxs = [];
+
+  // Fila separadora muy fina justo debajo de la cabecera
+  aoa.push([]);
+  thinRowIdxs.push(aoa.length-1);
+
+  function addSection(label, list){
+    aoa.push(['', label]);
+    sectionRowIdxs.push(aoa.length-1);
+    aoa.push([]);
+    thinRowIdxs.push(aoa.length-1);
+    list.forEach(it => {
+      rowMeta.push({rowIdx: aoa.length});
+      aoa.push(['', it.label, ...buildRowValues(it.combo)]);
+    });
+  }
+
+  addSection('Comerciales en Negativo', negItems);
+
+  // Fila grande en blanco para separar visualmente el bloque de negativos del de positivos
+  const bigGapIdx = aoa.length;
+  aoa.push([]);
+
+  addSection('Comerciales en Positivo', posItems);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:2},{wch:32}, ...colTypes.map(t => t==='pct' ? {wch:20} : (t==='text' ? {wch:16} : {wch:16}))];
+
+  const lastCol = colLetter(headerCells.length-1);
+  const NAVY='FF0D2340', WHITE='FFFFFFFF', GREEN='FF1F9D55', RED='FFD64545', GREY='FF6B7280', LIGHTNAVY='FF1F4E79';
+
+  // Cabecera de la tabla: fila más alta, fondo navy, texto blanco y negrita, centrado
+  const headerRow = 3; // índice 0-based dentro del aoa
+  const rows = ws['!rows'] || [];
+  rows[headerRow] = {hpt:26};
+  ws['!rows'] = rows;
+  ['B', ...COLS].forEach(col => {
+    const addr = col + (headerRow+1);
+    if(ws[addr]) ws[addr].s = {
+      font:{bold:true,color:{rgb:WHITE}},
+      fill:{fgColor:{rgb:NAVY}},
+      alignment:{horizontal:'center',vertical:'center'}
+    };
+  });
+
+  // Filas separadoras muy finas
+  thinRowIdxs.forEach(idx => { rows[idx] = {hpt:4}; });
+  // Fila grande en blanco entre el bloque de negativos y el de positivos
+  rows[bigGapIdx] = {hpt:30};
+  ws['!rows'] = rows;
+
+  // Cabeceras de sección "Comerciales en Negativo" / "Comerciales en Positivo"
+  const lastColIdx0 = headerCells.length-1; // índice 0-based de la última columna de datos
+  if(!ws['!merges']) ws['!merges'] = [];
+  sectionRowIdxs.forEach(idx => {
+    ws['!merges'].push({s:{r:idx,c:1},e:{r:idx,c:lastColIdx0}});
+    rows[idx] = {hpt:22};
+    ['B', ...COLS].forEach(col => {
+      const addr = col + (idx+1);
+      if(ws[addr]) ws[addr].s = {
+        font:{bold:true,color:{rgb:WHITE},sz:11},
+        fill:{fgColor:{rgb:LIGHTNAVY}},
+        alignment:{horizontal:'left',vertical:'center'}
+      };
+    });
+    const bAddr = 'B'+(idx+1);
+    if(!ws[bAddr]) ws[bAddr] = {t:'s',v:''};
+  });
+  ws['!rows'] = rows;
+
+  // Filas de datos: centrado, fondo blanco, borde inferior fino. Los % de variación van
+  // en rojo si son negativos y verde si son positivos (umbral ±0.5%, igual que en pantalla).
+  rowMeta.forEach(({rowIdx}) => {
+    const rowNum = rowIdx + 1;
+    ['B', ...COLS].forEach(col => {
+      const addr = col + rowNum;
+      if(!ws[addr]) return;
+      ws[addr].s = {
+        alignment:{horizontal:'center',vertical:'center'},
+        fill:{fgColor:{rgb:WHITE}},
+        border:{bottom:{style:'thin',color:{rgb:'FFE2E6EC'}}}
+      };
+    });
+    COLS.forEach((col,i) => {
+      const addr = col + rowNum;
+      if(!ws[addr]) return;
+      const type = colTypes[i];
+      if(type === 'eur'){
+        ws[addr].z = '#,##0" €"';
+      } else if(type === 'pct' && ws[addr].v!==null && ws[addr].v!==undefined){
+        ws[addr].z = '0.0%';
+        const v = ws[addr].v;
+        const color = v>0.005 ? GREEN : (v<-0.005 ? RED : GREY);
+        ws[addr].s.font = Object.assign({}, ws[addr].s.font, {color:{rgb:color}});
+      }
+    });
+  });
+  ws['!rows'] = rows;
+
+  // Título y subtítulo por encima de la tabla
+  if(ws['B1']) ws['B1'].s = {font:{bold:true,sz:14,color:{rgb:NAVY}}};
+  if(ws['B2']) ws['B2'].s = {font:{sz:10,color:{rgb:GREY}}};
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Comerciales');
+  const fname = `Ingresos_Comerciales_${YEARS[0]}-${lastYear}${showComparable?'_'+sanitizeFilename(monthsLabel):''}${search?'_'+sanitizeFilename(searchVal):''}.xlsx`;
+
+  // Generamos el .xlsx normal y luego editamos el XML interno del zip para quitar
+  // las líneas de cuadrícula antes de descargar (xlsx-js-style no lo expone directo).
+  try{
+    const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const zip = await JSZip.loadAsync(wbout);
+    const sheetFiles = Object.keys(zip.files).filter(f => /^xl\/worksheets\/sheet\d+\.xml$/.test(f));
+    for(const f of sheetFiles){
+      let xmlStr = await zip.file(f).async('string');
+      xmlStr = xmlStr.replace(/<sheetView\b/, '<sheetView showGridLines="0"');
+      zip.file(f, xmlStr);
+    }
+    const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(e){
+    XLSX.writeFile(wb, fname, {bookType:'xlsx'});
+  }
+}
+
+async function exportNuevosAnunciantesXLSX(){
+  if(DATA.length === 0) return;
+
+  const agg = buildAggregates(); // mismos comerciales/equipos que en pantalla
+  const { agg: newAgg, detail: detailAgg } = buildNewAdvertisersData();
+  const yearSets = buildAnuncianteYearSets();
+  const visibleYears = YEARS.filter(y => !!yearSets[y-1]);
+  if(visibleYears.length === 0) return;
+
+  let allKeys = Object.keys(agg);
+  const searchVal = document.getElementById('searchBox').value.trim();
+  const search = normalize(searchVal);
+  if(search) allKeys = allKeys.filter(k => normalize(agg[k].label || k).includes(search));
+
+  // Mismo criterio de orden que el desplegable "Ordenar" de la pantalla
+  const sortMode = document.getElementById('sortSelect').value;
+  const lastYear = visibleYears[visibleYears.length - 1];
+  const totalIncomeOf  = k => visibleYears.reduce((s,y)=> s + ((newAgg[k] && newAgg[k][y]) ? newAgg[k][y].income : 0), 0);
+  const lastYearCountOf = k => (newAgg[k] && newAgg[k][lastYear]) ? newAgg[k][lastYear].count : 0;
+  if(sortMode === 'growth-desc') allKeys.sort((a,b)=> lastYearCountOf(b) - lastYearCountOf(a));
+  else if(sortMode === 'growth-asc') allKeys.sort((a,b)=> lastYearCountOf(a) - lastYearCountOf(b));
+  else if(sortMode === 'total-desc') allKeys.sort((a,b)=> totalIncomeOf(b) - totalIncomeOf(a));
+  else if(sortMode === 'total-asc')  allKeys.sort((a,b)=> totalIncomeOf(a) - totalIncomeOf(b));
+  else allKeys.sort((a,b)=> (agg[a].label||a).localeCompare(agg[b].label||b,'es'));
+
+  const teamMap = assignTeamsForKeys(allKeys, agg);
+
+  function colLetter(idx0){
+    let n = idx0+1, s = '';
+    while(n > 0){ const rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+    return s;
+  }
+
+  // Cabecera dinámica: por cada año visible, dos columnas (Nº nuevos anunciantes / Ingreso)
+  const headerCells = ['', 'Comercial'];
+  const colTypes = []; // 'num' | 'eur', una por columna de datos a partir de la C
+  visibleYears.forEach(y => {
+    headerCells.push(`${y} · Nº nuevos`);
+    colTypes.push('num');
+    headerCells.push(`${y} · Ingreso`);
+    colTypes.push('eur');
+  });
+  const COLS = colTypes.map((_,i) => colLetter(i+2)); // +2: saltamos col A (aire) y col B (Comercial)
+
+  function buildRowValues(key){
+    const vals = [];
+    visibleYears.forEach(y => {
+      const cell = (newAgg[key] && newAgg[key][y]) ? newAgg[key][y] : {count:0, income:0};
+      vals.push(cell.count);
+      vals.push(Math.round(cell.income));
+    });
+    return vals;
+  }
+
+  const aoa = [];
+  aoa.push(['', 'Nuevos Anunciantes por Comercial']);
+  aoa.push(['', `${search?`Búsqueda: "${searchVal}" · `:''}Años: ${visibleYears.join(', ')}`]);
+  aoa.push([]);
+  aoa.push(headerCells);
+
+  const rowMeta = [];
+  const thinRowIdxs = [];
+  const sectionRowIdxs = [];
+  const teamTotalRowIdxs = [];
+
+  aoa.push([]);
+  thinRowIdxs.push(aoa.length-1);
+
+  const grandCountTotals = {}, grandIncomeTotals = {};
+  visibleYears.forEach(y => { grandCountTotals[y] = 0; grandIncomeTotals[y] = 0; });
+
+  TEAMS_ORDER.forEach(teamName => {
+    const members = teamMap[teamName];
+    if(!members || members.length === 0) return;
+    const { normal, pinned } = splitPinned(members, agg);
+    const orderedKeys = [...normal, ...pinned];
+
+    aoa.push(['', teamName]);
+    sectionRowIdxs.push(aoa.length-1);
+    aoa.push([]);
+    thinRowIdxs.push(aoa.length-1);
+
+    const teamCountTotals = {}, teamIncomeTotals = {};
+    visibleYears.forEach(y => { teamCountTotals[y] = 0; teamIncomeTotals[y] = 0; });
+
+    orderedKeys.forEach(k => {
+      const rowVals = buildRowValues(k);
+      visibleYears.forEach((y, i) => {
+        teamCountTotals[y]  += rowVals[i*2];
+        teamIncomeTotals[y] += rowVals[i*2+1];
+        grandCountTotals[y]  += rowVals[i*2];
+        grandIncomeTotals[y] += rowVals[i*2+1];
+      });
+      rowMeta.push({rowIdx: aoa.length});
+      aoa.push(['', agg[k].label || k, ...rowVals]);
+    });
+
+    const teamTotalVals = [];
+    visibleYears.forEach(y => { teamTotalVals.push(teamCountTotals[y]); teamTotalVals.push(Math.round(teamIncomeTotals[y])); });
+    teamTotalRowIdxs.push(aoa.length);
+    aoa.push(['', `Total ${teamName}`, ...teamTotalVals]);
+
+    aoa.push([]);
+  });
+
+  // Total global
+  const grandTotalVals = [];
+  visibleYears.forEach(y => { grandTotalVals.push(grandCountTotals[y]); grandTotalVals.push(Math.round(grandIncomeTotals[y])); });
+  const grandTotalRowIdx = aoa.length;
+  aoa.push(['', 'TOTAL GLOBAL', ...grandTotalVals]);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:2},{wch:32}, ...colTypes.map(() => ({wch:16}))];
+
+  const NAVY='FF0D2340', WHITE='FFFFFFFF', LIGHTNAVY='FF1F4E79', GOLD='FFC9A227';
+
+  const headerRow = 3;
+  const rows = ws['!rows'] || [];
+  rows[headerRow] = {hpt:26};
+  ws['!rows'] = rows;
+  ['B', ...COLS].forEach(col => {
+    const addr = col + (headerRow+1);
+    if(ws[addr]) ws[addr].s = {
+      font:{bold:true,color:{rgb:WHITE}},
+      fill:{fgColor:{rgb:NAVY}},
+      alignment:{horizontal:'center',vertical:'center'}
+    };
+  });
+
+  thinRowIdxs.forEach(idx => { rows[idx] = {hpt:4}; });
+  ws['!rows'] = rows;
+
+  const lastColIdx0 = headerCells.length-1;
+  if(!ws['!merges']) ws['!merges'] = [];
+  sectionRowIdxs.forEach(idx => {
+    ws['!merges'].push({s:{r:idx,c:1},e:{r:idx,c:lastColIdx0}});
+    rows[idx] = {hpt:22};
+    ['B', ...COLS].forEach(col => {
+      const addr = col + (idx+1);
+      if(ws[addr]) ws[addr].s = {
+        font:{bold:true,color:{rgb:WHITE},sz:11},
+        fill:{fgColor:{rgb:LIGHTNAVY}},
+        alignment:{horizontal:'left',vertical:'center'}
+      };
+    });
+    const bAddr = 'B'+(idx+1);
+    if(!ws[bAddr]) ws[bAddr] = {t:'s',v:''};
+  });
+  ws['!rows'] = rows;
+
+  // Filas de datos
+  rowMeta.forEach(({rowIdx}) => {
+    const rowNum = rowIdx + 1;
+    ['B', ...COLS].forEach(col => {
+      const addr = col + rowNum;
+      if(!ws[addr]) return;
+      ws[addr].s = {
+        alignment:{horizontal:'center',vertical:'center'},
+        fill:{fgColor:{rgb:WHITE}},
+        border:{bottom:{style:'thin',color:{rgb:'FFE2E6EC'}}}
+      };
+    });
+    COLS.forEach((col,i) => {
+      const addr = col + rowNum;
+      if(!ws[addr]) return;
+      if(colTypes[i] === 'eur') ws[addr].z = '#,##0" €"';
+    });
+  });
+
+  // Filas de total por equipo (negrita, fondo gris claro)
+  teamTotalRowIdxs.forEach(idx => {
+    const rowNum = idx + 1;
+    ['B', ...COLS].forEach(col => {
+      const addr = col + rowNum;
+      if(!ws[addr]) return;
+      ws[addr].s = {
+        font:{bold:true,color:{rgb:'FF0D2340'}},
+        alignment:{horizontal:'center',vertical:'center'},
+        fill:{fgColor:{rgb:'FFF0F2F5'}},
+        border:{top:{style:'thin',color:{rgb:'FFCBD3DE'}}}
+      };
+    });
+    COLS.forEach((col,i) => {
+      const addr = col + rowNum;
+      if(!ws[addr]) return;
+      if(colTypes[i] === 'eur') ws[addr].z = '#,##0" €"';
+    });
+  });
+
+  // Fila de total global (destacada en dorado/navy)
+  {
+    const rowNum = grandTotalRowIdx + 1;
+    rows[grandTotalRowIdx] = {hpt:24};
+    ws['!rows'] = rows;
+    ['B', ...COLS].forEach(col => {
+      const addr = col + rowNum;
+      if(!ws[addr]) return;
+      ws[addr].s = {
+        font:{bold:true,color:{rgb:WHITE},sz:11.5},
+        alignment:{horizontal:'center',vertical:'center'},
+        fill:{fgColor:{rgb:NAVY}}
+      };
+    });
+    COLS.forEach((col,i) => {
+      const addr = col + rowNum;
+      if(!ws[addr]) return;
+      if(colTypes[i] === 'eur') ws[addr].z = '#,##0" €"';
+    });
+  }
+
+  if(ws['B1']) ws['B1'].s = {font:{bold:true,sz:14,color:{rgb:NAVY}}};
+  if(ws['B2']) ws['B2'].s = {font:{sz:10,color:{rgb:'FF6B7280'}}};
+
+  // Segunda hoja: detalle línea a línea de cada anunciante nuevo (mismos datos
+  // que se ven al desplegar cada comercial en pantalla).
+  const detailAoa = [['Año', 'Equipo', 'Comercial', 'Anunciante', 'Marca', 'Publicación', 'Producto', 'Ingreso']];
+  const detailRows = [];
+  Object.keys(agg).forEach(k => {
+    if(search && !normalize(agg[k].label || k).includes(search)) return;
+    const team = agg[k].team || 'Sin Asignar';
+    visibleYears.forEach(y => {
+      const list = detailAgg[k] && detailAgg[k][y];
+      if(!Array.isArray(list)) return;
+      list.forEach(item => {
+        detailRows.push([y, team, agg[k].label || k, item.anunciante, item.marca, item.publicacion, item.producto, Math.round(item.importe)]);
+      });
+    });
+  });
+  const teamRankDetail = t => { const idx = TEAMS_ORDER.indexOf(t); return idx===-1 ? TEAMS_ORDER.length : idx; };
+  detailRows.sort((a,b) => b[0]-a[0] || teamRankDetail(a[1])-teamRankDetail(b[1]) || String(a[2]).localeCompare(String(b[2]),'es') || b[7]-a[7]);
+  detailAoa.push(...detailRows);
+
+  const ws2 = XLSX.utils.aoa_to_sheet(detailAoa);
+  ws2['!cols'] = [{wch:8},{wch:14},{wch:26},{wch:26},{wch:22},{wch:16},{wch:22},{wch:14}];
+  const headerCols2 = ['A','B','C','D','E','F','G','H'];
+  headerCols2.forEach(col => {
+    const addr = col+'1';
+    if(ws2[addr]) ws2[addr].s = {
+      font:{bold:true,color:{rgb:WHITE}},
+      fill:{fgColor:{rgb:NAVY}},
+      alignment:{horizontal:'center',vertical:'center'}
+    };
+  });
+  for(let r=2; r<=detailAoa.length; r++){
+    const addr = 'H'+r;
+    if(ws2[addr]){ ws2[addr].z = '#,##0" €"'; ws2[addr].s = {alignment:{horizontal:'right'}}; }
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Nuevos Anunciantes');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Detalle');
+  const fname = `Nuevos_Anunciantes_${visibleYears[0]}-${visibleYears[visibleYears.length-1]}${search?'_'+sanitizeFilename(searchVal):''}.xlsx`;
+
+  try{
+    const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const zip = await JSZip.loadAsync(wbout);
+    const sheetFiles = Object.keys(zip.files).filter(f => /^xl\/worksheets\/sheet\d+\.xml$/.test(f));
+    for(const f of sheetFiles){
+      let xmlStr = await zip.file(f).async('string');
+      xmlStr = xmlStr.replace(/<sheetView\b/, '<sheetView showGridLines="0"');
+      zip.file(f, xmlStr);
+    }
+    const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(e){
+    XLSX.writeFile(wb, fname, {bookType:'xlsx'});
+  }
+}
+
+function toggleCanal(rowId){
+  const rows = document.querySelectorAll(`tr[data-group="${rowId}"]`);
+  const toggle = document.querySelector(`[data-rowid="${rowId}"]`);
+  const isVisible = rows.length > 0 && rows[0].classList.contains('visible');
+  // Mostrar/ocultar: tabs siempre visibles cuando abierto, canales por defecto
+  rows.forEach(r => {
+    if(!isVisible){
+      // Abrir: mostrar tabs + canales (sectores ocultos)
+      if(r.dataset.view === 'sectores') r.classList.remove('visible');
+      else r.classList.add('visible');
+    } else {
+      r.classList.remove('visible');
+    }
+  });
+  if(toggle) toggle.textContent = isVisible ? '▶' : '▼';
+  // Reset tabs al abrir
+  if(!isVisible){
+    const tabsEl = document.getElementById('tabs-' + rowId);
+    if(tabsEl){
+      tabsEl.querySelectorAll('.breakdown-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+    }
+  }
+}
+
+function switchBreakdown(rowId, view, btn){
+  event && event.stopPropagation();
+  // Cambiar tab activo
+  const tabsEl = document.getElementById('tabs-' + rowId);
+  if(tabsEl) tabsEl.querySelectorAll('.breakdown-tab').forEach(t => t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  // Mostrar/ocultar filas según vista
+  const rows = document.querySelectorAll(`tr[data-group="${rowId}"][data-view]`);
+  rows.forEach(r => {
+    if(r.dataset.view === view) r.classList.add('visible');
+    else r.classList.remove('visible');
+  });
+}
+
+function toggleTeam(teamId){
+  const content = document.getElementById('content-' + teamId);
+  const toggle  = document.getElementById('toggle-' + teamId);
+  if(!content || !toggle) return;
+  if(content.style.display === 'none'){
+    content.style.display = '';
+    toggle.textContent = '▲ Ocultar';
+  } else {
+    content.style.display = 'none';
+    toggle.textContent = '▼ Mostrar';
+  }
+}
+</script>
+</body>
+</html>
