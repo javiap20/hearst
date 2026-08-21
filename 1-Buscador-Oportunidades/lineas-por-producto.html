@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Líneas por Producto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#0d2340;--navy-light:#16345f;--accent:#00a3e0;
+    --green:#1f9d55;--red:#d64545;--bg:#f4f6f9;
+    --border:#e2e6ec;--text:#1f2937;--muted:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--text);}
+  header{background:linear-gradient(90deg,var(--navy),var(--navy-light));color:#fff;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  header h1{margin:0;font-size:20px;font-weight:600;letter-spacing:.3px;}
+  header .subtitle{font-size:13px;color:#c9d6e8;margin-top:4px;}
+  .fechas-wrap{display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;}
+  .fecha-canal{font-size:11px;color:#c9d6e8;}
+  .fecha-canal span{color:#fff;font-weight:600;}
+  .upload-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+  .up-multi-sub{font-size:12px;color:#c9d6e8;}
+  .up-cards{display:flex;gap:12px;flex-wrap:wrap;}
+  .up-card{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:8px;min-width:160px;}
+  .up-card:hover{background:rgba(255,255,255,0.15);}
+  .up-card.loaded{background:rgba(31,157,85,0.25);border-color:#1f9d55;}
+  .up-icon{font-size:16px;}
+  .up-canal-name{font-size:13px;font-weight:700;color:#fff;}
+  .up-mini-status{font-size:11px;color:#c9d6e8;margin-left:auto;}
+  .up-card.loaded .up-mini-status{color:#2ecc71;font-weight:600;}
+  main{padding:24px 32px 60px;max-width:1400px;margin:0 auto;}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:16px;}
+  .mf-label{font-size:12.5px;font-weight:600;color:var(--muted);margin-right:2px;white-space:nowrap;}
+  .month-filter{display:none;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;}
+  .mf-chips{display:flex;gap:4px;flex-wrap:wrap;}
+  .mf-chip{padding:5px 10px;border-radius:14px;border:1px solid var(--border);background:#f4f6f9;font-size:12px;cursor:pointer;color:var(--text);user-select:none;transition:.15s;}
+  .mf-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .mf-chip:hover{border-color:var(--accent);}
+  .mf-actions{display:flex;gap:6px;margin-left:auto;}
+  .mf-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:12px;cursor:pointer;color:var(--navy);font-weight:600;white-space:nowrap;}
+  .mf-btn:hover{background:#eef2f7;}
+  .mf-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .pub-filter{display:none;flex-direction:column;gap:4px;margin-bottom:14px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;}
+  .pub-filter-head{display:flex;align-items:center;gap:10px;}
+  .pub-group{display:flex;flex-direction:column;gap:4px;padding-top:14px;}
+  .pub-group:first-child{padding-top:0;}
+  .pub-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .pub-canal-label{font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap;letter-spacing:.3px;text-transform:uppercase;}
+  .pub-row .mf-chip{font-size:9px;padding:3px 8px;}
+  .empty-state{background:#fff;border:1px dashed var(--border);border-radius:10px;padding:60px 20px;text-align:center;color:var(--muted);}
+  .empty-state b{color:var(--text);}
+  .tab-bar{display:none;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);flex-wrap:wrap;}
+  .tab-btn{padding:9px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;background:#f4f6f9;margin-bottom:-2px;transition:.15s;user-select:none;white-space:nowrap;}
+  .tab-btn:hover{color:var(--navy);background:#eef2f7;}
+  .tab-btn.active{color:var(--navy);background:#fff;border-color:var(--border);border-bottom-color:#fff;font-weight:700;}
+
+  /* ── Filtro de Comercial ── */
+  .comercial-filter{display:flex;align-items:center;gap:8px;flex:1;min-width:260px;position:relative;}
+  .comercial-filter input{padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:100%;max-width:340px;}
+  .comercial-filter input:focus{outline:none;border-color:var(--accent);}
+  #comercialClearBtn{display:none;}
+
+  /* ── Filtro de Sector ── */
+  .sector-filters-label{font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 8px;}
+  .sector-btns{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;}
+  .sector-btn{padding:7px 14px;border-radius:16px;border:1px solid var(--border);background:#f4f6f9;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--navy);user-select:none;transition:.15s;}
+  .sector-btn:hover{border-color:var(--accent);}
+  .sector-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+  /* ── Filtro de Franja de importe ── */
+  .franja-filter{display:none;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;}
+  .franja-filter input[type="number"]{width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
+  .franja-filter input[type="number"]:focus{outline:none;border-color:var(--accent);}
+  .franja-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:12px;cursor:pointer;color:var(--navy);font-weight:600;white-space:nowrap;}
+  .franja-btn:hover{background:#eef2f7;}
+
+  /* ── Bloques de contenido ── */
+  #blocksContainer{display:flex;flex-direction:column;gap:20px;}
+  .block-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px 24px;}
+  .block-card-title{font-size:14.5px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .canal-digital-dot{color:#00a3e0;}.canal-print-dot{color:#e67e22;}.canal-eventos-dot{color:#8e44ad;}
+  table.mini-canal-table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed;}
+  table.mini-canal-table thead th{background:var(--navy);color:#fff;text-align:center;padding:9px 8px;font-weight:600;}
+  table.mini-canal-table thead th:first-child{text-align:left;}
+  table.mini-canal-table tbody td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  table.mini-canal-table tbody td:first-child{text-align:left;font-weight:600;color:var(--navy);}
+  table.mini-canal-table tbody tr:last-child td{border-bottom:none;}
+  table.mini-canal-table tbody tr:hover{background:#f8fafc;}
+  table.mini-canal-table tfoot td{padding:9px 8px;text-align:center;font-weight:700;color:var(--navy);background:#eef2f7;}
+  table.mini-canal-table tfoot td:first-child{text-align:left;}
+  table.mini-canal-table th:nth-child(1),table.mini-canal-table td:nth-child(1){width:46%;}
+  table.mini-canal-table th:nth-child(2),table.mini-canal-table td:nth-child(2){width:18%;}
+  table.mini-canal-table th:nth-child(3),table.mini-canal-table td:nth-child(3){width:18%;}
+  table.mini-canal-table th:nth-child(4),table.mini-canal-table td:nth-child(4){width:18%;}
+  table.mini-canal-table.no-franja th:nth-child(1),table.mini-canal-table.no-franja td:nth-child(1){width:52%;}
+  table.mini-canal-table.no-franja th:nth-child(3),table.mini-canal-table.no-franja td:nth-child(3){width:24%;}
+  table.mini-canal-table.no-franja th:nth-child(4),table.mini-canal-table.no-franja td:nth-child(4){width:24%;}
+  .franja-col{display:none;}
+  table.mini-canal-table tbody td.franja-col{background:#fdeef3;font-weight:700;color:#a3265a;}
+  table.mini-canal-table tbody tr:hover td.franja-col{background:#fbe1ea;}
+  table.mini-canal-table tfoot td.franja-col{background:#f6c8da;}
+
+  /* ── Desglose de líneas por producto ── */
+  .desglose-toggle{display:inline-flex;align-items:center;justify-content:center;width:16px;cursor:pointer;color:var(--accent);font-size:9px;margin-right:6px;transition:transform .15s;user-select:none;}
+  .desglose-toggle.open{transform:rotate(90deg);}
+  .desglose-spacer{display:inline-block;width:22px;}
+  tr.producto-row.expanded td{background:#eaf5fc;}
+  tr.producto-row.row-dimmed td{color:#b9c1cb!important;opacity:.55;}
+  tr.producto-row.row-dimmed td.franja-col{color:#eccbda!important;}
+  tr.desglose-row td{padding:0;border-bottom:1px solid var(--border);background:#f8fafc;}
+  .desglose-wrap{padding:10px 16px 14px 38px;}
+  table.desglose-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+  table.desglose-table td.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  table.desglose-table thead th{background:#e7edf4;color:var(--navy);text-align:center;padding:6px 10px;font-weight:600;border-bottom:1px solid var(--border);}
+  table.desglose-table tbody td{padding:6px 10px;border-bottom:1px solid #eaeef3;color:var(--text);}
+  table.desglose-table tbody tr:last-child td{border-bottom:none;}
+  table.desglose-table tbody tr:hover{background:#eef2f7;}
+  table.desglose-table td.desglose-ingreso,table.desglose-table th.desglose-ingreso-th{text-align:right;}
+  table.desglose-table td.desglose-ingreso{font-weight:700;color:var(--navy);}
+
+
+  /* ── Selector de vista por canal: Anunciantes / Franja presupuestaria ── */
+  .channel-title-row{justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .channel-title-label{display:flex;align-items:center;gap:8px;}
+  .channel-view-toggle{display:inline-flex;align-items:center;gap:3px;padding:3px;background:#eef2f7;border:1px solid var(--border);border-radius:9px;}
+  .channel-view-btn{border:none;background:transparent;color:var(--muted);font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:.15s;}
+  .channel-view-btn:hover{color:var(--navy);background:#fff;}
+  .channel-view-btn.active{background:var(--navy);color:#fff;box-shadow:0 1px 2px rgba(13,35,64,.12);}
+
+  /* ── Vista Franja presupuestaria, separada producto por producto ── */
+  table.budget-range-table th:nth-child(1),table.budget-range-table td:nth-child(1){width:52%;}
+  table.budget-range-table th:nth-child(2),table.budget-range-table td:nth-child(2),
+  table.budget-range-table th:nth-child(3),table.budget-range-table td:nth-child(3){width:18%;}
+  table.budget-range-table th:nth-child(4),table.budget-range-table td:nth-child(4){width:12%;}
+  tr.budget-product-row{cursor:pointer;}
+  tr.budget-product-row td{background:#e8edf4!important;color:var(--navy)!important;font-weight:800!important;text-transform:none;letter-spacing:.01em;padding:10px 12px!important;border-top:10px solid #fff;border-bottom:1px solid #d7dee8!important;transition:opacity .18s ease,filter .18s ease,background .18s ease;}
+  tr.budget-product-row:first-child td{border-top:0;}
+  tr.budget-product-row:hover td{background:#dde6f0!important;}
+  tr.budget-product-row.expanded td{background:#dceaf5!important;}
+  tr.budget-product-row.row-dimmed td{color:#a9b2bf!important;opacity:.48;filter:grayscale(1);}
+  tr.budget-product-row.row-dimmed:hover td{opacity:.68;}
+  .budget-product-toggle{display:inline-flex;align-items:center;justify-content:center;width:16px;margin-right:7px;color:var(--accent);font-size:9px;transition:transform .15s;user-select:none;}
+  .budget-product-toggle.open{transform:rotate(90deg);}
+  .budget-product-meta{font-size:11px;font-weight:600;color:#75849a;margin-left:8px;}
+  tr.budget-product-row.row-dimmed .budget-product-meta{color:#aeb6c1;}
+  tr.budget-range-row{cursor:pointer;}
+  tr.budget-range-row td{transition:opacity .18s ease,filter .18s ease,background .18s ease,color .18s ease;}
+  tr.budget-range-row td:first-child{padding-left:20px!important;font-weight:700;color:var(--navy);}
+  tr.budget-range-row.expanded td{background:#eef6ff;}
+  tr.budget-range-row.row-dimmed td{color:#aeb6c1!important;opacity:.42;filter:grayscale(1);}
+  tr.budget-range-row.row-dimmed:hover td{opacity:.62;}
+  tr.budget-range-row.row-dimmed .budget-delta{color:#aeb6c1!important;}
+  .budget-range-toggle{display:inline-flex;align-items:center;justify-content:center;width:16px;margin-right:7px;color:#7c93b5;font-size:9px;transition:transform .15s;user-select:none;}
+  .budget-range-toggle.open{transform:rotate(90deg);}
+  tr.budget-pub-row{cursor:help;}
+  tr.budget-pub-row td{background:#f7f8fb;font-size:11.8px;color:var(--text);}
+  tr.budget-pub-row td:first-child{padding-left:52px!important;font-weight:600;color:var(--text);}
+  tr.budget-pub-row:hover td{background:#eef2f7!important;}
+  .budget-hover-tooltip{position:fixed;z-index:9999;display:none;width:min(940px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 24px));overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 14px 36px rgba(13,35,64,.22);padding:12px 14px;pointer-events:auto;color:var(--text);font-size:11.5px;line-height:1.35;}
+  .budget-hover-tooltip.visible{display:block;}
+  .budget-tooltip-title{font-size:13px;font-weight:800;color:var(--navy);padding-bottom:7px;margin-bottom:7px;border-bottom:1px solid var(--border);}
+  .budget-tooltip-year{font-size:11px;font-weight:800;color:#526277;text-transform:uppercase;letter-spacing:.035em;margin:8px 0 5px;}
+  .budget-tooltip-empty{color:var(--muted);font-style:italic;padding:3px 0 5px;}
+  .budget-tooltip-table{display:grid;grid-template-columns:minmax(270px,2.3fr) minmax(110px,1fr) minmax(170px,1.45fr) minmax(86px,.65fr);border:1px solid #e5e9ef;border-radius:7px;overflow:visible;}
+  .budget-tooltip-cell{padding:5px 7px;border-bottom:1px solid #edf0f4;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .budget-tooltip-cell.has-more-products{position:relative;overflow:visible;}
+  .budget-tooltip-head{background:#eef2f7;color:#536176;font-weight:700;font-size:10.5px;}
+  .budget-tooltip-amount{text-align:right;font-weight:800;color:var(--navy);}
+  .budget-tooltip-table .budget-tooltip-cell:nth-last-child(-n+4){border-bottom:none;}
+  .budget-tooltip-shared{display:inline-block;margin-left:5px;padding:1px 5px;border-radius:8px;background:#edf7f0;color:#237a45;font-size:9.5px;font-weight:700;vertical-align:1px;}
+  .budget-tooltip-more-wrap{position:relative;display:inline-block;overflow:visible;}
+  .budget-tooltip-more-products{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:9px;background:#fff3d6;border:1px solid #f0cf82;color:#8a5a00;font-family:inherit;font-size:9.5px;line-height:1.35;font-weight:800;vertical-align:1px;cursor:pointer;}
+  .budget-tooltip-more-products.ambiguous{background:#f5efff;border-color:#d9c7f2;color:#68449a;}
+  .budget-tooltip-more-popover{display:none;position:fixed;z-index:10050;left:0;top:0;width:min(560px,calc(100vw - 32px));max-height:min(360px,calc(100vh - 32px));overflow:auto;padding:14px 16px;background:#fff;border:1px solid #d9c7f2;border-radius:10px;box-shadow:0 14px 34px rgba(64,32,96,.24);color:var(--text);font-size:12px;font-weight:400;line-height:1.55;white-space:normal;text-align:left;}
+  .budget-tooltip-more-wrap.open{z-index:10060;}
+  .budget-tooltip-more-wrap.open .budget-tooltip-more-popover{display:block;}
+  .budget-tooltip-more-products:hover,.budget-tooltip-more-products:focus{background:#ffe8aa;border-color:#dcae45;outline:none;}
+  .budget-tooltip-more-title{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:7px;}
+  .budget-tooltip-more-line{margin-top:5px;}
+  .budget-tooltip-more-total{margin-top:10px;padding-top:9px;border-top:1px solid #eadcf8;color:#7e22ce;font-size:14px;font-weight:900;}
+  .budget-tooltip-more-note{margin-top:8px;color:var(--muted);font-size:10.5px;}
+  .budget-delta{font-weight:800;}
+  .budget-delta.up{color:var(--green);}
+  .budget-delta.down{color:#ef123d;}
+  .budget-delta.flat{color:var(--muted);}
+  .budget-note{margin-top:10px;font-size:11px;color:#8792a2;line-height:1.45;}
+
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Líneas por Producto</h1>
+    <div class="subtitle">Nº de líneas reales e ingreso por producto — Digital / Print / Eventos</div>
+    <div class="fechas-wrap" id="fechasWrap" style="display:none"></div>
+  </div>
+  <div class="upload-wrap">
+    <div class="up-multi-sub">Cargando automáticamente los Excel desde SharePoint…</div>
+    <div class="up-cards">
+      <div class="up-card" id="up-card-Digital" onclick="document.getElementById('fileDigital').click()">
+        <span class="up-icon">💻</span><span class="up-canal-name">Digital</span>
+        <div class="up-mini-status" id="up-status-Digital">Buscando en SharePoint…</div>
+        <input type="file" id="fileDigital" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Digital')">
+      </div>
+      <div class="up-card" id="up-card-Print" onclick="document.getElementById('filePrint').click()">
+        <span class="up-icon">📰</span><span class="up-canal-name">Print</span>
+        <div class="up-mini-status" id="up-status-Print">Buscando en SharePoint…</div>
+        <input type="file" id="filePrint" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Print')">
+      </div>
+      <div class="up-card" id="up-card-Eventos" onclick="document.getElementById('fileEventos').click()">
+        <span class="up-icon">🎤</span><span class="up-canal-name">Eventos</span>
+        <div class="up-mini-status" id="up-status-Eventos">Buscando en SharePoint…</div>
+        <input type="file" id="fileEventos" accept=".xlsx,.xls" style="display:none" onchange="onFileInputCanal(this,'Eventos')">
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="monthFilter" class="month-filter">
+    <span class="mf-label">Meses:</span>
+    <div class="mf-chips" id="mfChips"></div>
+    <div class="mf-actions">
+      <button class="mf-btn" id="mfNone" onclick="setMonthMode('none')">Ninguno</button>
+      <button class="mf-btn active" id="mfClosed" onclick="setMonthMode('closed')">Cerrados</button>
+      <button class="mf-btn" id="mfAll" onclick="setMonthMode('all')">Todos</button>
+    </div>
+  </div>
+
+  <div id="pubFilter" class="pub-filter">
+    <div class="pub-filter-head">
+      <span class="mf-label">Publicaciones:</span>
+      <div class="mf-actions">
+        <button class="mf-btn" onclick="setAllPubs(false)">Ninguno</button>
+        <button class="mf-btn active" onclick="setAllPubs(true)">Todos</button>
+      </div>
+    </div>
+    <div id="pubGroups"></div>
+  </div>
+
+  <div class="toolbar" id="toolbar" style="display:none">
+    <div class="comercial-filter">
+      <span class="mf-label">Comercial:</span>
+      <input type="text" id="comercialInput" list="comercialDatalist" placeholder="Escribe o selecciona un comercial…" oninput="onComercialInput()" autocomplete="off">
+      <datalist id="comercialDatalist"></datalist>
+      <button class="mf-btn" id="comercialClearBtn" onclick="clearComercial()">✕</button>
+    </div>
+    <div class="year-filter" id="yearFilter" style="display:none;align-items:center;gap:8px;">
+      <span class="mf-label">Año:</span>
+      <select class="sort-select" id="yearSelect" onchange="onYearChange()" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;"></select>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="tabBar">
+    <div class="tab-btn active" data-tab="todos" onclick="switchTab('todos',this)">Todos</div>
+    <div class="tab-btn" data-tab="madrid-lujo" onclick="switchTab('madrid-lujo',this)">Madrid Lujo</div>
+    <div class="tab-btn" data-tab="madrid-lifestyle" onclick="switchTab('madrid-lifestyle',this)">Madrid Lifestyle</div>
+    <div class="tab-btn" data-tab="barcelona" onclick="switchTab('barcelona',this)">Barcelona</div>
+    <div class="tab-btn" data-tab="internacional" onclick="switchTab('internacional',this)">Internacional</div>
+    <div class="tab-btn" data-tab="programatica" onclick="switchTab('programatica',this)">Programática</div>
+  </div>
+
+  <div id="sectorFilterWrap" style="display:none">
+    <div class="sector-filters-label">Elige un sector si quieres ver el desglose solo de ese sector:</div>
+    <div class="sector-btns" id="sectorBtns"></div>
+  </div>
+
+  <div class="franja-filter" id="franjaFilter">
+    <span class="mf-label">Franja de importe (€):</span>
+    <span style="font-size:12px;color:var(--muted)">Desde</span>
+    <input type="number" id="franjaDesde" placeholder="—" oninput="onFranjaChange()">
+    <span style="font-size:12px;color:var(--muted)">Hasta</span>
+    <input type="number" id="franjaHasta" placeholder="—" oninput="onFranjaChange()">
+    <button class="franja-btn" onclick="clearFranja()">✕ Limpiar</button>
+  </div>
+
+  <div id="blocksContainer">
+    <div class="empty-state"><p>📊 <b>Sin datos</b></p><p>Esperando la carga automática de los Excel…</p></div>
+  </div>
+</main>
+
+<div id="budgetHoverTooltip" class="budget-hover-tooltip" role="tooltip" aria-hidden="true"></div>
+
+<script>
+let DATA = [];
+let ALL_YEARS = [];
+let selectedYear = new Date().getFullYear();
+let hasMesColumn = false;
+let selectedMonths = new Set();
+let activeTab = 'todos';
+let selectedComercial = '';
+let selectedPubs = {}; // { Digital: Set([...]), Print: Set([...]), Eventos: Set([...]) }
+let ALL_COMERCIALES = [];
+let selectedSector = '';
+let expandedProductos = new Set(); // claves "canal|||producto" con el desglose abierto
+let canalViewMode = {Digital:'anunciantes',Print:'anunciantes',Eventos:'anunciantes'};
+let expandedBudgetProduct = {Digital:null,Print:null,Eventos:null}; // un producto abierto por canal; todos empiezan plegados
+let expandedBudgetRanges = new Set(); // claves "canal|||producto|||rango" abiertas en la vista presupuestaria
+let budgetTooltipRegistry = new Map();
+let budgetTooltipSeq = 0;
+const CANAL_FECHAS = {};
+const CANALES = ['Digital','Print','Eventos'];
+const CANAL_ICON = {Digital:'💻',Print:'📰',Eventos:'🎤'};
+const CANAL_DOT = {Digital:'canal-digital-dot',Print:'canal-print-dot',Eventos:'canal-eventos-dot'};
+
+const SECTORES_MADRID_LUJO = ['BELLEZA E HIGIENE','DECORACION','FINANZAS','JOYERIA/RELOJERIA','MODA','SALUD'];
+const SECTORES_MADRID_LIFESTYLE = ['AAPP','DEPORTES Y TIEMPO LIBRE','ENERGIA','ENTRETENIMIENTO','MOTOR','RETAIL','TECNOLOGIA','VIAJES','ALIMENTACION','BEBIDAS'];
+const MES_ABBR = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MES_NOMBRES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+const EXCEL_URLS = {
+  Digital: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y',
+  Print:   'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU',
+  Eventos: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU'
+};
+
+const HEADER_ALIASES = {
+  area:        ['áreas','areas','área','area','equipo','team'],
+  claseOrden:  ['clase de orden','clase orden','claseorden','clase_orden','order class','order type'],
+  anio:        ['año inserción','ano insercion','año insercion','ano inserción','año'],
+  mes:         ['mes inserción','mes insercion','mes'],
+  importe:     ['imp.neto a comisionar','imp neto a comisionar','importe neto a comisionar','imp.neto comisionar'],
+  sector:      ['sector'],
+  anunciante:  ['anunciante'],
+  marca:       ['marca'],
+  comercial:   ['comercial'],
+  publicacion: ['publicación','publicacion','publicaciones','cabecera','revista','site','medio'],
+  detalle:     ['detalle'],
+  producto:    ['producto','productos'],
+  familia:     ['familia','familias']
+};
+
+function normalize(str){
+  return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+// Elle se reparte en tres publicaciones según la URL de la columna Detalle:
+// contiene "gourmet" -> Elle Gourmet; contiene "viajes"/"travel" -> Elle Travel;
+// cualquier otro caso (o vacío) de la publicación Elle -> Elle (revista general).
+// En Digital, la columna Publicación trae dominios (www.elle.com/es/, cosmopolitan.com...);
+// se limpian prefijos/sufijos de URL para que el filtro sea legible.
+function cleanDigitalPub(raw){
+  let s=String(raw||'').trim();
+  if(!s) return '';
+  s=s.replace(/^https?:\/\//i,'');
+  s=s.replace(/^www\./i,'');
+  s=s.replace(/\/+$/,'');
+  s=s.replace(/\/es$/i,'');
+  s=s.replace(/\.(com|es)$/i,'');
+  s=s.replace(/\/+$/,'');
+  s=s.trim();
+  if(s.toLowerCase()==='womenshealthmag') return 'Womenshealth';
+  return s;
+}
+function titleCase(s){
+  if(!s) return s;
+  const lower=s.toLowerCase();
+  return lower.charAt(0).toUpperCase()+lower.slice(1);
+}
+function getPublicacion(d){
+  // Para Digital-Elle el split viene resuelto en d.pubLabel (asignado en processWorkbook)
+  if(d.pubLabel) return d.pubLabel;
+  if(d.canal==='Digital'){
+    const clean=cleanDigitalPub(d.publicacion);
+    return clean?titleCase(clean):'SIN PUBLICACIÓN';
+  }
+  // Print y Eventos: forzamos "Fotogramas & Video" (o variantes) a mostrarse solo como "Fotogramas"
+  const raw=d.publicacion||'SIN PUBLICACIÓN';
+  if(normalize(raw).includes('fotogramas')) return 'FOTOGRAMAS';
+  return raw;
+}
+
+
+/* ────────────── MARCA VISUAL: MÁS PRODUCTOS EN PEDIDOS INTERNACIONALES J ──────────────
+   Esta lógica NO modifica el ingreso de la línea ni su franja presupuestaria.
+   Solo detecta si una activación J - PAGO INTERNACIONAL DIRECTO tiene líneas
+   compatibles de Article Translated y/o Content Ignition, para marcarla en el tooltip. */
+const J_MORE_PRODUCTS=['Article Translated','Content Ignition'];
+function isInternationalDirectOrder(it){
+  const n=normalize(it&&it.claseOrden);
+  return n==='j - pago internacional directo'||n==='j-pago internacional directo'||(n.startsWith('j')&&n.includes('pago internacional directo'));
+}
+function isJMoreProduct(producto){
+  const n=normalize(producto);
+  return J_MORE_PRODUCTS.some(p=>n===normalize(p));
+}
+function jMoreProductsMatchKey(it){
+  return [
+    it&&it.anio,
+    it&&it.mes,
+    normalize(it&&it.anunciante),
+    normalize(it&&it.marca),
+    normalize(getPublicacion(it)),
+    normalize(it&&it.comercial)
+  ].join('|||');
+}
+function jMoreProductsRepairKey(it){
+  return [
+    jMoreProductsMatchKey(it),
+    normalize(it&&it.producto),
+    normalize(it&&it.familia),
+    normalize(it&&it.canal),
+    normalize(it&&it.team)
+  ].join('|||');
+}
+function cleanJMoreProductRows(sourceItems){
+  const groups=new Map();
+  (sourceItems||[])
+    .filter(it=>isInternationalDirectOrder(it)&&isJMoreProduct(it.producto))
+    .forEach((it,idx)=>{
+      const key=jMoreProductsRepairKey(it);
+      if(!groups.has(key)) groups.set(key,[]);
+      groups.get(key).push({...it,_sourceOrder:idx});
+    });
+
+  const cleaned=[];
+  groups.forEach(groupItems=>{
+    const positives=groupItems.filter(it=>it.importe>0).map(it=>({...it,_used:false}));
+    const negatives=groupItems.filter(it=>it.importe<0).map(it=>({...it,_used:false}));
+
+    // Reparos exactos.
+    negatives.forEach(neg=>{
+      const target=Math.round(Math.abs(neg.importe)*100);
+      const exact=positives.find(pos=>!pos._used&&Math.round(pos.importe*100)===target);
+      if(exact){ exact._used=true; neg._used=true; }
+    });
+
+    // Reparos parciales sobre la positiva superviviente de mayor importe.
+    negatives.forEach(neg=>{
+      if(neg._used) return;
+      const target=Math.round(Math.abs(neg.importe)*100);
+      const partial=positives
+        .filter(pos=>!pos._used&&Math.round(pos.importe*100)>target)
+        .sort((a,b)=>b.importe-a.importe||a._sourceOrder-b._sourceOrder)[0];
+      if(partial){
+        partial.importe=Math.round((partial.importe-Math.abs(neg.importe))*100)/100;
+        neg._used=true;
+      }
+    });
+
+    positives.filter(pos=>!pos._used&&pos.importe>0).forEach(pos=>cleaned.push(pos));
+  });
+  return cleaned.map(({_sourceOrder,_used,...it})=>it);
+}
+function markJMoreProducts(mainItems,allFilteredRows){
+  const result=(mainItems||[]).map(it=>({...it}));
+  const mainsByKey=new Map();
+  result.forEach(it=>{
+    if(it.importe<=0||!isInternationalDirectOrder(it)||isJMoreProduct(it.producto)) return;
+    const key=jMoreProductsMatchKey(it);
+    if(!mainsByKey.has(key)) mainsByKey.set(key,[]);
+    mainsByKey.get(key).push(it);
+  });
+
+  const complementsByKey=new Map();
+  cleanJMoreProductRows(allFilteredRows).forEach(it=>{
+    const key=jMoreProductsMatchKey(it);
+    if(!complementsByKey.has(key)) complementsByKey.set(key,[]);
+    complementsByKey.get(key).push(it);
+  });
+
+  complementsByKey.forEach((complements,key)=>{
+    const mains=mainsByKey.get(key)||[];
+    if(mains.length===0) return;
+    const byProduct=new Map();
+    complements.forEach(it=>{
+      const label=it.producto||'(sin producto)';
+      byProduct.set(label,(byProduct.get(label)||0)+it.importe);
+    });
+    const components=Array.from(byProduct.entries()).map(([producto,importe])=>({
+      producto,
+      importe:Math.round(importe*100)/100
+    }));
+    if(components.length===0) return;
+
+    if(mains.length===1){
+      mains[0].jMoreProducts=true;
+      mains[0].jMoreProductsComponents=components;
+    }else{
+      mains.forEach(main=>{
+        main.jMoreProducts=true;
+        main.jMoreProductsAmbiguous=true;
+        main.jMoreProductsMainCount=mains.length;
+        main.jMoreProductsComponents=components;
+      });
+    }
+  });
+  return result;
+}
+function jMoreProductsTooltip(it){
+  const components=(it&&it.jMoreProductsComponents)||[];
+  const detail=components.map(c=>`${c.producto}: ${formatEURTooltip(c.importe)}`).join(' + ');
+  const extras=components.reduce((sum,c)=>sum+c.importe,0);
+  const combined=Math.round(((Number(it&&it.importe)||0)+extras)*100)/100;
+  if(it&&it.jMoreProductsAmbiguous){
+    return `Más productos encontrados (${detail}), pero hay ${it.jMoreProductsMainCount||'varias'} líneas principales compatibles y no se asignan automáticamente. El ingreso y la franja mostrados no cambian.`;
+  }
+  return `Caso internacional J. Ingreso de esta línea: ${formatEURTooltip(it&&it.importe)}. Más productos: ${detail}. Total conjunto: ${formatEURTooltip(combined)}. El ingreso y la franja mostrados no cambian.`;
+}
+function jMoreProductsPopoverHtml(it){
+  const components=(it&&it.jMoreProductsComponents)||[];
+  const detail=components.map(c=>`${escapeHtml(c.producto)}: ${formatEURTooltip(c.importe)}`).join(' + ');
+  const extras=components.reduce((sum,c)=>sum+c.importe,0);
+  const combined=Math.round(((Number(it&&it.importe)||0)+extras)*100)/100;
+  if(it&&it.jMoreProductsAmbiguous){
+    return `<div class="budget-tooltip-more-popover" role="note">
+      <div class="budget-tooltip-more-title">Más productos encontrados</div>
+      <div class="budget-tooltip-more-line">${detail}</div>
+      <div class="budget-tooltip-more-line">Hay ${it.jMoreProductsMainCount||'varias'} líneas principales compatibles y no se asignan automáticamente.</div>
+      <div class="budget-tooltip-more-note">El ingreso y la franja mostrados no cambian.</div>
+    </div>`;
+  }
+  return `<div class="budget-tooltip-more-popover" role="note">
+    <div class="budget-tooltip-more-title">Caso internacional J</div>
+    <div class="budget-tooltip-more-line">Ingreso de esta línea: ${formatEURTooltip(it&&it.importe)}</div>
+    <div class="budget-tooltip-more-line">Más productos: ${detail}</div>
+    <div class="budget-tooltip-more-total">Total conjunto: ${formatEURTooltip(combined)}</div>
+    <div class="budget-tooltip-more-note">El ingreso y la franja mostrados no cambian.</div>
+  </div>`;
+}
+
+function findColIndex(headerRow, aliases){
+  const nh=headerRow.map(normalize);
+  for(const a of aliases){ const i=nh.indexOf(normalize(a)); if(i!==-1) return i; }
+  return -1;
+}
+function parseMonth(val){
+  if(!val) return null;
+  const n=parseInt(val,10);
+  if(!isNaN(n)&&n>=1&&n<=12) return n;
+  const norm=normalize(String(val));
+  const idx=MES_NOMBRES.findIndex(m=>norm.startsWith(normalize(m)));
+  return idx!==-1?idx+1:null;
+}
+function formatEUR(val){
+  if(val===null||val===undefined||isNaN(val)) return '-';
+  const sign=val<0?'-':'';
+  const str=Math.abs(Math.round(val)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return sign+str+'\u00A0\u20AC';
+}
+function formatInt(val){
+  if(val===null||val===undefined||isNaN(val)) return '-';
+  const sign=val<0?'-':'';
+  return sign+Math.abs(Math.round(val)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+}
+function calcCountPct(cur,prev){
+  if(prev>0) return ((cur-prev)/prev)*100;
+  if(cur>0) return 100;
+  return null;
+}
+function formatPctValue(val){
+  if(val===null||val===undefined||!isFinite(val)) return '—';
+  const rounded=Math.round(val*10)/10;
+  const abs=Math.abs(rounded);
+  const shown=Number.isInteger(abs)?abs.toFixed(0):abs.toFixed(1).replace('.',',');
+  return (rounded>0?'+':(rounded<0?'-':''))+shown+'%';
+}
+function pctClass(val){
+  if(val===null||Math.abs(val)<0.05) return 'flat';
+  return val>0?'up':'down';
+}
+function formatEURExact(val){
+  if(val===null||val===undefined||isNaN(val)) return '-';
+  const sign=val<0?'-':'';
+  const str=Math.abs(Math.round(val)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return sign+str+'\u00A0\u20AC';
+}
+function formatEURTooltip(val){
+  if(val===null||val===undefined||isNaN(val)) return '-';
+  // Forzado manual: algunos navegadores no separan los importes de cuatro cifras
+  // en es-ES (1013 en vez de 1.013). Aquí siempre mostramos punto de millar.
+  const sign=val<0?'-':'';
+  const str=Math.abs(Math.round(val)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return sign+str+'\u00A0\u20AC';
+}
+function escapeHtml(str){
+  return String(str===null||str===undefined?'':str).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function getClosedMonths(){
+  const currentMonth = new Date().getMonth() + 1;
+  const closed = new Set();
+  for(let m = 1; m < currentMonth; m++) closed.add(m);
+  return closed;
+}
+
+/* ────────────── CARGA DE EXCEL ────────────── */
+async function autoLoadFromServer(){
+  await Promise.all(CANALES.map(async canal=>{
+    try{
+      const res=await fetch(EXCEL_URLS[canal],{cache:'no-cache'});
+      if(!res.ok) throw new Error('No encontrado');
+      const buffer=await res.arrayBuffer();
+      processWorkbook(new Uint8Array(buffer),canal,canal.toUpperCase()+'.xlsx');
+    }catch(e){ markCanalPending(canal); }
+  }));
+}
+function markCanalLoaded(canal,filename,fecha){
+  const card=document.getElementById('up-card-'+canal);
+  const status=document.getElementById('up-status-'+canal);
+  if(card) card.classList.add('loaded');
+  if(status) status.textContent='✓ '+filename+(fecha?' · '+fecha:'');
+  updateFechasHeader();
+}
+function updateFechasHeader(){
+  const wrap=document.getElementById('fechasWrap');
+  if(!wrap) return;
+  const parts=CANALES.filter(c=>CANAL_FECHAS[c])
+    .map(c=>`<div class="fecha-canal">${CANAL_ICON[c]} ${c}: <span>${CANAL_FECHAS[c]}</span></div>`);
+  if(parts.length>0){wrap.innerHTML=parts.join('');wrap.style.display='flex';}
+}
+function markCanalPending(canal){
+  const card=document.getElementById('up-card-'+canal);
+  const status=document.getElementById('up-status-'+canal);
+  if(card) card.classList.remove('loaded');
+  if(status) status.textContent='No disponible · pulsa para subirlo manualmente';
+}
+function onFileInputCanal(input,canal){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>processWorkbook(new Uint8Array(e.target.result),canal,file.name);
+  reader.readAsArrayBuffer(file);
+}
+function processWorkbook(data,canal,filename){
+  const wb=XLSX.read(data,{type:'array'});
+  const metaSheet=wb.Sheets['META']||wb.Sheets['Meta']||wb.Sheets['meta'];
+  let fecha=null;
+  if(metaSheet&&metaSheet['B1']){
+    const raw=metaSheet['B1'].v;
+    if(typeof raw==='number'){
+      const date=new Date(Math.round((raw-25569)*86400*1000));
+      fecha=`${date.getUTCDate().toString().padStart(2,'0')}/${(date.getUTCMonth()+1).toString().padStart(2,'0')}/${date.getUTCFullYear()}`;
+    } else fecha=String(raw);
+  }
+  CANAL_FECHAS[canal]=fecha;
+  const dataSheetName=wb.SheetNames.find(n=>n.toUpperCase()!=='META')||wb.SheetNames[0];
+  const sheet=wb.Sheets[dataSheetName];
+  const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
+  if(rows.length<2){markCanalPending(canal);return;}
+
+  const hr=rows[0];
+  const colArea=findColIndex(hr,HEADER_ALIASES.area);
+  const colClase=findColIndex(hr,HEADER_ALIASES.claseOrden);
+  const colAnio=findColIndex(hr,HEADER_ALIASES.anio);
+  const colMes=findColIndex(hr,HEADER_ALIASES.mes);
+  const colImporte=findColIndex(hr,HEADER_ALIASES.importe);
+  const colSector=findColIndex(hr,HEADER_ALIASES.sector);
+  const colAnunciante=findColIndex(hr,HEADER_ALIASES.anunciante);
+  const colMarca=findColIndex(hr,HEADER_ALIASES.marca);
+  const colComercial=findColIndex(hr,HEADER_ALIASES.comercial);
+  const colPublicacion=findColIndex(hr,HEADER_ALIASES.publicacion);
+  const colProducto=findColIndex(hr,HEADER_ALIASES.producto);
+  const colFamilia=findColIndex(hr,HEADER_ALIASES.familia);
+  const colDetalle=findColIndex(hr,HEADER_ALIASES.detalle);
+  if(colAnio===-1||colImporte===-1){markCanalPending(canal);return;}
+
+  DATA=DATA.filter(d=>d.canal!==canal);
+  for(let i=1;i<rows.length;i++){
+    const row=rows[i];
+    const rawArea=colArea!==-1?String(row[colArea]||'').trim():'';
+    const rawClase=colClase!==-1?String(row[colClase]||'').trim():'';
+    const anio=parseInt(row[colAnio],10);
+    const mes=colMes!==-1?parseMonth(row[colMes]):null;
+    const importe=parseFloat(String(row[colImporte]).replace(',','.'))||0;
+    const rawSec=colSector!==-1?String(row[colSector]||'').trim():'';
+    const sector=rawSec.replace(/^[\d\s*]+\*?\s*/,'').trim().toUpperCase()||'SIN SECTOR';
+    const anunciante=colAnunciante!==-1?String(row[colAnunciante]||'').trim():'';
+    const marca=colMarca!==-1?String(row[colMarca]||'').trim():'';
+    const comercial=colComercial!==-1?String(row[colComercial]||'').trim():'';
+    const publicacion=colPublicacion!==-1?String(row[colPublicacion]||'').trim():'';
+    const producto=colProducto!==-1?String(row[colProducto]||'').trim():'';
+    const familia=colFamilia!==-1?String(row[colFamilia]||'').trim():'';
+    const detalleRaw=colDetalle!==-1?String(row[colDetalle]||'').trim():'';
+    if(isNaN(anio)||anio<2000||anio>2100) continue;
+    const claseLetra=normalize(rawClase).charAt(0);
+    let team;
+    if(claseLetra==='j') team='Internacional';
+    else if(claseLetra==='p'||claseLetra==='q') team='Programática';
+    else{
+      const areaNorm=normalize(rawArea);
+      if(areaNorm.includes('programat')) team='Programática';
+      else if(areaNorm.includes('barcelona')) team='Barcelona';
+      else if(areaNorm.includes('internacional')) team='Internacional';
+      else team='Madrid';
+    }
+    if(mes!==null) hasMesColumn=true;
+    // ── Split Elle Digital en Elle / Elle Gourmet / Elle Travel ──
+    // Cada fila del Excel pertenece a UNA sola publicación (Elle general, Gourmet o Travel),
+    // detectada por la columna "Detalle".
+    if(canal==='Digital' && normalize(cleanDigitalPub(publicacion))==='elle'){
+      const det=normalize(detalleRaw);
+      const isGourmet = det.includes('gourmet');
+      const isTravel  = det.includes('viaje') || det.includes('travel');
+      let pubLabel='Elle';
+      if(isGourmet) pubLabel='Elle Gourmet';
+      else if(isTravel) pubLabel='Elle Travel';
+      DATA.push({sector,team,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase,pubLabel});
+    } else {
+      DATA.push({sector,team,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase});
+    }
+  }
+  rebuildYears();
+  markCanalLoaded(canal,filename,fecha);
+  initMonthFilter();
+  initPubFilter();
+  populateComercialList();
+  populateSectorButtons();
+  showUI();
+  render();
+}
+
+/* ────────────── AÑO / MESES ────────────── */
+function rebuildYears(){
+  const aniosSet=new Set(DATA.map(d=>d.anio));
+  ALL_YEARS=Array.from(aniosSet).sort((a,b)=>a-b);
+  populateYearSelect();
+}
+function populateYearSelect(){
+  const sel=document.getElementById('yearSelect');
+  if(!sel||ALL_YEARS.length===0) return;
+  const sortedDesc=[...ALL_YEARS].sort((a,b)=>b-a);
+  if(!ALL_YEARS.includes(selectedYear)){
+    const thisYear=new Date().getFullYear();
+    selectedYear=ALL_YEARS.includes(thisYear)?thisYear:sortedDesc[0];
+  }
+  sel.innerHTML=sortedDesc.map(y=>`<option value="${y}" ${y===selectedYear?'selected':''}>${y}</option>`).join('');
+  document.getElementById('yearFilter').style.display='flex';
+}
+function onYearChange(){
+  const sel=document.getElementById('yearSelect');
+  selectedYear=parseInt(sel.value,10);
+  populateComercialList();
+  render();
+}
+function showUI(){
+  document.getElementById('toolbar').style.display='flex';
+  document.getElementById('pubFilter').style.display='flex'; // .pub-filter usa flex-direction:column
+  document.getElementById('tabBar').style.display='flex';
+  document.getElementById('sectorFilterWrap').style.display='block';
+  document.getElementById('franjaFilter').style.display='flex';
+  if(hasMesColumn) document.getElementById('monthFilter').style.display='flex';
+}
+function initMonthFilter(){
+  if(!hasMesColumn) return;
+  const allMonths=new Set(DATA.map(d=>d.mes).filter(m=>m!==null));
+  const sorted=Array.from(allMonths).sort((a,b)=>a-b);
+  if(selectedMonths.size===0){
+    selectedMonths=getClosedMonths();
+  }
+  const chips=document.getElementById('mfChips');
+  chips.innerHTML='';
+  sorted.forEach(m=>{
+    const chip=document.createElement('div');
+    chip.className='mf-chip'+(selectedMonths.has(m)?' active':'');
+    chip.textContent=MES_ABBR[m-1];
+    chip.onclick=()=>{
+      if(selectedMonths.has(m)) selectedMonths.delete(m); else selectedMonths.add(m);
+      chip.classList.toggle('active',selectedMonths.has(m));
+      updateMonthBtns('');
+      render();
+    };
+    chips.appendChild(chip);
+  });
+}
+function updateMonthBtns(mode){
+  document.getElementById('mfNone').classList.toggle('active', mode==='none');
+  document.getElementById('mfClosed').classList.toggle('active', mode==='closed');
+  document.getElementById('mfAll').classList.toggle('active', mode==='all');
+}
+function setMonthMode(mode){
+  const allMonths=new Set(DATA.map(d=>d.mes).filter(m=>m!==null));
+  const sorted=Array.from(allMonths).sort((a,b)=>a-b);
+  const chips=document.getElementById('mfChips');
+  if(mode==='none') selectedMonths=new Set();
+  else if(mode==='closed') selectedMonths=getClosedMonths();
+  else if(mode==='all') selectedMonths=new Set(sorted);
+  chips.querySelectorAll('.mf-chip').forEach((c,i)=>{
+    c.classList.toggle('active', selectedMonths.has(sorted[i]));
+  });
+  updateMonthBtns(mode);
+  render();
+}
+
+/* ────────────── FILTRO DE PUBLICACIONES (por canal, con Elle repartida en 3) ────────────── */
+function initPubFilter(){
+  const icons={Digital:'💻',Print:'📰',Eventos:'🎤'};
+  const wrap=document.getElementById('pubGroups');
+  wrap.innerHTML='';
+  CANALES.forEach(canal=>{
+    let pubs=Array.from(new Set(DATA.filter(d=>d.canal===canal).map(getPublicacion)));
+    // "BOOK" no debe aparecer como publicación seleccionable en Print
+    if(canal==='Print') pubs=pubs.filter(p=>normalize(p)!=='book');
+    // Elle, Elle Gourmet y Elle Travel se fuerzan siempre en Digital en cuanto haya datos de ese canal
+    if(canal==='Digital'&&DATA.some(d=>d.canal==='Digital')){
+      if(!pubs.includes('Elle')) pubs.push('Elle');
+      if(!pubs.includes('Elle Gourmet')) pubs.push('Elle Gourmet');
+      if(!pubs.includes('Elle Travel')) pubs.push('Elle Travel');
+    }
+    pubs=pubs.sort((a,b)=>a.localeCompare(b,'es'));
+    if(pubs.length===0) return;
+    if(!selectedPubs[canal]) selectedPubs[canal]=new Set(pubs);
+    // publicaciones nuevas entran activas por defecto (no ocultan datos existentes)
+    pubs.forEach(p=>{ if(!selectedPubs[canal].has(p)) selectedPubs[canal].add(p); });
+
+    // Grupo: label en línea propia + chips debajo
+    const group=document.createElement('div');
+    group.className='pub-group';
+    group.dataset.canal=canal;
+    const label=document.createElement('div');
+    label.className='pub-canal-label';
+    label.textContent=icons[canal]+' '+canal;
+    group.appendChild(label);
+    const chipsWrap=document.createElement('div');
+    chipsWrap.className='mf-chips pub-row';
+    chipsWrap.dataset.canal=canal;
+    pubs.forEach(p=>{
+      const chip=document.createElement('div');
+      chip.className='mf-chip'+(selectedPubs[canal].has(p)?' active':'');
+      chip.textContent=p;
+      chip.onclick=()=>{
+        if(selectedPubs[canal].has(p)) selectedPubs[canal].delete(p); else selectedPubs[canal].add(p);
+        chip.classList.toggle('active',selectedPubs[canal].has(p));
+        render();
+      };
+      chipsWrap.appendChild(chip);
+    });
+    group.appendChild(chipsWrap);
+    wrap.appendChild(group);
+  });
+}
+function setAllPubs(all){
+  document.querySelectorAll('#pubGroups .pub-group').forEach(group=>{
+    const canal=group.dataset.canal;
+    const chips=Array.from(group.querySelectorAll('.mf-chip'));
+    selectedPubs[canal]=all?new Set(chips.map(c=>c.textContent)):new Set();
+    chips.forEach(c=>c.classList.toggle('active',all));
+  });
+  render();
+}
+
+/* ────────────── ZONA (tab bar) ────────────── */
+function switchTab(tab,el){
+  activeTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  render();
+}
+function getDataForTab(tab){
+  if(tab==='todos') return DATA;
+  if(tab==='madrid-lujo') return DATA.filter(d=>d.team==='Madrid');
+  if(tab==='madrid-lifestyle') return DATA.filter(d=>d.team==='Madrid');
+  if(tab==='barcelona') return DATA.filter(d=>d.team==='Barcelona');
+  if(tab==='internacional') return DATA.filter(d=>d.team==='Internacional');
+  if(tab==='programatica') return DATA.filter(d=>d.team==='Programática');
+  return DATA;
+}
+function getSectorFilterForTab(tab){
+  if(tab==='madrid-lujo') return new Set(SECTORES_MADRID_LUJO.map(normalize));
+  if(tab==='madrid-lifestyle') return new Set(SECTORES_MADRID_LIFESTYLE.map(normalize));
+  return null;
+}
+
+/* ────────────── COMERCIAL ────────────── */
+function populateComercialList(){
+  const set=new Set(DATA.filter(d=>d.comercial).map(d=>d.comercial));
+  ALL_COMERCIALES=Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
+  const conIngreso=new Set(
+    DATA.filter(d=>d.comercial&&d.anio===selectedYear&&d.importe>0).map(d=>d.comercial)
+  );
+  const visibleComerciales=ALL_COMERCIALES.filter(c=>conIngreso.has(c));
+  const dl=document.getElementById('comercialDatalist');
+  dl.innerHTML=visibleComerciales.map(c=>`<option value="${c}"></option>`).join('');
+}
+function onComercialInput(){
+  const input=document.getElementById('comercialInput');
+  const val=input.value;
+  const valNorm=normalize(val);
+  const match=ALL_COMERCIALES.find(c=>normalize(c)===valNorm);
+  selectedComercial=match||'';
+  document.getElementById('comercialClearBtn').style.display=val?'inline-block':'none';
+  render();
+}
+function clearComercial(){
+  selectedComercial='';
+  document.getElementById('comercialInput').value='';
+  document.getElementById('comercialClearBtn').style.display='none';
+  render();
+}
+
+/* ────────────── SECTOR ────────────── */
+function populateSectorButtons(){
+  const set=new Set(DATA.map(d=>d.sector).filter(Boolean));
+  const sectors=Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
+  const wrap=document.getElementById('sectorBtns');
+  wrap.innerHTML=sectors.map(s=>`<div class="sector-btn">${s}</div>`).join('');
+  wrap.querySelectorAll('.sector-btn').forEach((btn,i)=>{
+    const s=sectors[i];
+    btn.classList.toggle('active', normalize(s)===normalize(selectedSector));
+    btn.addEventListener('click',()=>{
+      selectedSector=(normalize(selectedSector)===normalize(s))?'':s;
+      wrap.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('active'));
+      if(selectedSector) btn.classList.add('active');
+      render();
+    });
+  });
+}
+
+/* ────────────── FRANJA DE IMPORTE ────────────── */
+function onFranjaChange(){ render(); }
+function clearFranja(){
+  document.getElementById('franjaDesde').value='';
+  document.getElementById('franjaHasta').value='';
+  render();
+}
+function getFranja(){
+  const dRaw=document.getElementById('franjaDesde').value;
+  const hRaw=document.getElementById('franjaHasta').value;
+  const desde=dRaw===''?null:parseFloat(dRaw);
+  const hasta=hRaw===''?null:parseFloat(hRaw);
+  return {desde,hasta};
+}
+
+/* ────────────── LÓGICA DE LÍNEA REAL ────────────── */
+// Un reparo es una línea negativa que cancela una línea positiva del mismo
+// anunciante+marca (dentro de la misma publicación) SOLO si el importe es
+// exactamente igual. Las negativas sin una positiva exacta que cancelar no
+// restan. Venta conjunta (mismo importe, Madrid + Barcelona, comerciales
+// distintos) cuenta como una sola línea. Reutilizado tal cual de
+// analisis-redes-sociales.html (computeRealPubStats / computeGroupRealLineCount),
+// pero devolviendo también los ítems completos (no solo el importe) para poder
+// aplicar después la fusión especial de la familia Display.
+function computeRealPubItems(pubItems){
+  const groups=new Map();
+  pubItems.forEach(it=>{
+    const key=normalize(it.anunciante)+'|||'+normalize(it.marca);
+    if(!groups.has(key)) groups.set(key,{pos:[],neg:[]});
+    if(it.importe>0) groups.get(key).pos.push({...it});
+    else if(it.importe<0) groups.get(key).neg.push({...it});
+  });
+
+  const realItems=[];
+  const largestCompatibleIndex=(items,target,comercialNorm,requireSameCommercial)=>{
+    let bestIdx=-1;
+    items.forEach((p,idx)=>{
+      const cents=Math.round(p.importe*100);
+      if(cents<=Math.round(target*100)) return;
+      if(requireSameCommercial&&normalize(p.comercial||'')!==comercialNorm) return;
+      if(bestIdx<0||p.importe>items[bestIdx].importe) bestIdx=idx;
+    });
+    return bestIdx;
+  };
+
+  groups.forEach(g=>{
+    const posItems=g.pos.slice();
+
+    // 1) Reparos: exactos primero; si no, parciales sobre la positiva MAYOR.
+    // Siempre se prioriza el mismo comercial antes de caer a cualquier comercial.
+    g.neg.forEach(nIt=>{
+      const target=Math.abs(nIt.importe);
+      const targetCents=Math.round(target*100);
+      const negComercial=normalize(nIt.comercial||'');
+
+      let exactIdx=posItems.findIndex(p=>
+        Math.round(p.importe*100)===targetCents&&normalize(p.comercial||'')===negComercial);
+      if(exactIdx<0){
+        exactIdx=posItems.findIndex(p=>Math.round(p.importe*100)===targetCents);
+      }
+      if(exactIdx>=0){
+        posItems.splice(exactIdx,1);
+        return;
+      }
+
+      let partialIdx=largestCompatibleIndex(posItems,target,negComercial,true);
+      if(partialIdx<0) partialIdx=largestCompatibleIndex(posItems,target,negComercial,false);
+      if(partialIdx>=0){
+        posItems[partialIdx]={
+          ...posItems[partialIdx],
+          importe:Math.round((posItems[partialIdx].importe-target)*100)/100
+        };
+      }
+      // Si no hay positiva igual o mayor, el reparo queda huérfano: no resta ni cuenta.
+    });
+
+    // 2) Venta compartida Madrid + Barcelona: mismo importe, comerciales distintos.
+    const byImporte=new Map();
+    posItems.forEach(it=>{
+      const ik=Math.round(it.importe*100);
+      if(!byImporte.has(ik)) byImporte.set(ik,[]);
+      byImporte.get(ik).push(it);
+    });
+
+    byImporte.forEach(subGroup=>{
+      const madridItems=subGroup.filter(it=>(it.team||'').toLowerCase()==='madrid');
+      const barcelonaItems=subGroup.filter(it=>(it.team||'').toLowerCase()==='barcelona');
+      const otherItems=subGroup.filter(it=>{
+        const t=(it.team||'').toLowerCase();
+        return t!=='madrid'&&t!=='barcelona';
+      });
+      const pairs=Math.min(madridItems.length,barcelonaItems.length);
+      for(let i=0;i<pairs;i++){
+        const madrid=madridItems[i];
+        const barcelona=barcelonaItems[i];
+        if(normalize(madrid.comercial||'')!==normalize(barcelona.comercial||'')){
+          realItems.push({
+            ...madrid,
+            importe:Math.round((madrid.importe+barcelona.importe)*100)/100,
+            comercial:(madrid.comercial||'')+' + '+(barcelona.comercial||''),
+            ventaCompartida:true
+          });
+        }else{
+          realItems.push({...madrid});
+          realItems.push({...barcelona});
+        }
+      }
+      for(let i=pairs;i<madridItems.length;i++) realItems.push({...madridItems[i]});
+      for(let i=pairs;i<barcelonaItems.length;i++) realItems.push({...barcelonaItems[i]});
+      otherItems.forEach(it=>realItems.push({...it}));
+    });
+  });
+  return realItems;
+}
+function computeRealPubStats(pubItems){
+  const realItems=computeRealPubItems(pubItems);
+  return {realCount:realItems.length,realValues:realItems.map(it=>it.importe)};
+}
+// Adaptación de computeGroupRealLineCount: en vez de devolver solo el nº de
+// líneas reales, devuelve el array de importes reales (ya con neteo de
+// reparos y fusión de venta conjunta aplicados), agrupando primero por
+// publicación como hace el original.
+function computeGroupRealValues(rows){
+  const byPub=new Map();
+  rows.forEach(it=>{
+    const key=getPublicacion(it)||'';
+    if(!byPub.has(key)) byPub.set(key,[]);
+    byPub.get(key).push(it);
+  });
+  let values=[];
+  byPub.forEach(pubItems=>{ values=values.concat(computeRealPubStats(pubItems).realValues); });
+  return values;
+}
+// Igual que computeGroupRealValues pero devolviendo los ítems completos
+// (tras neteo de reparos y fusión de venta conjunta), agrupando primero por
+// publicación. Es la base para la fusión especial de la familia Display.
+function computeGroupRealItems(rows){
+  const byPub=new Map();
+  rows.forEach(it=>{
+    const key=getPublicacion(it)||'';
+    if(!byPub.has(key)) byPub.set(key,[]);
+    byPub.get(key).push(it);
+  });
+  let items=[];
+  byPub.forEach(pubItems=>{ items=items.concat(computeRealPubItems(pubItems)); });
+  return items;
+}
+// ---- Fusión especial para las familias "Display" y "Video" ----
+// Tras el neteo de reparos habitual, las líneas reales que solo difieren en
+// la Publicación (mismo Anunciante+Marca+Comercial+Sector+Mes+Año) se
+// fusionan en una única línea cuyo importe es la suma de todas ellas —
+// igual que agrupar por esas columnas en una tabla dinámica.
+const FAMILIAS_FUSION_NORM=['Display','Video'].map(normalize);
+function isFamiliaFusionRows(rows){
+  return rows.some(d=>FAMILIAS_FUSION_NORM.includes(normalize(d.familia)));
+}
+function computeFusionMergedItems(rows){
+  const realItems=computeGroupRealItems(rows);
+  const map=new Map();
+  realItems.forEach(it=>{
+    const key=normalize(it.anunciante)+'|||'+normalize(it.marca)+'|||'+normalize(it.comercial)+'|||'+normalize(it.sector)+'|||'+(it.mes===null||it.mes===undefined?'':it.mes)+'|||'+it.anio;
+    if(!map.has(key)){
+      map.set(key,{...it,importe:0,_publicaciones:new Set()});
+    }
+    const entry=map.get(key);
+    entry.importe+=it.importe;
+    entry._publicaciones.add(getPublicacion(it));
+  });
+  return Array.from(map.values()).map(it=>{
+    const pubs=Array.from(it._publicaciones).filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
+    const {_publicaciones,...rest}=it;
+    return {
+      ...rest,
+      importe:Math.round(rest.importe*100)/100,
+      _displayPublication:pubs.length<=1?(pubs[0]||'SIN PUBLICACIÓN'):'Varias publicaciones',
+      _publicationTitle:pubs.join(', ')
+    };
+  });
+}
+function computeFusionMergedValues(rows){
+  return computeFusionMergedItems(rows).map(it=>it.importe);
+}
+
+function computeRealItemsByProduct(rows){
+  const byProducto=new Map();
+  rows.forEach(d=>{
+    const key=d.producto||'(sin producto)';
+    if(!byProducto.has(key)) byProducto.set(key,[]);
+    byProducto.get(key).push(d);
+  });
+  let items=[];
+  byProducto.forEach(prodRows=>{
+    const prodItems=isFamiliaFusionRows(prodRows)
+      ?computeFusionMergedItems(prodRows)
+      :computeGroupRealItems(prodRows);
+    items=items.concat(prodItems);
+  });
+  return items;
+}
+
+
+/* ────────────── DESGLOSE DE LÍNEAS POR PRODUCTO ── */
+// Familias cuyos productos permiten desplegar el desglose de líneas
+// (Anunciante + Marca + Publicación + Comercial + Ingreso exacto), por canal.
+const FAMILIAS_DESGLOSABLES_RAW = {
+  Digital: ['Sponsorship','Curated','Social Networks'],
+  Print: ['Sponsorship','Curated','CONVENCIONAL']
+};
+const FAMILIAS_DESGLOSABLES_NORM = {};
+Object.keys(FAMILIAS_DESGLOSABLES_RAW).forEach(canal=>{
+  FAMILIAS_DESGLOSABLES_NORM[canal]=new Set(FAMILIAS_DESGLOSABLES_RAW[canal].map(normalize));
+});
+function isFamiliaDesglosable(canal,familia){
+  const set=FAMILIAS_DESGLOSABLES_NORM[canal];
+  return set?set.has(normalize(familia)):false;
+}
+function toggleProductoDesglose(canal,producto){
+  const key=canal+'|||'+producto;
+  if(expandedProductos.has(key)) expandedProductos.delete(key);
+  else expandedProductos.add(key);
+  render();
+}
+
+/* ────────────── RENDER ────────────── */
+// Familias que se excluyen por completo del dashboard: sus productos no
+// deben aparecer en ninguno de los tres bloques.
+const FAMILIAS_EXCLUIDAS_NORM=['Programatica Display Directo','Programatica Display Indirecto','Video Programatico Directo','Video Programatico Indirecto'].map(normalize);
+// Anunciantes que se excluyen por completo del dashboard (no son activaciones reales).
+const ANUNCIANTES_EXCLUIDOS_NORM=['AJUSTE PROGRAMATICA'].map(normalize);
+// Productos que se excluyen por completo del dashboard (costes/gastos internos, no son activaciones reales).
+const PRODUCTOS_EXCLUIDOS_NORM=['Gastos Ejecución (Production Cost)','Article (Production Cost)'].map(normalize);
+function getFilteredRowsForCanal(canal,year=selectedYear){
+  let rows=getDataForTab(activeTab).filter(d=>d.canal===canal);
+  rows=rows.filter(d=>!FAMILIAS_EXCLUIDAS_NORM.includes(normalize(d.familia)));
+  rows=rows.filter(d=>!ANUNCIANTES_EXCLUIDOS_NORM.includes(normalize(d.anunciante)));
+  rows=rows.filter(d=>!PRODUCTOS_EXCLUIDOS_NORM.includes(normalize(d.producto)));
+  const zonaSectorFilter=getSectorFilterForTab(activeTab);
+  if(zonaSectorFilter) rows=rows.filter(d=>zonaSectorFilter.has(normalize(d.sector)));
+  if(selectedComercial) rows=rows.filter(d=>normalize(d.comercial)===normalize(selectedComercial));
+  if(selectedSector) rows=rows.filter(d=>normalize(d.sector)===normalize(selectedSector));
+  const pubsCanal=selectedPubs[canal];
+  if(pubsCanal) rows=rows.filter(d=>pubsCanal.has(getPublicacion(d)));
+  rows=rows.filter(d=>d.anio===year);
+  if(hasMesColumn&&selectedMonths.size>0) rows=rows.filter(d=>d.mes!==null&&selectedMonths.has(d.mes));
+  return rows;
+}
+function computeProductosParaCanal(canal,franja){
+  const rows=getFilteredRowsForCanal(canal);
+  const byProducto=new Map();
+  rows.forEach(d=>{
+    const key=d.producto||'(sin producto)';
+    if(!byProducto.has(key)) byProducto.set(key,[]);
+    byProducto.get(key).push(d);
+  });
+  const items=[];
+  byProducto.forEach((prodRows,producto)=>{
+    const values=isFamiliaFusionRows(prodRows)?computeFusionMergedValues(prodRows):computeGroupRealValues(prodRows);
+    if(values.length===0) return;
+    const realCount=values.length;
+    const ingresoTotal=Math.round(values.reduce((a,b)=>a+b,0)*100)/100;
+    let franjaCount=null;
+    if(franja.hasta!==null){
+      franjaCount=values.filter(v=>franja.desde!==null?(v>=franja.desde&&v<=franja.hasta):v<=franja.hasta).length;
+      if(franjaCount===0) return;
+    }
+    const familia=prodRows[0]?prodRows[0].familia:'';
+    const desglosable=isFamiliaDesglosable(canal,familia);
+    items.push({producto,realCount,ingresoTotal,franjaCount,familia,desglosable,prodRows:desglosable?prodRows:null});
+  });
+  items.sort((a,b)=>b.realCount-a.realCount);
+  return items;
+}
+function renderCanalHeader(canal){
+  const mode=canalViewMode[canal]||'anunciantes';
+  return `<div class="block-card-title channel-title-row">
+    <span class="channel-title-label"><span class="${CANAL_DOT[canal]}">●</span> ${canal}</span>
+    <span class="channel-view-toggle" aria-label="Vista de ${escapeHtml(canal)}">
+      <button type="button" class="channel-view-btn${mode==='anunciantes'?' active':''}" data-canal-view="anunciantes" data-canal="${escapeHtml(canal)}">Anunciantes</button>
+      <button type="button" class="channel-view-btn${mode==='franjas'?' active':''}" data-canal-view="franjas" data-canal="${escapeHtml(canal)}">Franja Presupuestaria</button>
+    </span>
+  </div>`;
+}
+function setCanalView(canal,mode){
+  canalViewMode[canal]=mode;
+  render();
+}
+function toggleBudgetProduct(canal,producto){
+  const current=expandedBudgetProduct[canal]||null;
+  expandedBudgetProduct[canal]=current===producto?null:producto;
+  // Al cambiar o cerrar el producto, sus franjas vuelven a empezar plegadas.
+  expandedBudgetRanges=new Set([...expandedBudgetRanges].filter(key=>!key.startsWith(canal+'|||')));
+  render();
+}
+function toggleBudgetRange(canal,producto,rangeId){
+  const prefix=canal+'|||'+producto+'|||';
+  const key=prefix+rangeId;
+  const wasOpen=expandedBudgetRanges.has(key);
+  // Solo una franja abierta por producto: al cambiar de franja, la anterior
+  // se cierra y el resto queda atenuado para centrar la lectura.
+  expandedBudgetRanges=new Set([...expandedBudgetRanges].filter(k=>!k.startsWith(prefix)));
+  if(!wasOpen) expandedBudgetRanges.add(key);
+  render();
+}
+function getBudgetPublicationInfo(item){
+  const label=item._displayPublication||getPublicacion(item)||'SIN PUBLICACIÓN';
+  const title=item._publicationTitle||label;
+  return {label,title};
+}
+function buildPublicationCounts(items){
+  const map=new Map();
+  items.forEach(it=>{
+    const info=getBudgetPublicationInfo(it);
+    if(!map.has(info.label)) map.set(info.label,{label:info.label,title:info.title,count:0,items:[]});
+    const entry=map.get(info.label);
+    entry.count++;
+    entry.items.push(it);
+  });
+  return map;
+}
+function renderBudgetTooltipTable(items){
+  if(!items||items.length===0) return '<div class="budget-tooltip-empty">Sin líneas en este año.</div>';
+  const sorted=items.slice().sort((a,b)=>b.importe-a.importe||(a.anunciante||'').localeCompare(b.anunciante||'','es')||(a.marca||'').localeCompare(b.marca||'','es'));
+  const cells=sorted.map(it=>{
+    const shared=it.ventaCompartida?'<span class="budget-tooltip-shared">Compartida</span>':'';
+    const moreProducts=it.jMoreProducts
+      ?`<span class="budget-tooltip-more-wrap"><button type="button" class="budget-tooltip-more-products${it.jMoreProductsAmbiguous?' ambiguous':''}" aria-expanded="false" aria-label="${escapeHtml(jMoreProductsTooltip(it))}">Más productos</button>${jMoreProductsPopoverHtml(it)}</span>`
+      :'';
+    return `<div class="budget-tooltip-cell${it.jMoreProducts?' has-more-products':''}" title="${escapeHtml(it.anunciante||'—')}">${escapeHtml(it.anunciante||'—')}${moreProducts}</div>
+      <div class="budget-tooltip-cell" title="${escapeHtml(it.marca||'—')}">${escapeHtml(it.marca||'—')}</div>
+      <div class="budget-tooltip-cell" title="${escapeHtml(it.comercial||'—')}">${escapeHtml(it.comercial||'—')}${shared}</div>
+      <div class="budget-tooltip-cell budget-tooltip-amount">${formatEURTooltip(it.importe)}</div>`;
+  }).join('');
+  return `<div class="budget-tooltip-table">
+    <div class="budget-tooltip-cell budget-tooltip-head">Anunciante</div>
+    <div class="budget-tooltip-cell budget-tooltip-head">Marca</div>
+    <div class="budget-tooltip-cell budget-tooltip-head">Comercial</div>
+    <div class="budget-tooltip-cell budget-tooltip-head budget-tooltip-amount">Ingreso real</div>
+    ${cells}
+  </div>`;
+}
+function registerBudgetTooltip(publicacion,title,currentItems,previousItems){
+  const key='budget-tip-'+(++budgetTooltipSeq);
+  budgetTooltipRegistry.set(key,`<div class="budget-tooltip-title" title="${escapeHtml(title||publicacion)}">${escapeHtml(publicacion)}</div>
+    <div class="budget-tooltip-year">${selectedYear} · ${currentItems.length} línea${currentItems.length===1?'':'s'}</div>
+    ${renderBudgetTooltipTable(currentItems)}
+    <div class="budget-tooltip-year">${selectedYear-1} · ${previousItems.length} línea${previousItems.length===1?'':'s'}</div>
+    ${renderBudgetTooltipTable(previousItems)}`);
+  return key;
+}
+let budgetTooltipHideTimer=null;
+let budgetTooltipAnchorRow=null;
+let budgetTooltipPendingRow=null;
+function cancelBudgetTooltipHide(){
+  if(budgetTooltipHideTimer!==null){
+    clearTimeout(budgetTooltipHideTimer);
+    budgetTooltipHideTimer=null;
+  }
+}
+function hideBudgetTooltip(openPending=false){
+  cancelBudgetTooltipHide();
+  const tooltip=document.getElementById('budgetHoverTooltip');
+  if(!tooltip) return;
+  const pending=(openPending&&budgetTooltipPendingRow&&document.body.contains(budgetTooltipPendingRow)&&budgetTooltipPendingRow.matches(':hover'))
+    ?budgetTooltipPendingRow:null;
+  tooltip.classList.remove('visible');
+  tooltip.setAttribute('aria-hidden','true');
+  budgetTooltipAnchorRow=null;
+  budgetTooltipPendingRow=null;
+  // Si el usuario queria consultar deliberadamente otra publicacion, se abre
+  // solo despues de cerrar la anterior. Mientras atraviesa otras filas para
+  // llegar al cuadro, la posicion original permanece completamente bloqueada.
+  if(pending) setTimeout(()=>showBudgetTooltip(pending),0);
+}
+function scheduleBudgetTooltipHide(){
+  cancelBudgetTooltipHide();
+  budgetTooltipHideTimer=setTimeout(()=>hideBudgetTooltip(true),550);
+}
+function enterBudgetTooltip(){
+  budgetTooltipPendingRow=null;
+  cancelBudgetTooltipHide();
+}
+function positionBudgetTooltip(row){
+  const tooltip=document.getElementById('budgetHoverTooltip');
+  if(!row||!tooltip||!tooltip.classList.contains('visible')) return;
+  const gap=0;
+  const margin=8;
+  const anchor=row.getBoundingClientRect();
+  const rect=tooltip.getBoundingClientRect();
+
+  // El cuadro queda anclado a la fila, no al puntero. Se intenta colocar
+  // debajo y alineado con la publicación; si no cabe, se coloca encima.
+  let left=anchor.left+Math.min(86,Math.max(0,anchor.width*.04));
+  let top=anchor.bottom-1;
+  if(top+rect.height>window.innerHeight-margin){
+    top=anchor.top-rect.height+1;
+  }
+  if(top<margin) top=margin;
+  if(left+rect.width>window.innerWidth-margin){
+    left=window.innerWidth-rect.width-margin;
+  }
+  tooltip.style.left=Math.max(margin,left)+'px';
+  tooltip.style.top=Math.max(margin,top)+'px';
+}
+function showBudgetTooltip(row){
+  cancelBudgetTooltipHide();
+  const key=row.dataset.budgetTooltipKey;
+  const html=budgetTooltipRegistry.get(key);
+  const tooltip=document.getElementById('budgetHoverTooltip');
+  if(!html||!tooltip) return;
+  budgetTooltipAnchorRow=row;
+  budgetTooltipPendingRow=null;
+  tooltip.innerHTML=html;
+  tooltip.classList.add('visible');
+  tooltip.setAttribute('aria-hidden','false');
+  positionBudgetTooltip(row);
+}
+function budgetBandLabel(index){
+  if(index===0) return 'De 1 € a 999 €';
+  return `De ${formatInt(index*1000)} € a ${formatInt(index*1000+999)} €`;
+}
+// La vista presupuestaria usa exactamente los productos que aparecen con
+// triángulo/desglose en la vista Anunciantes del año seleccionado.
+function getBudgetProductsForCanal(canal){
+  return computeProductosParaCanal(canal,{desde:null,hasta:null})
+    .filter(it=>it.desglosable);
+}
+function buildBudgetRangesForProduct(canal,producto){
+  const prevYear=selectedYear-1;
+  const sameProduct=d=>(d.producto||'(sin producto)')===producto;
+  const currentAllRows=getFilteredRowsForCanal(canal,selectedYear);
+  const previousAllRows=getFilteredRowsForCanal(canal,prevYear);
+  const currentRows=currentAllRows.filter(sameProduct);
+  const previousRows=previousAllRows.filter(sameProduct);
+
+  // Negativos y 0 € se conservan tal cual llegan en el Excel.
+  // Desde 1 € se aplica la fuente única de línea real del dashboard.
+  // Después solo se AÑADE una marca informativa a las líneas internacionales J
+  // que tengan Article Translated y/o Content Ignition compatibles. No se altera
+  // el importe ni la franja en la que cae la línea.
+  const currentReal=markJMoreProducts(
+    (isFamiliaFusionRows(currentRows)?computeFusionMergedItems(currentRows):computeGroupRealItems(currentRows))
+      .filter(it=>it.importe>0),
+    currentAllRows
+  );
+  const previousReal=markJMoreProducts(
+    (isFamiliaFusionRows(previousRows)?computeFusionMergedItems(previousRows):computeGroupRealItems(previousRows))
+      .filter(it=>it.importe>0),
+    previousAllRows
+  );
+
+  const ranges=[
+    {
+      id:'negative',label:'En negativo',
+      currentItems:currentRows.filter(d=>d.importe<0),
+      previousItems:previousRows.filter(d=>d.importe<0)
+    },
+    {
+      id:'zero',label:'0 €',
+      currentItems:currentRows.filter(d=>d.importe===0),
+      previousItems:previousRows.filter(d=>d.importe===0)
+    }
+  ];
+
+  const allPositive=currentReal.concat(previousReal);
+  if(allPositive.length>0){
+    const maxBand=Math.max(...allPositive.map(it=>Math.floor(it.importe/1000)));
+    for(let index=0;index<=maxBand;index++){
+      const inBand=it=>Math.floor(it.importe/1000)===index;
+      ranges.push({
+        id:'band-'+index,
+        label:budgetBandLabel(index),
+        currentItems:currentReal.filter(inBand),
+        previousItems:previousReal.filter(inBand)
+      });
+    }
+  }
+  return {ranges,currentRows,previousRows,currentReal,previousReal,prevYear};
+}
+function renderBudgetPublicationRows(range){
+  const curMap=buildPublicationCounts(range.currentItems);
+  const prevMap=buildPublicationCounts(range.previousItems);
+  const labels=new Set([...curMap.keys(),...prevMap.keys()]);
+  return Array.from(labels).map(label=>{
+    const curEntry=curMap.get(label);
+    const prevEntry=prevMap.get(label);
+    const cur=curEntry?.count||0;
+    const prev=prevEntry?.count||0;
+    const title=curEntry?.title||prevEntry?.title||label;
+    return {label,title,cur,prev,currentItems:curEntry?.items||[],previousItems:prevEntry?.items||[],pct:calcCountPct(cur,prev)};
+  }).sort((a,b)=>b.cur-a.cur||b.prev-a.prev||a.label.localeCompare(b.label,'es')).map(r=>{
+    const tooltipKey=registerBudgetTooltip(r.label,r.title,r.currentItems,r.previousItems);
+    return `
+    <tr class="budget-pub-row" data-budget-tooltip-key="${tooltipKey}">
+      <td>${escapeHtml(r.label)}</td>
+      <td>${formatInt(r.cur)}</td>
+      <td>${formatInt(r.prev)}</td>
+      <td><span class="budget-delta ${pctClass(r.pct)}">${formatPctValue(r.pct)}</span></td>
+    </tr>`;
+  }).join('');
+}
+function renderBudgetProductRows(canal,productItem,activeProduct){
+  const producto=productItem.producto;
+  const {ranges,currentReal,previousReal}=buildBudgetRangesForProduct(canal,producto);
+  const totalCurrent=currentReal.length;
+  const totalPrevious=previousReal.length;
+  const isProductOpen=activeProduct===producto;
+  const anyProductOpen=!!activeProduct;
+  let productClass='budget-product-row';
+  if(isProductOpen) productClass+=' expanded';
+  else if(anyProductOpen) productClass+=' row-dimmed';
+
+  let html=`<tr class="${productClass}" data-budget-product-header="1" data-budget-canal="${escapeHtml(canal)}" data-budget-product="${escapeHtml(producto)}">
+    <td colspan="4"><span class="budget-product-toggle${isProductOpen?' open':''}">▶</span>${escapeHtml(producto)}<span class="budget-product-meta">${formatInt(totalCurrent)} líneas reales ${selectedYear} · ${formatInt(totalPrevious)} líneas reales ${selectedYear-1}</span></td>
+  </tr>`;
+
+  // Por defecto solo se muestra la cabecera del producto. Sus franjas aparecen
+  // únicamente al abrirlo, para que el bloque no se haga interminable.
+  if(!isProductOpen) return html;
+
+  const rangePrefix=canal+'|||'+producto+'|||';
+  const activeRangeKey=[...expandedBudgetRanges].find(key=>key.startsWith(rangePrefix))||null;
+  const activeRangeId=activeRangeKey?activeRangeKey.slice(rangePrefix.length):null;
+
+  html+=ranges.map(range=>{
+    const cur=range.currentItems.length;
+    const prev=range.previousItems.length;
+    const pct=calcCountPct(cur,prev);
+    const key=canal+'|||'+producto+'|||'+range.id;
+    const isOpen=expandedBudgetRanges.has(key);
+    const hasDetail=cur>0||prev>0;
+    const triangle=hasDetail
+      ?`<span class="budget-range-toggle${isOpen?' open':''}">▶</span>`
+      :`<span class="desglose-spacer"></span>`;
+    let rangeClass='budget-range-row';
+    if(isOpen) rangeClass+=' expanded';
+    else if(activeRangeId) rangeClass+=' row-dimmed';
+    let rangeHtml=`<tr class="${rangeClass}" data-budget-canal="${escapeHtml(canal)}" data-budget-product="${escapeHtml(producto)}" data-budget-range="${escapeHtml(range.id)}">
+      <td>${triangle}${range.label}</td>
+      <td>${formatInt(cur)}</td>
+      <td>${formatInt(prev)}</td>
+      <td><span class="budget-delta ${pctClass(pct)}">${formatPctValue(pct)}</span></td>
+    </tr>`;
+    if(isOpen&&hasDetail) rangeHtml+=renderBudgetPublicationRows(range);
+    return rangeHtml;
+  }).join('');
+  return html;
+}
+function renderBudgetRangeBlock(canal){
+  const prevYear=selectedYear-1;
+  const products=getBudgetProductsForCanal(canal);
+  if(products.length===0){
+    return `<div class="block-card">
+      ${renderCanalHeader(canal)}
+      <div class="empty-state" style="padding:30px 20px;"><p>No hay productos desplegables en la vista Anunciantes para los filtros seleccionados.</p></div>
+    </div>`;
+  }
+
+  let activeProduct=expandedBudgetProduct[canal]||null;
+  if(activeProduct&&!products.some(item=>item.producto===activeProduct)){
+    expandedBudgetProduct[canal]=null;
+    activeProduct=null;
+  }
+  const rowsHtml=products.map(productItem=>renderBudgetProductRows(canal,productItem,activeProduct)).join('');
+  return `<div class="block-card">
+    ${renderCanalHeader(canal)}
+    <table class="mini-canal-table budget-range-table">
+      <thead><tr>
+        <th>Producto / Rango de importe</th>
+        <th>Nº líneas (${selectedYear})</th>
+        <th>Nº líneas (${prevYear})</th>
+        <th>Δ</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="budget-note">Solo se incluyen los productos que pueden desplegarse en la vista <b>Anunciantes</b>. Pulsa el triángulo de un producto para ver sus franjas; el resto se atenuará para facilitar la lectura. Al desplegar una franja, las demás franjas del producto también quedarán en gris. Cada producto mantiene sus filas <b>En negativo</b> y <b>0 €</b> con las líneas tal como llegan en el Excel. Desde 1 € en adelante se utilizan las líneas reales: reparos exactos y parciales sobre la positiva compatible de mayor importe, prioridad del mismo comercial y venta compartida Madrid–Barcelona. Después puedes desplegar una franja para ver sus publicaciones.</div>
+  </div>`;
+}
+function renderAnunciantesCanalBlock(canal,franja){
+  const items=computeProductosParaCanal(canal,franja);
+  const showFranja=franja.hasta!==null;
+  const totalLineas=items.reduce((s,it)=>s+it.realCount,0);
+  const totalIngreso=items.reduce((s,it)=>s+it.ingresoTotal,0);
+  const totalFranja=showFranja?items.reduce((s,it)=>s+(it.franjaCount||0),0):null;
+
+  if(items.length===0){
+    return `<div class="block-card">
+      ${renderCanalHeader(canal)}
+      <div class="empty-state" style="padding:30px 20px;"><p>Sin líneas reales para los filtros seleccionados.</p></div>
+    </div>`;
+  }
+
+  const anyExpandedInCanal=items.some(it=>expandedProductos.has(canal+'|||'+it.producto));
+  const colspanDesglose=showFranja?4:3;
+
+  let rowsHtml=items.map(it=>{
+    const key=canal+'|||'+it.producto;
+    const isExpanded=it.desglosable&&expandedProductos.has(key);
+    let rowClass='producto-row';
+    if(isExpanded) rowClass+=' expanded';
+    else if(anyExpandedInCanal) rowClass+=' row-dimmed';
+
+    const triangle=it.desglosable
+      ? `<span class="desglose-toggle${isExpanded?' open':''}" data-canal="${escapeHtml(canal)}" data-producto="${escapeHtml(it.producto)}">▶</span>`
+      : `<span class="desglose-spacer"></span>`;
+
+    let html=`
+    <tr class="${rowClass}">
+      <td>${triangle}${it.producto}</td>
+      <td class="franja-col" style="display:${showFranja?'table-cell':'none'}">${it.franjaCount!==null?formatInt(it.franjaCount):'—'}</td>
+      <td>${formatInt(it.realCount)}</td>
+      <td>${formatEUR(it.ingresoTotal)}</td>
+    </tr>`;
+
+    if(isExpanded){
+      let desgloseItems=computeGroupRealItems(it.prodRows);
+      if(showFranja){
+        desgloseItems=desgloseItems.filter(d=>franja.desde!==null?(d.importe>=franja.desde&&d.importe<=franja.hasta):d.importe<=franja.hasta);
+      }
+      desgloseItems=desgloseItems.slice().sort((a,b)=>b.importe-a.importe);
+      const desgloseRows=desgloseItems.map(d=>`
+        <tr>
+          <td class="truncate" title="${escapeHtml(d.anunciante)}">${escapeHtml(d.anunciante)||'—'}</td>
+          <td class="truncate" title="${escapeHtml(d.marca)}">${escapeHtml(d.marca)||'—'}</td>
+          <td class="truncate" title="${escapeHtml(getPublicacion(d))}">${escapeHtml(getPublicacion(d))||'—'}</td>
+          <td class="truncate" title="${escapeHtml(d.comercial)}">${escapeHtml(d.comercial)||'—'}</td>
+          <td class="desglose-ingreso">${formatEURExact(d.importe)}</td>
+        </tr>`).join('');
+      html+=`
+    <tr class="desglose-row">
+      <td colspan="${colspanDesglose}">
+        <div class="desglose-wrap">
+          <table class="desglose-table">
+            <colgroup>
+              <col style="width:12%">
+              <col style="width:18%">
+              <col style="width:18%">
+              <col style="width:34%">
+              <col style="width:18%">
+            </colgroup>
+            <thead><tr>
+              <th>Anunciante</th>
+              <th>Marca</th>
+              <th>Publicación</th>
+              <th>Comercial</th>
+              <th class="desglose-ingreso-th">Ingreso exacto</th>
+            </tr></thead>
+            <tbody>${desgloseRows}</tbody>
+          </table>
+        </div>
+      </td>
+    </tr>`;
+    }
+    return html;
+  }).join('');
+
+  return `<div class="block-card">
+    ${renderCanalHeader(canal)}
+    <table class="mini-canal-table${showFranja?'':' no-franja'}">
+      <thead><tr>
+        <th>Producto</th>
+        <th class="franja-col" style="display:${showFranja?'table-cell':'none'}">Nº líneas en franja</th>
+        <th>Nº líneas reales</th>
+        <th>Ingreso total real</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr>
+        <td>Total</td>
+        <td class="franja-col" style="display:${showFranja?'table-cell':'none'}">${totalFranja!==null?formatInt(totalFranja):'—'}</td>
+        <td>${formatInt(totalLineas)}</td>
+        <td>${formatEUR(totalIngreso)}</td>
+      </tr></tfoot>
+    </table>
+  </div>`;
+}
+function renderCanalBlock(canal,franja){
+  return canalViewMode[canal]==='franjas'
+    ?renderBudgetRangeBlock(canal)
+    :renderAnunciantesCanalBlock(canal,franja);
+}
+function render(){
+  const container=document.getElementById('blocksContainer');
+  hideBudgetTooltip();
+  budgetTooltipRegistry=new Map();
+  budgetTooltipSeq=0;
+  if(DATA.length===0){
+    container.innerHTML='<div class="empty-state"><p>📊 <b>Sin datos</b></p><p>Esperando la carga automática de los Excel…</p></div>';
+    return;
+  }
+  const franja=getFranja();
+  container.innerHTML=CANALES.map(canal=>renderCanalBlock(canal,franja)).join('');
+}
+
+const blocksContainer=document.getElementById('blocksContainer');
+blocksContainer.addEventListener('mouseover',function(e){
+  const row=e.target.closest('.budget-pub-row[data-budget-tooltip-key]');
+  if(!row||!blocksContainer.contains(row)) return;
+  if(e.relatedTarget&&row.contains(e.relatedTarget)) return;
+  const tooltip=document.getElementById('budgetHoverTooltip');
+  // Una vez abierto, el cuadro queda bloqueado en su fila original. Al bajar
+  // hacia el tooltip, las publicaciones intermedias no pueden moverlo.
+  if(tooltip&&tooltip.classList.contains('visible')&&budgetTooltipAnchorRow&&budgetTooltipAnchorRow!==row){
+    budgetTooltipPendingRow=row;
+    return;
+  }
+  showBudgetTooltip(row);
+});
+blocksContainer.addEventListener('mouseout',function(e){
+  const row=e.target.closest('.budget-pub-row[data-budget-tooltip-key]');
+  if(!row||row!==budgetTooltipAnchorRow) return;
+  const tooltip=document.getElementById('budgetHoverTooltip');
+  if(e.relatedTarget&&(row.contains(e.relatedTarget)||(tooltip&&tooltip.contains(e.relatedTarget)))) return;
+  // Margen amplio para llegar al cuadro; este ya toca visualmente la fila y
+  // permanece inmovil aunque el puntero atraviese otras publicaciones.
+  scheduleBudgetTooltipHide();
+});
+const budgetHoverTooltip=document.getElementById('budgetHoverTooltip');
+function closeMoreProductsWrap(wrap){
+  if(!wrap) return;
+  wrap.classList.remove('open');
+  wrap.dataset.pinned='false';
+  const btn=wrap.querySelector('.budget-tooltip-more-products');
+  if(btn) btn.setAttribute('aria-expanded','false');
+}
+function closeAllMoreProducts(except=null){
+  budgetHoverTooltip.querySelectorAll('.budget-tooltip-more-wrap.open').forEach(wrap=>{
+    if(wrap!==except) closeMoreProductsWrap(wrap);
+  });
+}
+function positionMoreProductsPopover(wrap){
+  if(!wrap||!wrap.classList.contains('open')) return;
+  const btn=wrap.querySelector('.budget-tooltip-more-products');
+  const popover=wrap.querySelector('.budget-tooltip-more-popover');
+  if(!btn||!popover) return;
+  const margin=12;
+  const gap=7;
+  const btnRect=btn.getBoundingClientRect();
+  const popRect=popover.getBoundingClientRect();
+  let left=btnRect.left;
+  let top=btnRect.bottom+gap;
+  if(left+popRect.width>window.innerWidth-margin) left=window.innerWidth-popRect.width-margin;
+  if(left<margin) left=margin;
+  if(top+popRect.height>window.innerHeight-margin) top=btnRect.top-popRect.height-gap;
+  if(top<margin) top=margin;
+  popover.style.left=left+'px';
+  popover.style.top=top+'px';
+}
+function openMoreProductsWrap(wrap,pinned=false){
+  if(!wrap) return;
+  closeAllMoreProducts(wrap);
+  wrap.classList.add('open');
+  wrap.dataset.pinned=pinned?'true':'false';
+  const btn=wrap.querySelector('.budget-tooltip-more-products');
+  if(btn) btn.setAttribute('aria-expanded','true');
+  requestAnimationFrame(()=>positionMoreProductsPopover(wrap));
+}
+budgetHoverTooltip.addEventListener('mouseenter',enterBudgetTooltip);
+budgetHoverTooltip.addEventListener('mouseleave',scheduleBudgetTooltipHide);
+// Al pasar por "Más productos" se abre el detalle. Un clic lo deja fijado.
+budgetHoverTooltip.addEventListener('mouseover',function(e){
+  const btn=e.target.closest('.budget-tooltip-more-products');
+  if(!btn) return;
+  const wrap=btn.closest('.budget-tooltip-more-wrap');
+  if(e.relatedTarget&&wrap.contains(e.relatedTarget)) return;
+  cancelBudgetTooltipHide();
+  openMoreProductsWrap(wrap,wrap.dataset.pinned==='true');
+});
+budgetHoverTooltip.addEventListener('mouseout',function(e){
+  const wrap=e.target.closest('.budget-tooltip-more-wrap');
+  if(!wrap) return;
+  if(e.relatedTarget&&wrap.contains(e.relatedTarget)) return;
+  if(wrap.dataset.pinned!=='true') closeMoreProductsWrap(wrap);
+});
+budgetHoverTooltip.addEventListener('focusin',function(e){
+  const btn=e.target.closest('.budget-tooltip-more-products');
+  if(btn) openMoreProductsWrap(btn.closest('.budget-tooltip-more-wrap'),false);
+});
+budgetHoverTooltip.addEventListener('focusout',function(e){
+  const wrap=e.target.closest('.budget-tooltip-more-wrap');
+  if(!wrap||wrap.dataset.pinned==='true') return;
+  if(e.relatedTarget&&wrap.contains(e.relatedTarget)) return;
+  closeMoreProductsWrap(wrap);
+});
+budgetHoverTooltip.addEventListener('click',function(e){
+  const btn=e.target.closest('.budget-tooltip-more-products');
+  if(!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  cancelBudgetTooltipHide();
+  const wrap=btn.closest('.budget-tooltip-more-wrap');
+  if(wrap.dataset.pinned==='true') closeMoreProductsWrap(wrap);
+  else openMoreProductsWrap(wrap,true);
+});
+budgetHoverTooltip.addEventListener('scroll',function(){
+  const openWrap=budgetHoverTooltip.querySelector('.budget-tooltip-more-wrap.open');
+  if(openWrap) positionMoreProductsPopover(openWrap);
+});
+document.addEventListener('click',function(e){
+  if(e.target.closest('.budget-tooltip-more-wrap')) return;
+  closeAllMoreProducts();
+});
+window.addEventListener('scroll',hideBudgetTooltip,true);
+window.addEventListener('resize',()=>{
+  if(budgetTooltipAnchorRow) positionBudgetTooltip(budgetTooltipAnchorRow);
+  const openWrap=budgetHoverTooltip.querySelector('.budget-tooltip-more-wrap.open');
+  if(openWrap) positionMoreProductsPopover(openWrap);
+});
+window.addEventListener('blur',hideBudgetTooltip);
+
+document.getElementById('blocksContainer').addEventListener('click',function(e){
+  const viewBtn=e.target.closest('.channel-view-btn');
+  if(viewBtn){
+    setCanalView(viewBtn.dataset.canal,viewBtn.dataset.canalView);
+    return;
+  }
+  const budgetProductRow=e.target.closest('.budget-product-row');
+  if(budgetProductRow){
+    toggleBudgetProduct(budgetProductRow.dataset.budgetCanal,budgetProductRow.dataset.budgetProduct);
+    return;
+  }
+  const budgetRow=e.target.closest('.budget-range-row');
+  if(budgetRow){
+    toggleBudgetRange(budgetRow.dataset.budgetCanal,budgetRow.dataset.budgetProduct,budgetRow.dataset.budgetRange);
+    return;
+  }
+  const t=e.target.closest('.desglose-toggle');
+  if(!t) return;
+  toggleProductoDesglose(t.dataset.canal,t.dataset.producto);
+});
+document.addEventListener('DOMContentLoaded',autoLoadFromServer);
+</script>
+</body>
+</html>
