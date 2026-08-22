@@ -6138,7 +6138,7 @@ function renderResumenSectores(){
   // se determina exclusivamente por "Oficina de venta / Centro de coste".
   if(resumenScope!=='total') filt=filt.filter(r=>r._oficina===resumenScope);
 
-  if(resumenSecProgMode==='con'&&PROG_DATA&&PROG_DATA.length&&(mActiveChannel==='GLOBAL'||mActiveChannel==='DIGITAL')){
+  if(resumenSecProgMode==='con'&&PROG_DATA&&PROG_DATA.length&&(mActiveChannel==='GLOBAL'||mActiveChannel==='DIGITAL'||mActiveChannel==='DIGITAL_PROGRAMATICA')){
     const vk=findVendorsKey(filt);
     let progRows=yr==='all'?progRowsAllYears(vk):progRowsForYear(yr,'_ingActual',vk);
     // En Programática la zona también procede de su columna Oficina de venta / Centro de coste.
