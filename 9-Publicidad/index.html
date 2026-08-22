@@ -152,7 +152,7 @@ body::after {
 /* ── BLOQUE DE REPOSITORIO ── */
 .repo-block {
   width: 100%;
-  max-width: 720px;
+  max-width: 1080px;
   margin-bottom: 20px;
   animation: fadeUp 0.5s ease both;
   scroll-margin-top: 24px;
@@ -198,7 +198,7 @@ body::after {
 .grid {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -333,6 +333,10 @@ body::after {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 640px) {
   .grid { grid-template-columns: 1fr; }
   .header h1 { font-size: 2rem; }
@@ -372,6 +376,15 @@ body::after {
     </div>
 
     <div class="grid">
+      <a href="https://javiap20.github.io/hearst/5-Ingresos/objetivos.html" target="_blank" class="btn-card c-cyan">
+        <div class="stripe"></div>
+        <div class="btn-body">
+          <div class="btn-icon">💶</div>
+          <div class="btn-title">Objetivos</div>
+          <div class="btn-desc">Evolución de los ingresos en función del objetivo del año</div>
+        </div>
+        <div class="btn-arrow">→</div>
+      </a>
       <a href="https://javiap20.github.io/hearst/9-Publicidad/patrones-ingresos.html" target="_blank" class="btn-card c-blue">
         <div class="stripe"></div>
         <div class="btn-body">
@@ -387,15 +400,6 @@ body::after {
           <div class="btn-icon">🧮</div>
           <div class="btn-title">Previsiones (solo Calculadora)</div>
           <div class="btn-desc">Previsiones mes en curso y futuros...</div>
-        </div>
-        <div class="btn-arrow">→</div>
-      </a>
-      <a href="https://javiap20.github.io/hearst/9-Publicidad/objetivos.html" target="_blank" class="btn-card c-cyan">
-        <div class="stripe"></div>
-        <div class="btn-body">
-          <div class="btn-icon">💶</div>
-          <div class="btn-title">Objetivos</div>
-          <div class="btn-desc">Evolución de los ingresos en función del objeti del año</div>
         </div>
         <div class="btn-arrow">→</div>
       </a>
@@ -425,7 +429,7 @@ body::after {
         </div>
         <div class="btn-arrow">→</div>
       </a>
-      <a href="https://javiap20.github.io/hearst/9-Publicidad/cartera-comercial.html" target="_blank" class="btn-card c-green">
+      <a href="https://javiap20.github.io/hearst/7-Equipo-Comercial/cartera-comercial.html" target="_blank" class="btn-card c-green">
         <div class="stripe"></div>
         <div class="btn-body">
           <div class="btn-icon">💼</div>
