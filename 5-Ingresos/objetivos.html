@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Dashboard Publicitario — Análisis Completo</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -6105,6 +6105,15 @@ function resumenAvance(ing,obj,yoyRows,yr){
   return '<td>'+avance+'</td>';
 }
 function resumenYoY(rows,yr){ if(yr!=='2026') return '<td>—</td>'; return '<td class="td-yoy">'+fmtYoY(calcYoYFromRows(rows))+'</td>'; }
+// Devuelve solo el % de "mismo periodo año anterior" (o null si no aplica), para la exportación a Excel.
+function pctYoYVal(rows,yr){
+  if(yr!=='2026') return null;
+  const y=calcYoYFromRows(rows);
+  return y?y.pct:null;
+}
+// Datos "en crudo" (sin HTML) capturados en cada render, listos para la exportación a Excel.
+let __expPubRows=[];
+let __expSecRows=[];
 function renderResumenPublicaciones(){
   const el=document.getElementById('resumen-pubs-table'); if(!el)return;
   const yr=document.getElementById('m-f-year').value;
@@ -6124,9 +6133,11 @@ function renderResumenPublicaciones(){
   items.sort((a,b) => b.ot - a.ot); // Ordenar por Objetivo Total descendente
   const prevBase=mGetChannelData().filter(r=>r._yearRaw==='2025' && (resumenScope==='total'||r._oficina===resumenScope));
   h+='<tr class="mc-total"><td>TOTAL</td>'+resumenCellObj(so,si)+resumenAvance(si,so,prevBase,yr)+resumenYoY(prevBase,yr)+'</tr>';
+  __expPubRows=[{label:'TOTAL',ot:so,ing:si,pctYoY:pctYoYVal(prevBase,yr)}];
   items.forEach(x=>{
     const prevRows=getPrevRowsPub(x.pub,null).filter(r=>rowMatchesActiveChannel(r) && (resumenScope==='total'||r._oficina===resumenScope));
     h+='<tr><td>'+esc(x.pub)+'</td>'+resumenCellObj(x.ot,x.ing)+resumenAvance(x.ing,x.ot,prevRows,yr)+resumenYoY(prevRows,yr)+'</tr>';
+    __expPubRows.push({label:x.pub,ot:x.ot,ing:x.ing,pctYoY:pctYoYVal(prevRows,yr)});
   });
   el.innerHTML=h+'</tbody></table></div>';
 }
@@ -6181,6 +6192,7 @@ function renderResumenSectores(){
   });
   const prevTotal=mGetChannelData().filter(r=>r._yearRaw==='2025' && (resumenScope==='total'||r._oficina===resumenScope));
   h+='<tr class="mc-total"><td>TOTAL</td>'+resumenCellObj(so,si)+resumenAvance(si,so,prevTotal,yr)+resumenYoY(prevTotal,yr)+'</tr>';
+  __expSecRows=[{label:'TOTAL',ot:so,ing:si,pctYoY:pctYoYVal(prevTotal,yr)}];
 
   keys.forEach(k=>{
      const o=objNorm[k]||{};
@@ -6188,16 +6200,27 @@ function renderResumenSectores(){
      const prev=mGetChannelData().filter(r=>r._yearRaw==='2025' && (resumenScope==='total'||r._oficina===resumenScope) && normalizeStr(r._sectorClean||'—')===k);
      const displayName = realNames.get(k) || k;
      h+='<tr><td>'+esc(displayName)+'</td>'+resumenCellObj(ot,ing)+resumenAvance(ing,ot,prev,yr)+resumenYoY(prev,yr)+'</tr>';
+     __expSecRows.push({label:displayName,ot,ing,pctYoY:pctYoYVal(prev,yr)});
   });
   el.innerHTML=h+'</tbody></table></div>';
 }
 
 // ── EXPORTAR RESUMEN A EXCEL ───────────────────────────────────────────────
-// Genera 4 hojas (TOTAL, MADRID, BARCELONA, INTERNACIONAL), cada una con
-// Publicaciones + Sectores. Sectores se exporta siempre CON Programática.
+// Genera 1 hoja por Canal (Global, Digital, Digital Directa, Digital Programática,
+// Print, Eventos). Dentro de cada hoja, los bloques TOTAL/MADRID/BARCELONA/
+// INTERNACIONAL van en horizontal, separados por una columna en blanco.
+// Sectores se exporta siempre CON Programática.
 // Respeta los filtros visibles de Mes, Situación y Estado anunciante.
 function exportarResumenExcel(){
   if(typeof XLSX==='undefined'){ alert('No se ha podido cargar el módulo de Excel.'); return; }
+  const canales=[
+    {key:'GLOBAL',name:'GLOBAL'},
+    {key:'DIGITAL',name:'DIGITAL'},
+    {key:'DIGITAL_DIRECTA',name:'DIGITAL DIRECTA'},
+    {key:'DIGITAL_PROGRAMATICA',name:'DIGITAL PROGRAMATICA'},
+    {key:'PRINT',name:'PRINT'},
+    {key:'EVENTOS',name:'EVENTOS'}
+  ];
   const scopes=[
     {key:'total',name:'TOTAL'},
     {key:'madrid',name:'MADRID'},
@@ -6205,46 +6228,176 @@ function exportarResumenExcel(){
     {key:'internacional',name:'INTERNACIONAL'}
   ];
   const prevScope=resumenScope;
+  const prevChannel=mActiveChannel;
   const prevProg=resumenSecProgMode;
   const wb=XLSX.utils.book_new();
 
   // Para la exportación, Sectores siempre se calcula CON Programática.
   resumenSecProgMode=(PROG_DATA&&PROG_DATA.length)?'con':'sin';
 
-  scopes.forEach(sc=>{
-    resumenScope=sc.key;
-    renderResumenPublicaciones();
-    renderResumenSectores();
+  // ── Estilos reutilizables ────────────────────────────────────────────────
+  const BLOQUE_COLS=5; // columnas de datos por bloque de zona (label + 4)
+  const SEP_COL_W=20;  // ancho de la columna en blanco entre bloques de zona
+  const ESTILO_TITULO_AREA={
+    font:{bold:true,sz:13,color:{rgb:'FFFFFF'}},
+    fill:{fgColor:{rgb:'1B3A5C'}},
+    alignment:{horizontal:'center',vertical:'center'}
+  };
+  const ESTILO_TITULO_SECCION={
+    font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},
+    fill:{fgColor:{rgb:'2E6E7E'}},
+    alignment:{horizontal:'center',vertical:'center'}
+  };
+  const ESTILO_CABECERA_COL={
+    font:{bold:true,color:{rgb:'1B3A5C'}},
+    fill:{fgColor:{rgb:'CFE7EC'}},
+    alignment:{horizontal:'center',vertical:'center'}
+  };
+  const ESTILO_TOTAL={
+    font:{bold:true,color:{rgb:'1B3A5C'}},
+    fill:{fgColor:{rgb:'9FCBD6'}},
+    alignment:{horizontal:'center',vertical:'center'}
+  };
+  const ESTILO_DATO={alignment:{horizontal:'center',vertical:'center'},fill:{fgColor:{rgb:'FFFFFF'}}};
+  // Relleno blanco "neutro": se usa en las celdas vacías (columna A, columnas
+  // separadoras, filas de separación...) solo para tapar visualmente la cuadrícula de Excel.
+  const ESTILO_BLANCO={fill:{fgColor:{rgb:'FFFFFF'}}};
 
-    const pubTable=document.querySelector('#resumen-pubs-table table');
-    const secTable=document.querySelector('#resumen-sector-table table');
-    const ws=XLSX.utils.aoa_to_sheet([[RESUMEN_SCOPE_LABELS[sc.key]||sc.name],[]]);
+  // Devuelve el estilo de una fila de datos: cabecera de columnas, fila TOTAL o dato normal.
+  function estiloFila(fila,idx){
+    if(idx===0) return ESTILO_CABECERA_COL;
+    if(String(fila[0]||'').trim().toUpperCase()==='TOTAL') return ESTILO_TOTAL;
+    return ESTILO_DATO;
+  }
 
-    if(pubTable){
-      const pubWs=XLSX.utils.table_to_sheet(pubTable,{raw:true});
-      XLSX.utils.sheet_add_aoa(ws,[['PUBLICACIONES']],{origin:'A3'});
-      XLSX.utils.sheet_add_json(ws,XLSX.utils.sheet_to_json(pubWs,{header:1,raw:true}),{origin:'A4',skipHeader:true});
-    }
-    const pubRows=pubTable?pubTable.rows.length:0;
-    const secStart=5+pubRows;
-    if(secTable){
-      const secWs=XLSX.utils.table_to_sheet(secTable,{raw:true});
-      XLSX.utils.sheet_add_aoa(ws,[['SECTORES · CON PROGRAMÁTICA']],{origin:'A'+secStart});
-      XLSX.utils.sheet_add_json(ws,XLSX.utils.sheet_to_json(secWs,{header:1,raw:true}),{origin:'A'+(secStart+1),skipHeader:true});
-    }
+  // Convierte los datos "en crudo" capturados en el render (label/objetivo/real/%YoY)
+  // en filas de tabla ya con solo el % (sin la cifra de diferencia ni el "de X").
+  function filasExport(rowsData,labelCol){
+    const header=[labelCol,'Objetivo','Real actual','% vs Objetivo','% Año Anterior'];
+    const body=rowsData.map(x=>{
+      const pctObj=x.ot ? ((x.ing/x.ot*100).toFixed(1)+'%') : '—';
+      const pctYoY=(x.pctYoY===null||x.pctYoY===undefined) ? '—' : (x.pctYoY.toFixed(1)+'%');
+      return [x.label, fmtFull(x.ot), fmtFull(x.ing), pctObj, pctYoY];
+    });
+    return [header,...body];
+  }
 
-    // Anchos cómodos y cuadrícula oculta al abrir la hoja en Excel.
-    ws['!cols']=[{wch:32},{wch:24},{wch:18},{wch:28}];
+  function ponerCelda(ws,r,c,valor,estilo){
+    const addr=XLSX.utils.encode_cell({r,c});
+    const tipo=(typeof valor==='number')?'n':'s';
+    ws[addr]={t:tipo,v:(valor===undefined||valor===null)?'':valor,s:estilo};
+  }
+
+  // Alturas de fila (en puntos): título de área, título de sección,
+  // cabecera de columnas y fila TOTAL.
+  const ALTO_AREA=30;
+  const ALTO_SECCION=25;
+  const ALTO_CABECERA=20;
+  const ALTO_TOTAL=30;
+
+  canales.forEach(ch=>{
+    mActiveChannel=ch.key;
+
+    const ws={};
+    const merges=[];
+    const rowHeights=[];
+    const altoFila=(r,pt)=>{ rowHeights[r]={hpt:pt}; };
+    const colWidths=[{wch:4}]; // columna A: margen izquierdo de toda la hoja
+    let colStart=1;   // primera columna de datos del bloque actual
+    let filaTopeHoja=0;
+
+    scopes.forEach((sc,scIdx)=>{
+      resumenScope=sc.key;
+      renderResumenPublicaciones();
+      renderResumenSectores();
+
+      const pubRows=filasExport(__expPubRows,'Publicación');
+      const secRows=filasExport(__expSecRows,'Sector');
+
+      let r=1; // fila 0 se deja en blanco, como margen superior
+
+      // Fila del área (MADRID / BARCELONA / ...), combinada dentro de este bloque.
+      for(let c=0;c<BLOQUE_COLS;c++) ponerCelda(ws,r,colStart+c,'',ESTILO_TITULO_AREA);
+      ponerCelda(ws,r,colStart,RESUMEN_SCOPE_LABELS[sc.key]||sc.name,ESTILO_TITULO_AREA);
+      merges.push({s:{r,c:colStart},e:{r,c:colStart+BLOQUE_COLS-1}});
+      altoFila(r,ALTO_AREA);
+      r+=2; // fila en blanco de separación
+
+      if(pubRows.length){
+        for(let c=0;c<BLOQUE_COLS;c++) ponerCelda(ws,r,colStart+c,'',ESTILO_TITULO_SECCION);
+        ponerCelda(ws,r,colStart,'PUBLICACIONES',ESTILO_TITULO_SECCION);
+        merges.push({s:{r,c:colStart},e:{r,c:colStart+BLOQUE_COLS-1}});
+        altoFila(r,ALTO_SECCION);
+        r++;
+        pubRows.forEach((fila,idx)=>{
+          const estilo=estiloFila(fila,idx);
+          fila.forEach((val,ci)=>ponerCelda(ws,r,colStart+ci,val,estilo));
+          if(idx===0) altoFila(r,ALTO_CABECERA);
+          else if(String(fila[0]||'').trim().toUpperCase()==='TOTAL') altoFila(r,ALTO_TOTAL);
+          r++;
+        });
+        r++; // fila en blanco de separación
+      }
+
+      if(secRows.length){
+        for(let c=0;c<BLOQUE_COLS;c++) ponerCelda(ws,r,colStart+c,'',ESTILO_TITULO_SECCION);
+        ponerCelda(ws,r,colStart,'SECTORES · CON PROGRAMÁTICA',ESTILO_TITULO_SECCION);
+        merges.push({s:{r,c:colStart},e:{r,c:colStart+BLOQUE_COLS-1}});
+        altoFila(r,ALTO_SECCION);
+        r++;
+        secRows.forEach((fila,idx)=>{
+          const estilo=estiloFila(fila,idx);
+          fila.forEach((val,ci)=>ponerCelda(ws,r,colStart+ci,val,estilo));
+          if(idx===0) altoFila(r,ALTO_CABECERA);
+          else if(String(fila[0]||'').trim().toUpperCase()==='TOTAL') altoFila(r,ALTO_TOTAL);
+          r++;
+        });
+      }
+
+      filaTopeHoja=Math.max(filaTopeHoja,r-1);
+
+      // Anchos de las 5 columnas de datos de este bloque (label + 4 valores).
+      colWidths.push({wch:32},{wch:18},{wch:18},{wch:16},{wch:16});
+      colStart+=BLOQUE_COLS;
+
+      // Columna en blanco separadora antes del siguiente bloque de zona.
+      if(scIdx<scopes.length-1){
+        colWidths.push({wch:SEP_COL_W});
+        colStart+=1;
+      }
+    });
+
+    const ultimaCol=colStart-1;
+    ws['!merges']=merges;
+    ws['!cols']=colWidths;
+    ws['!rows']=rowHeights;
+    // showGridLines no siempre se respeta al abrir el archivo (depende de la
+    // app/versión), así que además rellenamos de blanco toda una zona amplia de
+    // la hoja (mucho más allá de la tabla): así, aunque hagas scroll, no se ve
+    // la cuadrícula por ningún lado.
     ws['!sheetViews']=[{showGridLines:false}];
-    XLSX.utils.book_append_sheet(wb,ws,sc.name);
+    const FILL_FILAS=400;   // filas cubiertas de blanco
+    const FILL_COLS=60;     // columnas cubiertas de blanco (más allá del último bloque)
+    const filaTope=Math.max(filaTopeHoja,FILL_FILAS-1);
+    const colTope=Math.max(ultimaCol,FILL_COLS-1);
+    for(let rr=0; rr<=filaTope; rr++){
+      for(let cc=0; cc<=colTope; cc++){
+        const addr=XLSX.utils.encode_cell({r:rr,c:cc});
+        if(!ws[addr]) ponerCelda(ws,rr,cc,'',ESTILO_BLANCO);
+      }
+    }
+    ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:filaTope,c:colTope}});
+    // Nombre de hoja: máximo 31 caracteres (límite de Excel).
+    XLSX.utils.book_append_sheet(wb,ws,ch.name.substring(0,31));
   });
 
   // Restaurar exactamente el estado visual que tenía el dashboard.
   resumenScope=prevScope;
+  mActiveChannel=prevChannel;
   resumenSecProgMode=prevProg;
+  document.querySelectorAll('.channel-tab').forEach(t=>t.classList.toggle('active',t.dataset.ch===prevChannel));
   const tog=document.getElementById('resumen-scope-toggle');
   if(tog) tog.querySelectorAll('.scope-toggle-btn').forEach(b=>b.classList.toggle('active',b.dataset.scope===prevScope));
-  const title=document.getElementById('resumen-scope-title');
   updateResumenScopeTitle();
   document.querySelectorAll('.resumenSecProgBtnSin').forEach(b=>b.classList.toggle('active',prevProg==='sin'));
   document.querySelectorAll('.resumenSecProgBtnCon').forEach(b=>b.classList.toggle('active',prevProg==='con'));
