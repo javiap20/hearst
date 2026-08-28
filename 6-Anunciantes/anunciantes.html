@@ -1014,7 +1014,7 @@ th.th-yoy {
 .anunciantes-v1-item{padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .anunciantes-v1-item:not(:nth-child(3n+1)){border-left:1px solid var(--border);}
 .anunciantes-v1-item:hover{background:var(--bg3);}
-#view-main .main-view > *:not(.anunciantes-v1-card):not(.anunciantes-kpi-grid):not(.anunciantes-section-divider):not(.anunciantes-toggle-bar):not(.anunciantes-desglose-card):not(.anunciantes-perdidos-card):not(.anunciantes-menores-card){display:none!important;}
+#view-main .main-view > *:not(.anunciantes-v1-card):not(.anunciantes-kpi-grid):not(.anunciantes-section-divider):not(.anunciantes-toggle-bar):not(.anunciantes-desglose-card):not(.anunciantes-perdidos-card):not(.anunciantes-menores-card):not(.anunciantes-historicos-card){display:none!important;}
 @media(max-width:900px){.anunciantes-v1-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:560px){.anunciantes-v1-grid{grid-template-columns:1fr;}}
 
@@ -1119,8 +1119,8 @@ th.th-yoy {
 .an-des-total-row td{background:linear-gradient(90deg,#edf3ff,#eef9f3)!important;border-top:2px solid #cbd5e1!important;font-weight:800!important;padding-top:10px!important;padding-bottom:10px!important}.an-des-total-row .an-des-prod{font-weight:800!important}@media(max-width:850px){.an-des-cols{grid-template-columns:1fr}}
 
 /* V14 · Anunciantes perdidos por comercial */
-.anunciantes-perdidos-card,.anunciantes-menores-card{display:none;}
-.anunciantes-perdidos-card.active,.anunciantes-menores-card.active{display:block;}
+.anunciantes-perdidos-card,.anunciantes-menores-card,.anunciantes-historicos-card{display:none;}
+.anunciantes-perdidos-card.active,.anunciantes-menores-card.active,.anunciantes-historicos-card.active{display:block;}
 .an-perd-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
 @media(max-width:850px){.an-perd-cols{grid-template-columns:1fr;}}
 .an-perd-col{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;}
@@ -1185,6 +1185,9 @@ th.th-yoy {
 /* V27 · separacion entre accesos rapidos de meses y meses individuales */
 .months-quick-divider{width:1px;height:24px;background:var(--border2);margin:0 5px;align-self:center;flex:0 0 auto;}
 
+
+/* Históricos · años siempre visibles + desglose Digital/Print */
+.an-hist-year{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:0 0 20px}.an-hist-year-head{padding:14px 16px;text-align:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:.04em;background:linear-gradient(90deg,#334155,#475569);color:#fff}.an-hist-year-head span{color:#fecaca}.an-hist-cols,.an-hist-row{display:grid;grid-template-columns:minmax(260px,1.7fr) 1fr 1fr 1fr;align-items:center;text-align:center}.an-hist-cols{padding:8px 14px;background:#e8edf4;border-bottom:1px solid #d5dce7;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#596176;font-weight:800}.an-hist-row{padding:9px 14px;border-bottom:1px solid var(--border);font-size:11px}.an-hist-row:last-child{border-bottom:0}.an-hist-name{font-weight:650;text-align:center}.an-hist-money{font-family:'Inter',sans-serif;color:var(--text2)}.an-hist-total{font-family:'Inter',sans-serif;font-weight:800;color:var(--red)}.an-hist-empty{padding:24px;text-align:center;color:var(--text3);font-size:11px;background:#fff}@media(max-width:760px){.an-hist-cols,.an-hist-row{grid-template-columns:minmax(180px,1.5fr) 1fr 1fr 1fr;font-size:9px}}
 </style>
 </head>
 <body>
@@ -1521,7 +1524,7 @@ th.th-yoy {
 
     <div class="main-view">
       <div class="anunciantes-section-divider" aria-hidden="true"><span></span><i></i><span></span></div>
-      <div class="anunciantes-toggle-bar"><button class="anunciantes-toggle-btn active" id="an-tab-listado" type="button" onclick="setAnunciantesTab('listado')">Listado de anunciantes</button><button class="anunciantes-toggle-btn" id="an-tab-desglose" type="button" onclick="setAnunciantesTab('desglose')">Desglose por anunciante</button><button class="anunciantes-toggle-btn" id="an-tab-perdidos" type="button" onclick="setAnunciantesTab('perdidos')">Anunciantes perdidos</button><button class="anunciantes-toggle-btn" id="an-tab-menores" type="button" onclick="setAnunciantesTab('menores')">Anunciantes con menos ingreso</button></div>
+      <div class="anunciantes-toggle-bar"><button class="anunciantes-toggle-btn active" id="an-tab-listado" type="button" onclick="setAnunciantesTab('listado')">Listado de anunciantes</button><button class="anunciantes-toggle-btn" id="an-tab-desglose" type="button" onclick="setAnunciantesTab('desglose')">Desglose por anunciante</button><button class="anunciantes-toggle-btn" id="an-tab-perdidos" type="button" onclick="setAnunciantesTab('perdidos')">Anunciantes perdidos</button><button class="anunciantes-toggle-btn" id="an-tab-menores" type="button" onclick="setAnunciantesTab('menores')">Anunciantes con menos ingreso</button><button class="anunciantes-toggle-btn" id="an-tab-historicos" type="button" onclick="setAnunciantesTab('historicos')">Perdidos años anteriores</button></div>
       <div class="anunciantes-kpi-grid">
         <div class="anunciantes-kpi">
           <div class="anunciantes-kpi-label">Total ingreso</div>
@@ -1567,6 +1570,11 @@ th.th-yoy {
           <div class="an-perd-col digital"><div class="an-perd-col-head">DIGITAL</div><div id="an-men-digital"></div></div>
           <div class="an-perd-col print"><div class="an-perd-col-head">PRINT</div><div id="an-men-print"></div></div>
         </div>
+      </div>
+      <div class="anunciantes-historicos-card" id="anunciantes-historicos-card">
+        <div class="an-subtoggle"><button class="an-export-xlsx-btn" onclick="exportAnunciantesHistoricosExcel()">↗ Exportar Excel</button></div>
+        <div class="an-analysis-note" style="margin-top:4px"><strong>Perdidos de años anteriores:</strong> revisa cada año anterior disponible y muestra los anunciantes que tuvieron ingreso &gt; 0 € en ese año pero no tienen ingreso &gt; 0 € en ningún momento del año seleccionado. La condición de perdido se calcula a nivel Hearst: <strong>Digital + Programática + Print</strong>; Eventos no se incluye. El <strong>filtro de meses se ignora por completo</strong>: tanto el año seleccionado como cada año histórico se revisan de enero a diciembre. Los demás filtros del dashboard sí se respetan. Los años se muestran siempre, aunque alguno no tenga anunciantes, para distinguir claramente un resultado vacío de un problema de carga.</div>
+        <div id="an-historicos-content"></div>
       </div>
 
       <!-- Mix canal (donut) - solo en GLOBAL -->
@@ -3300,22 +3308,25 @@ function renderMain(){
   if(_anTab==='desglose'&&_anDesCurrent) renderAnuncianteDesglose();
   if(_anTab==='perdidos') renderAnunciantesPerdidos();
   if(_anTab==='menores') renderAnunciantesMenores();
+  if(_anTab==='historicos') renderAnunciantesHistoricos();
 }
 
 
 let _anTab='listado',_anDesMatches=[],_anDesCurrent=null,_anDesBrand='__ALL__';
 function setAnunciantesTab(tab){
   _anTab=tab;
-  ['listado','desglose','perdidos','menores'].forEach(t=>document.getElementById('an-tab-'+t)?.classList.toggle('active',tab===t));
-  const k=document.querySelector('.anunciantes-kpi-grid'),l=document.querySelector('.anunciantes-v1-card'),d=document.getElementById('anunciantes-desglose-card'),p=document.getElementById('anunciantes-perdidos-card'),m=document.getElementById('anunciantes-menores-card');
+  ['listado','desglose','perdidos','menores','historicos'].forEach(t=>document.getElementById('an-tab-'+t)?.classList.toggle('active',tab===t));
+  const k=document.querySelector('.anunciantes-kpi-grid'),l=document.querySelector('.anunciantes-v1-card'),d=document.getElementById('anunciantes-desglose-card'),p=document.getElementById('anunciantes-perdidos-card'),m=document.getElementById('anunciantes-menores-card'),h=document.getElementById('anunciantes-historicos-card');
   if(k)k.style.display=tab==='listado'?'':'none';
   if(l)l.style.display=tab==='listado'?'':'none';
   if(d)d.classList.toggle('active',tab==='desglose');
   if(p)p.classList.toggle('active',tab==='perdidos');
   if(m)m.classList.toggle('active',tab==='menores');
+  if(h)h.classList.toggle('active',tab==='historicos');
   if(tab==='desglose')setTimeout(()=>document.getElementById('an-des-search')?.focus(),0);
   if(tab==='perdidos')renderAnunciantesPerdidos();
   if(tab==='menores')renderAnunciantesMenores();
+  if(tab==='historicos')renderAnunciantesHistoricos();
 }
 
 function anDesAdvertisers(){
@@ -3478,6 +3489,80 @@ function exportAnunciantesExcel(tipo){
   makeAreaTab(menores,'Barcelona','Menos ingreso - BAR');
   XLSX.writeFile(wb,`anunciantes-alertas-${yr}.xlsx`);
 }
+function buildAnunciantesHistoricosExportRows(){
+  const yr=document.getElementById('m-f-year').value;
+  if(!yr||yr==='all') return null;
+  const selected=parseInt(yr),prevSelected=selected-1,years=[...new Set(DATA.map(r=>parseInt(r._yearRaw)).filter(y=>Number.isFinite(y)&&y<prevSelected))].sort((a,b)=>b-a);
+  const base=mGetChannelData(),pubs=mGetSelected('pub');
+  function mapsForYear(ys){
+    const rows=mApplyFiltersSinMes(base.filter(r=>r._yearRaw===ys&&['DIGITAL','PRINT'].includes(r._canal)));
+    const dig=new Map(),pr=new Map(),all=new Map(),zoneIncome=new Map();
+    const add=(m,a,v)=>m.set(a,(m.get(a)||0)+v);
+    rows.forEach(r=>{const a=(r[COL_ANUN]||'').trim();if(!a)return;add(r._canal==='DIGITAL'?dig:pr,a,r._ingreso);add(all,a,r._ingreso);const z=mapArea(r._area,r._claseOrden);if(!zoneIncome.has(a))zoneIncome.set(a,new Map());zoneIncome.get(a).set(z,(zoneIncome.get(a).get(z)||0)+Math.max(0,r._ingreso));});
+    if(PROG_DATA?.length&&(mActiveChannel==='GLOBAL'||mActiveChannel==='DIGITAL')){
+      let prog=PROG_DATA.filter(r=>r._year===ys&&(pubs.includes('all')||pubs.includes(r._pubNorm))).map(r=>({a:(r._anun||'').trim(),v:r._ingActual||0,z:r._zonaProg}));
+      if(!prog.length&&parseInt(ys)===selected-1) prog=PROG_DATA.filter(r=>r._year===yr&&(pubs.includes('all')||pubs.includes(r._pubNorm))).map(r=>({a:(r._anun||'').trim(),v:r._ingAnt||0,z:r._zonaProg}));
+      prog.forEach(x=>{if(!x.a||x.a.toUpperCase()==='GOOGLE'||!x.v)return;add(dig,x.a,x.v);add(all,x.a,x.v);const z=x.z==='barcelona'?'Barcelona':x.z==='internacional'?'Internacional':'Madrid';if(!zoneIncome.has(x.a))zoneIncome.set(x.a,new Map());zoneIncome.get(x.a).set(z,(zoneIncome.get(x.a).get(z)||0)+Math.max(0,x.v));});
+    }
+    return{dig,pr,all,zoneIncome};
+  }
+  const cur=mapsForYear(yr),prev=mapsForYear(String(prevSelected));
+  const alreadyCovered=new Set([...prev.all.entries()].filter(([,v])=>v>0).map(([a])=>a)),assigned=new Set(),out=[];
+  years.forEach(y=>{const hist=mapsForYear(String(y));[...hist.all.entries()].filter(([a,v])=>v>0&&(cur.all.get(a)||0)<=0&&!alreadyCovered.has(a)&&!assigned.has(a)).forEach(([a,total])=>{assigned.add(a);const zm=hist.zoneIncome.get(a);let zona='Madrid';if(zm&&zm.size)zona=[...zm.entries()].sort((x,y)=>y[1]-x[1])[0][0];out.push({'Año':y,'Zona':zona,'Anunciante':a,'Digital + Programática':hist.dig.get(a)||0,'Print':hist.pr.get(a)||0,'Total Hearst':total});});});
+  return out;
+}
+function exportAnunciantesHistoricosExcel(){
+  const yr=document.getElementById('m-f-year').value;if(!yr||yr==='all'){alert('Selecciona un año concreto antes de exportar.');return;}
+  const rows=buildAnunciantesHistoricosExportRows()||[];if(!rows.length){alert('No hay anunciantes históricos perdidos para exportar con los filtros actuales.');return;}
+  const wb=XLSX.utils.book_new(),areas=['Madrid','Internacional','Barcelona'],abbr={Madrid:'MAD',Internacional:'INT',Barcelona:'BAR'},headers=['Año','Zona','Anunciante','Digital + Programática','Print','Total Hearst'];
+  areas.forEach(area=>{const ar=rows.filter(r=>r.Zona===area).sort((a,b)=>b['Año']-a['Año']||b['Total Hearst']-a['Total Hearst']).map(r=>({...r,Zona:abbr[area]}));const ws=XLSX.utils.json_to_sheet(ar,{header:headers});styleAnunciantesSheet(ws,['header',...ar.map(()=> 'data')]);ws['!cols']=[{wch:10},{wch:8},{wch:60},{wch:30},{wch:22},{wch:22}];const rg=XLSX.utils.decode_range(ws['!ref']);for(let R=1;R<=rg.e.r;R++){['D','E','F'].forEach(c=>{const cell=ws[c+(R+1)];if(cell)cell.z='#,##0 [$€-es-ES]';});}XLSX.utils.book_append_sheet(wb,ws,'Históricos - '+abbr[area]);});
+  XLSX.writeFile(wb,`anunciantes-perdidos-historicos-${yr}.xlsx`);
+}
+
+function renderAnunciantesHistoricos(){
+  const el=document.getElementById('an-historicos-content'),yr=document.getElementById('m-f-year').value;
+  if(!el)return;
+  if(!yr||yr==='all'){el.innerHTML='<div class="an-perd-empty">Selecciona un año concreto.</div>';return;}
+  const selected=parseInt(yr),prevSelected=selected-1,years=[...new Set(DATA.map(r=>parseInt(r._yearRaw)).filter(y=>Number.isFinite(y)&&y<prevSelected))].sort((a,b)=>b-a);
+  if(!years.length){el.innerHTML='<div class="an-perd-empty">No hay años históricos anteriores al año comparativo disponibles en los Excel cargados.</div>';return;}
+  const base=mGetChannelData(),pubs=mGetSelected('pub');
+  function mapsForYear(ys){
+    const rows=mApplyFiltersSinMes(base.filter(r=>r._yearRaw===ys&&['DIGITAL','PRINT'].includes(r._canal)));
+    const dig=new Map(),pr=new Map(),all=new Map();
+    const add=(m,a,v)=>m.set(a,(m.get(a)||0)+v);
+    rows.forEach(r=>{const a=(r[COL_ANUN]||'').trim();if(!a)return;add(r._canal==='DIGITAL'?dig:pr,a,r._ingreso);add(all,a,r._ingreso);});
+    // Programática histórica: usa _ingActual cuando existe una fila del propio año.
+    // Para el año inmediatamente anterior al seleccionado, si el Excel no trae filas propias,
+    // usa Imp.Neto Ant. de las filas del año seleccionado (estructura comparativa del fichero).
+    if(PROG_DATA?.length&&(mActiveChannel==='GLOBAL'||mActiveChannel==='DIGITAL')){
+      let prog=PROG_DATA.filter(r=>r._year===ys&&(pubs.includes('all')||pubs.includes(r._pubNorm))).map(r=>({a:(r._anun||'').trim(),v:r._ingActual||0}));
+      if(!prog.length && parseInt(ys)===selected-1){prog=PROG_DATA.filter(r=>r._year===yr&&(pubs.includes('all')||pubs.includes(r._pubNorm))).map(r=>({a:(r._anun||'').trim(),v:r._ingAnt||0}));}
+      prog.forEach(x=>{if(!x.a||x.a.toUpperCase()==='GOOGLE'||!x.v)return;add(dig,x.a,x.v);add(all,x.a,x.v);});
+    }
+    return{dig,pr,all};
+  }
+  const cur=mapsForYear(yr);
+  // El año inmediatamente anterior ya pertenece al toggle Anunciantes perdidos.
+  // Cualquier anunciante con ingreso > 0 en ese año queda fuera de Historicos, aunque tambien estuviera en anos mas antiguos.
+  const prev=mapsForYear(String(prevSelected));
+  const alreadyCovered=new Set([...prev.all.entries()].filter(([,v])=>v>0).map(([a])=>a));
+  // Al recorrer de mas reciente a mas antiguo, cada anunciante se asigna una sola vez: a su ultimo ano con ingreso positivo.
+  const assigned=new Set();
+  let html='';
+  years.forEach(y=>{
+    const ys=String(y),hist=mapsForYear(ys);
+    const items=[...hist.all.entries()]
+      .filter(([a,v])=>v>0&&(cur.all.get(a)||0)<=0&&!alreadyCovered.has(a)&&!assigned.has(a))
+      .map(([a,total])=>({a,total,d:hist.dig.get(a)||0,p:hist.pr.get(a)||0}))
+      .sort((a,b)=>b.total-a.total);
+    items.forEach(i=>assigned.add(i.a));
+    const total=items.reduce((z,x)=>z+x.total,0);
+    const rows=items.length?items.map(i=>`<div class="an-hist-row"><div class="an-hist-name">${esc(i.a)}</div><div class="an-hist-money">${fmtFull(i.d)}</div><div class="an-hist-money">${fmtFull(i.p)}</div><div class="an-hist-total">−${fmtFull(i.total)}</div></div>`).join(''):`<div class="an-hist-empty">No hay anunciantes de ${y} ausentes en todo ${yr}.</div>`;
+    html+=`<div class="an-hist-year"><div class="an-hist-year-head">${y} · ${items.length} ${items.length===1?'anunciante':'anunciantes'} · <span>${items.length?'−'+fmtFull(total):'0€'}</span></div><div class="an-hist-cols"><span>Anunciante</span><span>Digital + Programática</span><span>Print</span><span>Total Hearst ${y}</span></div>${rows}</div>`;
+  });
+  el.innerHTML=html;
+}
+
 function renderAnunciantesPerdidos(){
   const yr=document.getElementById('m-f-year').value;
   const digEl=document.getElementById('an-perd-digital'),prEl=document.getElementById('an-perd-print');
