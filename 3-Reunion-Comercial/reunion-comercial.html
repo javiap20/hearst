@@ -518,6 +518,24 @@ table.main-table td.num{text-align:right;font-family:'DM Mono',monospace;font-si
 .chip-main.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:500;}
 .chip-main.chip-all{font-style:italic;color:var(--text3);}
 .chip-main.chip-all.active{background:var(--bg4);border-color:var(--border2);color:var(--text2);font-style:normal;}
+/* Compact dropdown filters */
+.compact-filters-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:start;position:relative;}
+.compact-filter{position:relative;min-width:0;}
+.compact-filter-btn{width:100%;height:34px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:0 10px;cursor:pointer;color:var(--text2);font-family:'Inter',sans-serif;}
+.compact-filter-btn:hover{border-color:var(--blue);background:#fff;}
+.compact-filter.open .compact-filter-btn{border-color:#8fade0;background:#edf3fc;box-shadow:0 0 0 2px rgba(74,116,181,.10);}
+.compact-filter-title{font-size:10px;font-weight:700;letter-spacing:.055em;white-space:nowrap;}
+.compact-filter-summary{font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:auto;}
+.compact-filter-arrow{font-size:9px;color:var(--text3);transition:transform .15s;}
+.compact-filter.open .compact-filter-arrow{transform:rotate(180deg);}
+.compact-filter-panel{display:none;position:fixed;z-index:500;padding:12px 13px;background:#e8effa;border:2px solid #8fade0;border-radius:10px;box-shadow:0 14px 32px rgba(55,88,140,.20);}
+.compact-filter.open .compact-filter-panel{display:block;}
+.compact-filter-panel .chip-box{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px;width:100%;max-width:none;max-height:none!important;height:auto;overflow:visible!important;background:transparent;border:0;padding:0;}
+.compact-filter-panel .chip-main{flex:0 0 auto;background:#fff;border-color:#b8c9e5;box-shadow:0 1px 2px rgba(55,88,140,.06);}
+.compact-filter-panel .chip-main:hover{background:#f4f7fc;border-color:#6f96cf;}
+.compact-filter-panel .chip-main.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.compact-filter.has-selection .compact-filter-btn{border-color:var(--blue);background:rgba(37,99,235,.055);}
+@media(max-width:1100px){.compact-filters-row{grid-template-columns:repeat(3,minmax(0,1fr));}}
 .btn-clear-main{background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--radius);color:#b91c1c;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
 .btn-clear-main:hover{background:#fecaca;}
 .main-view{padding:24px 20px;display:flex;flex-direction:column;gap:20px;}
@@ -1099,15 +1117,13 @@ th.th-yoy {
         </div>
       </div>
       <div class="main-filters-divider"></div>
-      <div class="main-filters-row main-filters-row-3col">
-        <div class="chip-filter chip-filter-33"><label>Área</label><div class="chip-box" id="m-chips-area"></div></div>
-        <div class="chip-filter chip-filter-33"><label>Sector</label><div class="chip-box" id="m-chips-sector"></div></div>
-        <div class="chip-filter chip-filter-33"><label>Familia</label><div class="chip-box" id="m-chips-familia"></div></div>
-      </div>
-      <div class="main-filters-divider"></div>
-      <div class="main-filters-row main-filters-row-2col">
-        <div class="chip-filter chip-filter-50"><label>Publicación</label><div class="chip-box" id="m-chips-pub"></div></div>
-        <div class="chip-filter chip-filter-50"><label>Comercial</label><div class="chip-box chip-box-com" id="m-chips-com"></div></div>
+      <div class="compact-filters-row" id="compact-main-filters">
+        <div class="compact-filter" data-filter-key="globalarea"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'globalarea')"><span class="compact-filter-title">ÁREA GLOBAL</span><span class="compact-filter-summary" id="m-summary-globalarea">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-globalarea"></div></div></div>
+        <div class="compact-filter" data-filter-key="area"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'area')"><span class="compact-filter-title">ÁREA COMERCIAL</span><span class="compact-filter-summary" id="m-summary-area">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-area"></div></div></div>
+        <div class="compact-filter" data-filter-key="sector"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'sector')"><span class="compact-filter-title">SECTOR</span><span class="compact-filter-summary" id="m-summary-sector">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-sector"></div></div></div>
+        <div class="compact-filter" data-filter-key="familia"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'familia')"><span class="compact-filter-title">FAMILIA</span><span class="compact-filter-summary" id="m-summary-familia">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-familia"></div></div></div>
+        <div class="compact-filter" data-filter-key="pub"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'pub')"><span class="compact-filter-title">PUBLICACIÓN</span><span class="compact-filter-summary" id="m-summary-pub">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-pub"></div></div></div>
+        <div class="compact-filter" data-filter-key="com"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'com')"><span class="compact-filter-title">COMERCIAL</span><span class="compact-filter-summary" id="m-summary-com">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box chip-box-com" id="m-chips-com"></div></div></div>
       </div>
       <div class="main-filters-row" style="display:none">
         <div class="main-filter-group" style="display:none">
@@ -1710,7 +1726,7 @@ th.th-yoy {
 const COL_MES='Mes inserción',COL_PUB='Publicación',COL_ANUN='Anunciante',
       COL_MARCA='Marca',COL_COMERCIAL='Comercial',COL_SIT='Situación orden',
       COL_FAM='Familia',COL_PROD='Producto',COL_YEAR='Año inserción',
-      COL_ING='Imp.Neto a Comisionar',COL_AREA='ÁREAS',COL_SECTOR='Sector',
+      COL_ING='Imp.Neto a Comisionar',COL_AREA='ÁREAS',COL_AREA_GLOBAL='Oficina de venta / Centro de coste',COL_SECTOR='Sector',
       COL_DETALLE='Detalle',COL_CLASE_ORDEN='Clase de orden',
       SHEET_NAME='Analizador general';
 
@@ -2727,7 +2743,7 @@ function hideSectorPop(){const pop=document.getElementById('sector-pop');pop.cla
 // DASHBOARD GENERAL — FILTROS
 // ══════════════════════════════════════════════════════════════════════════════
 let mActiveChannel='GLOBAL',mSortCol='ingreso',mSortAsc=false,mExpandedAnuns=new Set();
-const mChipState={mes:new Set(),area:new Set(),sector:new Set(),familia:new Set(),pub:new Set(),com:new Set()};
+const mChipState={mes:new Set(),globalarea:new Set(),area:new Set(),sector:new Set(),familia:new Set(),pub:new Set(),com:new Set()};
 let mMonthsAutoInitDone=false;
 
 // Meses ya finalizados según el año seleccionado en el filtro de Año (m-f-year).
@@ -2770,6 +2786,7 @@ function populateMainFilters(){
   }
   const baseForFilters=selectedYr&&selectedYr!=='all'?base.filter(r=>r._yearRaw===selectedYr):base;
   const meses=new Set(base.map(r=>r._mesRaw).filter(Boolean));
+  const globalareas=new Set(base.map(r=>(r[COL_AREA_GLOBAL]||'').trim()).filter(Boolean));
   const areas=new Set(base.map(r=>(r[COL_AREA]||'').trim()).filter(Boolean));
   const sects=new Set(base.map(r=>r._sectorClean).filter(Boolean));
   const fams=new Set(base.map(r=>r._famLabel).filter(Boolean));
@@ -2778,6 +2795,7 @@ function populateMainFilters(){
   const sits=new Set(base.map(r=>(r[COL_SIT]||'').trim()).filter(Boolean));
   const mesOrdenados=MESES_ORDER.filter(m=>meses.has(m));
   mBuildChips('mes',mesOrdenados,v=>MESES_SHORT[v]||v);
+  mBuildChips('globalarea',globalareas,null);
   mBuildChips('area',areas,null);
   mBuildChips('sector',sects,null);
   mBuildChips('familia',fams,null);
@@ -2810,8 +2828,46 @@ function mBuildChips(key,vals,labelFn){
   }
   [...vals].sort().forEach(v=>{const label=labelFn?labelFn(v):v;const active=!isNone&&s.has(v);html+=`<span class="chip-main${active?' active':''}" data-key="${key}" data-val="${encodeURIComponent(v)}" onclick="mToggleChip('${key}',decodeURIComponent(this.dataset.val))">${label}</span>`;});
   container.innerHTML=html;
+  updateCompactFilterSummary(key);
 }
 
+function updateCompactFilterSummary(key){
+  if(key==='mes') return;
+  const el=document.getElementById('m-summary-'+key);
+  const wrap=document.querySelector('.compact-filter[data-filter-key="'+key+'"]');
+  if(!el||!wrap) return;
+  const vals=mGetSelected(key);
+  let txt='Todos';
+  if(vals.length===0) txt='Ninguno';
+  else if(!vals.includes('all')) txt=vals.length===1?vals[0]:(vals.length+' seleccionados');
+  el.textContent=txt; el.title=txt;
+  wrap.classList.toggle('has-selection',!vals.includes('all'));
+}
+function positionCompactPanel(w){
+  if(!w) return;
+  const panel=w.querySelector('.compact-filter-panel');
+  const row=document.getElementById('compact-main-filters');
+  const btn=w.querySelector('.compact-filter-btn');
+  if(!panel||!row||!btn) return;
+  const rr=row.getBoundingClientRect(), br=btn.getBoundingClientRect();
+  panel.style.left=Math.max(8,rr.left)+'px';
+  panel.style.top=(br.bottom+5)+'px';
+  panel.style.width=Math.max(280,rr.width)+'px';
+  panel.style.maxWidth='calc(100vw - 16px)';
+}
+function toggleCompactFilter(e,key){
+  e.stopPropagation();
+  const w=document.querySelector('.compact-filter[data-filter-key="'+key+'"]');
+  const wasOpen=w&&w.classList.contains('open');
+  document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'));
+  if(w&&!wasOpen){w.classList.add('open');positionCompactPanel(w);}
+}
+// La multiselección no cierra el filtro: solo se cierra al pulsar de nuevo su cabecera,
+// al abrir otro filtro o al hacer clic fuera.
+document.querySelectorAll('.compact-filter-panel').forEach(p=>p.addEventListener('click',e=>e.stopPropagation()));
+document.addEventListener('click',e=>{if(!e.target.closest('.compact-filter'))document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'));});
+window.addEventListener('resize',()=>{const w=document.querySelector('.compact-filter.open');if(w)positionCompactPanel(w);});
+window.addEventListener('scroll',()=>{const w=document.querySelector('.compact-filter.open');if(w)positionCompactPanel(w);},true);
 function mToggleChip(key,val){
   const s=mChipState[key];
   if(val==='all'){s.clear();}
@@ -2837,6 +2893,7 @@ function mRenderChips(key){
     else if(v==='none') ch.classList.toggle('active',isNone);
     else ch.classList.toggle('active',!isNone&&s.has(decodeURIComponent(v)));
   });
+  updateCompactFilterSummary(key);
 }
 
 function mGetSelected(key){const s=mChipState[key];if(!s) return['all'];if(s.has('__NONE__')) return[];return s.size===0?['all']:[...s];}
@@ -2844,10 +2901,11 @@ function mGetSelected(key){const s=mChipState[key];if(!s) return['all'];if(s.has
 function mGetChannelData(){return mActiveChannel==='GLOBAL'?DATA:DATA.filter(r=>r._canal===mActiveChannel);}
 
 function mApplyFilters(rows){
-  const meses=mGetSelected('mes'),areas=mGetSelected('area'),sects=mGetSelected('sector'),fams=mGetSelected('familia'),pubs=mGetSelected('pub'),coms=mGetSelected('com');
+  const meses=mGetSelected('mes'),globalareas=mGetSelected('globalarea'),areas=mGetSelected('area'),sects=mGetSelected('sector'),fams=mGetSelected('familia'),pubs=mGetSelected('pub'),coms=mGetSelected('com');
   const sit=document.getElementById('m-f-sit').value;
   return rows.filter(r=>{
     if(!meses.includes('all')&&!meses.includes(r._mesRaw)) return false;
+    if(!globalareas.includes('all')&&!globalareas.includes((r[COL_AREA_GLOBAL]||'').trim())) return false;
     if(!areas.includes('all')&&!areas.includes((r[COL_AREA]||'').trim())) return false;
     if(!sects.includes('all')&&!sects.includes(r._sectorClean)) return false;
     if(!fams.includes('all')&&!fams.includes(r._famLabel)) return false;
@@ -8445,6 +8503,10 @@ function loadPptxGenJS() {
 async function exportarPPT() {
   const btn = document.getElementById('btn-export-ppt');
   const originalText = btn.textContent;
+  // La exportación PPT de Sectores se genera siempre CON Programática,
+  // pero al terminar devolvemos el dashboard al estado que tenía el usuario.
+  const pptOriginalSecTableProgMode = secTableProgMode;
+  const pptOriginalSecTabProgMode = secTabProgMode;
   
   if (!window.PptxGenJS) {
     btn.textContent = '⏳ Cargando librería...';
@@ -8565,10 +8627,27 @@ async function exportarPPT() {
   }
 
   function getTop8SectorsDetailed() {
-    const filt = mGetFiltered();
+    const filtBase = mGetFiltered();
     const yr = document.getElementById('m-f-year').value;
     const hasPrev = yr && yr !== 'all';
-    const prevFilt = hasPrev ? mGetPrevFiltered(yr) : [];
+    const prevBase = hasPrev ? mGetPrevFiltered(yr) : [];
+
+    // PPT: el bloque de Sectores se calcula siempre CON Programática.
+    // Se usa exactamente el mismo reparto que el toggle del dashboard:
+    // suma Programática a su sector real y resta ese importe de VENDORS.
+    let filt = filtBase;
+    let prevFilt = prevBase;
+    if (PROG_DATA && PROG_DATA.length && (mActiveChannel === 'GLOBAL' || mActiveChannel === 'DIGITAL')) {
+      if (yr === 'all') {
+        filt = filtBase.concat(progRowsAllYears(findVendorsKey(filtBase)));
+      } else {
+        filt = filtBase.concat(progRowsForYear(yr, '_ingActual', findVendorsKey(filtBase)));
+        if (hasPrev) {
+          const prevYear = String(parseInt(yr) - 1);
+          prevFilt = prevBase.concat(progRowsForYear(prevYear, '_ingAnt', findVendorsKey(prevBase)));
+        }
+      }
+    }
     
     const sectorMap = new Map();
     
@@ -8858,7 +8937,7 @@ async function exportarPPT() {
         }
 
         // ── Construimos el array de runs de toda la caja ──────────────────
-        const allRuns = [];
+        let allRuns = [];
 
         // — Punto 1: título —
         allRuns.push({ text:'▸  ', options:{ bold:true, fontSize:13, color:'D4960A' } });
@@ -8895,24 +8974,389 @@ async function exportarPPT() {
         // — Espaciador 10pt —
         allRuns.push(spacer);
 
-        // — Puntos 2-7: productos —
-        const productos2 = [
-          'Branded Content','Branded Content Vídeo','Display',
-          'Social','Programática + Vídeo Directo','Programática + Vídeo Indirecto',
-        ];
-        productos2.forEach((prod, idx) => {
+        // — Puntos 2-5: análisis automático por familias —
+        // Texto ejecutivo basado únicamente en los datos cargados: ingreso, inserciones y presupuesto medio.
+        function famStats2(label, canal=null) {
+          const matchFam = r => String(r._famLabel||'').trim().toUpperCase() === String(label||'').trim().toUpperCase() && (!canal || r._canal === canal);
+          const cRows = cur2.filter(matchFam);
+          const pRows = prev2.filter(matchFam);
+          const calc = rows => {
+            const ing = rows.reduce((s,r)=>s+r._ingreso,0);
+            const pagadas = rows.filter(r => r._ingreso > 0);
+            const cero = rows.filter(r => r._ingreso === 0).length;
+            const pm = pagadas.length ? pagadas.reduce((s,r)=>s+r._ingreso,0)/pagadas.length : 0;
+            return { ing, n:rows.length, pagadas:pagadas.length, cero, pm };
+          };
+          return { cur:calc(cRows), prev:calc(pRows) };
+        }
+        function pct2(a,b){ return b>0 ? (a-b)/b*100 : null; }
+        function pctTxt2(v){ return v===null ? null : `${v>=0?'+':''}${v.toFixed(1)}%`; }
+        function addFamilyAnalysis2(label, title, canal=null) {
+          const st=famStats2(label, canal), c=st.cur, p=st.prev;
           allRuns.push({ text:'▸  ', options:{ bold:true, fontSize:12, color:'D4960A' } });
-          allRuns.push({ text:prod,           options:{ bold:true, fontSize:12, color:'1A1D27' } });
-          allRuns.push({ text:' → ',          options:{ fontSize:12, color:'BBBBBB' } });
-          allRuns.push({ text:'xxx',           options:{ fontSize:12, color:'555555', italic:true } });
-          allRuns.push({ text:' ', options:{ fontSize:12, breakLine:true } });
-          allRuns.push(spacer); // 10pt entre cada producto
-        });
+          allRuns.push({ text:title, options:{ bold:true, fontSize:12, color:'1A1D27' } });
+          allRuns.push({ text:' → ', options:{ fontSize:12, color:'BBBBBB' } });
+          if (!c.n && !p.n) {
+            allRuns.push({ text:'No hay datos de esta familia para el periodo seleccionado.', options:{ fontSize:10.5, color:'666666', italic:true } });
+          } else {
+            const dIng=pct2(c.ing,p.ing), dN=pct2(c.n,p.n), dPm=pct2(c.pm,p.pm);
+            const verbIng=dIng===null?'registra':dIng>=0?'crece':'cae';
+            allRuns.push({ text:`El ingreso ${verbIng}`, options:{ fontSize:10.5, color:'555555' } });
+            if(dIng!==null) allRuns.push({ text:` ${pctTxt2(dIng)}`, options:{ fontSize:10.5, bold:true, color:dIng>=0?'16A34A':'DC2626' } });
+            allRuns.push({ text:` hasta ${fmtEurS2(c.ing)}. `, options:{ fontSize:10.5, color:'555555' } });
+            allRuns.push({ text:`Tenemos ${c.n} inserciones`, options:{ fontSize:10.5, color:'555555' } });
+            if(dN!==null) allRuns.push({ text:` (${pctTxt2(dN)} vs ${prevYr2})`, options:{ fontSize:10.5, bold:true, color:dN>=0?'16A34A':'DC2626' } });
+            allRuns.push({ text:` y un presupuesto medio de ${fmtEurS2(c.pm)} por inserción con ingreso`, options:{ fontSize:10.5, color:'555555' } });
+            if(dPm!==null) allRuns.push({ text:` (${pctTxt2(dPm)})`, options:{ fontSize:10.5, bold:true, color:dPm>=0?'16A34A':'DC2626' } });
+            allRuns.push({ text:'.', options:{ fontSize:10.5, color:'555555' } });
+            if(c.cero>0) allRuns.push({ text:` Hay ${c.cero} inserciones a 0 €, que no se incluyen en ese presupuesto medio.`, options:{ fontSize:10, color:'777777', italic:true } });
+            if(dIng!==null && dPm!==null) {
+              let lectura='';
+              if(dIng<0 && dPm<0) lectura='La caída combina menor ingreso y erosión del presupuesto medio; conviene revisar precio y volumen.';
+              else if(dIng<0 && dPm>=0) lectura='El precio medio aguanta; la principal palanca de recuperación está en recuperar volumen de activaciones.';
+              else if(dIng>=0 && dPm<0) lectura='El ingreso mejora pese a un presupuesto medio menor, por lo que el crecimiento se apoya sobre todo en mayor volumen.';
+              else lectura='La evolución es positiva tanto en ingreso como en presupuesto medio.';
+              allRuns.push({ text:` ${lectura}`, options:{ fontSize:10.5, color:'555555', italic:true } });
+            }
+          }
+          allRuns.push({ text:' ', options:{ fontSize:10.5, breakLine:true } });
+          allRuns.push({ text:' ', options:{ fontSize:5, color:'FFFFFF', breakLine:true } });
+        }
 
-        s.addText(allRuns, {
-          x:0.45, y:1.35, w:9.1, h:4.1,
+        // Branded Content: dos productos concretos del Excel DIGITAL.
+        // Social: total de la familia + foco específico en Paid y Organic.
+        function statsByPredicate2(pred) {
+          const calc = rows => {
+            const ing = rows.reduce((s,r)=>s+r._ingreso,0);
+            const pagadas = rows.filter(r => r._ingreso > 0);
+            const cero = rows.filter(r => r._ingreso === 0).length;
+            const pm = pagadas.length ? pagadas.reduce((s,r)=>s+r._ingreso,0)/pagadas.length : 0;
+            return { ing, n:rows.length, pagadas:pagadas.length, cero, pm };
+          };
+          return {cur:calc(cur2.filter(pred)), prev:calc(prev2.filter(pred))};
+        }
+        function addStatsText2(title, st, indent=false) {
+          const c=st.cur,p=st.prev,dIng=pct2(c.ing,p.ing),dN=pct2(c.n,p.n),dPm=pct2(c.pm,p.pm);
+          allRuns.push({ text: indent?'    • ':'▸  ', options:{ bold:true, fontSize:indent?10.5:12, color:indent?'777777':'D4960A' } });
+          allRuns.push({ text:title, options:{ bold:true, fontSize:indent?10.5:12, color:'1A1D27' } });
+          allRuns.push({ text:' → ', options:{ fontSize:indent?10.5:12, color:'BBBBBB' } });
+          if(!c.n && !p.n){
+            allRuns.push({text:'No hay datos para el periodo seleccionado.',options:{fontSize:10.2,color:'666666',italic:true}});
+          } else {
+            const verb=dIng===null?'registra':dIng>=0?'crece':'cae';
+            allRuns.push({text:`El ingreso ${verb}`,options:{fontSize:10.2,color:'555555'}});
+            if(dIng!==null) allRuns.push({text:` ${pctTxt2(dIng)}`,options:{fontSize:10.2,bold:true,color:dIng>=0?'16A34A':'DC2626'}});
+            allRuns.push({text:` hasta ${fmtEurS2(c.ing)}, con ${c.n} inserciones`,options:{fontSize:10.2,color:'555555'}});
+            if(dN!==null) allRuns.push({text:` (${pctTxt2(dN)} vs ${prevYr2})`,options:{fontSize:10.2,bold:true,color:dN>=0?'16A34A':'DC2626'}});
+            allRuns.push({text:` y un presupuesto medio de ${fmtEurS2(c.pm)}`,options:{fontSize:10.2,color:'555555'}});
+            if(dPm!==null) allRuns.push({text:` (${pctTxt2(dPm)})`,options:{fontSize:10.2,bold:true,color:dPm>=0?'16A34A':'DC2626'}});
+            allRuns.push({text:'.',options:{fontSize:10.2,color:'555555'}});
+            if(dIng!==null && dPm!==null){
+              let lectura='';
+              if(dIng<0&&dPm<0) lectura=' La presión está tanto en volumen como en precio medio.';
+              else if(dIng<0&&dPm>=0) lectura=' El precio medio resiste; la recuperación depende principalmente de aumentar activaciones.';
+              else if(dIng>=0&&dPm<0) lectura=' El crecimiento se apoya en volumen pese a la caída del precio medio.';
+              else lectura=' La evolución es positiva tanto en ingreso como en presupuesto medio.';
+              allRuns.push({text:lectura,options:{fontSize:10.2,color:'555555',italic:true}});
+            }
+          }
+          allRuns.push({text:' ',options:{fontSize:10.2,breakLine:true}});
+        }
+
+        // BC se analiza por separado: producto Branded Content y producto Branded Content video.
+        // En cada uno se destacan como máximo 3 publicaciones con peor evolución del presupuesto medio.
+        function bcPublicationAlerts2(productName) {
+          const prodKey=String(productName).trim().toUpperCase();
+          const rowsC=cur2.filter(r=>r._canal==='DIGITAL' && String(r[COL_PROD]||'').trim().toUpperCase()===prodKey);
+          const rowsP=prev2.filter(r=>r._canal==='DIGITAL' && String(r[COL_PROD]||'').trim().toUpperCase()===prodKey);
+          const pubName=r=>String(r._pubClean||r._pubNorm||r._pub||r[COL_PUB]||'').trim()||'(Sin publicación)';
+          const build=rows=>{
+            const m=new Map();
+            rows.forEach(r=>{
+              const k=pubName(r); if(!m.has(k)) m.set(k,{ing:0,n:0,pagadas:0});
+              const x=m.get(k); x.ing+=r._ingreso||0; x.n++; if((r._ingreso||0)>0) x.pagadas++;
+            });
+            m.forEach(x=>x.pm=x.pagadas?x.ing/x.pagadas:0);
+            return m;
+          };
+          const c=build(rowsC), p=build(rowsP), pubs=new Set([...c.keys(),...p.keys()]);
+          return [...pubs].map(pub=>{
+            const a=c.get(pub)||{ing:0,n:0,pagadas:0,pm:0};
+            const b=p.get(pub)||{ing:0,n:0,pagadas:0,pm:0};
+            const dPm=b.pm>0?(a.pm-b.pm)/b.pm*100:null;
+            return {pub,cur:a,prev:b,dPm,impact:(b.pm-a.pm)*Math.max(a.pagadas,1)};
+          }).filter(x=>x.dPm!==null && x.dPm<0 && x.cur.pagadas>0)
+            .sort((a,b)=>(a.dPm-b.dPm)||((b.cur.pagadas||0)-(a.cur.pagadas||0))).slice(0,3);
+        }
+        function addBcProduct2(title, productName){
+          const pred=r=>r._canal==='DIGITAL' && String(r[COL_PROD]||'').trim().toUpperCase()===String(productName).trim().toUpperCase();
+          addStatsText2(title,statsByPredicate2(pred));
+          const alerts=bcPublicationAlerts2(productName);
+          if(alerts.length){
+            allRuns.push({text:'       Publicaciones a revisar: ',options:{fontSize:9.4,bold:true,color:'B45309'}});
+            alerts.forEach((x,i)=>{
+              allRuns.push({text:`${x.pub} ${pctTxt2(x.dPm)} (${fmtEurS2(x.prev.pm)} → ${fmtEurS2(x.cur.pm)}; ${x.cur.pagadas} activ.)${i<alerts.length-1?' · ':''}`,options:{fontSize:9.4,color:x.dPm<=-10?'DC2626':'B45309'}});
+            });
+            allRuns.push({text:' ',options:{fontSize:9.4,breakLine:true}});
+          }
+        }
+        // Foco especial en cuatro marcas clave. Solo se muestran alertas: deterioro vs mes anterior,
+        // tendencia reciente negativa o presupuesto medio claramente por debajo de su media del periodo.
+        const FOCUS_PUBS2 = [
+          {label:'ELLE', test:v=>v==='ELLE'},
+          {label:"Harper's Bazaar", test:v=>v.includes('HARPER') && v.includes('BAZAAR')},
+          {label:'Cosmopolitan', test:v=>v.includes('COSMOPOLITAN')},
+          {label:'Esquire', test:v=>v.includes('ESQUIRE')}
+        ];
+        function pubKeyFocus2(r){
+          return String(r._pubClean||r._pubNorm||r._pub||r[COL_PUB]||'').trim().toUpperCase();
+        }
+        function focusAlerts2(pred){
+          const months=MESES_ORDER.filter(m=>usaTodos2 || ordenados2.includes(m));
+          const alerts=[];
+          FOCUS_PUBS2.forEach(fp=>{
+            const rows=cur2.filter(r=>pred(r) && fp.test(pubKeyFocus2(r)));
+            if(!rows.length) return;
+            const monthly=months.map(m=>{
+              const rr=rows.filter(r=>r._mesRaw===m), paid=rr.filter(r=>(r._ingreso||0)>0);
+              const ing=rr.reduce((a,r)=>a+(r._ingreso||0),0);
+              return {m,ing,n:paid.length,pm:paid.length?ing/paid.length:0};
+            }).filter(x=>x.ing>0 || x.n>0);
+            if(!monthly.length) return;
+            const last=monthly[monthly.length-1], prior=monthly.length>1?monthly[monthly.length-2]:null;
+            const paidAll=rows.filter(r=>(r._ingreso||0)>0), totalIng=rows.reduce((a,r)=>a+(r._ingreso||0),0);
+            const avgPm=paidAll.length?totalIng/paidAll.length:0;
+            const ingMoM=prior&&prior.ing>0?(last.ing-prior.ing)/prior.ing*100:null;
+            const pmMoM=prior&&prior.pm>0?(last.pm-prior.pm)/prior.pm*100:null;
+            const belowAvg=avgPm>0?(last.pm-avgPm)/avgPm*100:null;
+            let trendIng=null, trendPm=null;
+            if(monthly.length>=3){
+              const a=monthly.slice(-3);
+              trendIng=(a[2].ing<a[1].ing && a[1].ing<a[0].ing);
+              trendPm=(a[2].pm<a[1].pm && a[1].pm<a[0].pm);
+            }
+            const reasons=[];
+            if(ingMoM!==null && ingMoM<0) reasons.push(`ingreso ${pctTxt2(ingMoM)} vs mes anterior`);
+            if(pmMoM!==null && pmMoM<0) reasons.push(`presupuesto medio ${pctTxt2(pmMoM)} vs mes anterior`);
+            if(trendIng) reasons.push('ingreso encadena 3 meses a la baja');
+            if(trendPm) reasons.push('presupuesto medio encadena 3 meses a la baja');
+            if(belowAvg!==null && belowAvg<=-10) reasons.push(`presupuesto medio ${Math.abs(belowAvg).toFixed(1)}% por debajo de su media`);
+            if(!reasons.length) return;
+            const severity=(ingMoM!==null&&ingMoM<0?Math.abs(ingMoM):0)+(pmMoM!==null&&pmMoM<0?Math.abs(pmMoM):0)+(belowAvg!==null&&belowAvg<0?Math.abs(belowAvg):0)+(trendIng?20:0)+(trendPm?20:0);
+            alerts.push({label:fp.label,last,prior,avgPm,reasons,severity});
+          });
+          return alerts.sort((a,b)=>b.severity-a.severity);
+        }
+        function addFocusAlerts2(title,pred){
+          const alerts=focusAlerts2(pred);
+          if(!alerts.length) return;
+          allRuns.push({text:`       Foco ${title} · marcas a revisar: `,options:{fontSize:9.2,bold:true,color:'7C3AED'}});
+          alerts.forEach((a,i)=>{
+            // Nombre de marca como "pill" visual para localizarla antes de leer el diagnóstico.
+            allRuns.push({text:`  ${a.label.toUpperCase()}  `,options:{fontSize:8.8,bold:true,color:'6D28D9',highlight:'EDE9FE'}});
+            allRuns.push({text:'  ',options:{fontSize:9.2,color:'555555'}});
+
+            // Evolución vs mes anterior: los valores positivos se leen en verde y los negativos en rojo.
+            if(a.prior && a.prior.ing>0){
+              const d=(a.last.ing-a.prior.ing)/a.prior.ing*100;
+              allRuns.push({text:'Ingreso ',options:{fontSize:9.2,color:'555555'}});
+              allRuns.push({text:pctTxt2(d),options:{fontSize:9.2,bold:true,color:d>=0?'16A34A':'DC2626'}});
+              allRuns.push({text:' vs mes anterior; ',options:{fontSize:9.2,color:'555555'}});
+            }
+            if(a.prior && a.prior.pm>0){
+              const d=(a.last.pm-a.prior.pm)/a.prior.pm*100;
+              allRuns.push({text:'PM ',options:{fontSize:9.2,color:'555555'}});
+              allRuns.push({text:pctTxt2(d),options:{fontSize:9.2,bold:true,color:d>=0?'16A34A':'DC2626'}});
+              allRuns.push({text:' vs mes anterior. ',options:{fontSize:9.2,color:'555555'}});
+            }
+            const below=a.avgPm>0?(a.last.pm-a.avgPm)/a.avgPm*100:null;
+            if(below!==null && below<=-10){
+              allRuns.push({text:'PM vs media ',options:{fontSize:9.2,color:'555555'}});
+              allRuns.push({text:pctTxt2(below),options:{fontSize:9.2,bold:true,color:'DC2626'}});
+              allRuns.push({text:'. ',options:{fontSize:9.2,color:'555555'}});
+            }
+            const trendReasons=a.reasons.filter(r=>r.includes('encadena'));
+            if(trendReasons.length){
+              allRuns.push({text:trendReasons.slice(0,1).join('')+'. ',options:{fontSize:9.2,color:'B45309',italic:true}});
+            }
+            allRuns.push({text:`Último mes ${fmtEurS2(a.last.ing)}, PM ${fmtEurS2(a.last.pm)}${i<alerts.length-1?'   ':''}`,options:{fontSize:9.2,color:'555555'}});
+          });
+          allRuns.push({text:' ',options:{fontSize:9.2,breakLine:true}});
+        }
+
+        addBcProduct2('Branded Content','Branded Content');
+        addFocusAlerts2('BC', r=>r._canal==='DIGITAL' && String(r[COL_PROD]||'').trim().toUpperCase()==='BRANDED CONTENT');
+        addBcProduct2('Branded Content Video','Branded Content video');
+        addFocusAlerts2('BC Video', r=>r._canal==='DIGITAL' && String(r[COL_PROD]||'').trim().toUpperCase()==='BRANDED CONTENT VIDEO');
+
+        // Cerrar la primera diapositiva aquí para no separar el análisis de BC de sus alertas.
+        s.addText(allRuns, { x:0.45, y:1.28, w:9.1, h:4.25, fontFace:'Calibri', valign:'top', wrap:true });
+
+        // Segunda diapositiva: Social + Display + Programática.
+        const sPart2 = newSlide('Análisis y Conclusiones por Productos Comerciales · Social, Display y Programática');
+        sPart2.addShape(pres.shapes.RECTANGLE, { x:0, y:0.585, w:10, h:0.45, fill:{color:'F5F6F8'}, line:{color:'F5F6F8'} });
+        sPart2.addText('Análisis y Conclusiones · Social, Display y Programática', { x:0.3, y:0.63, w:9.4, h:0.42, fontSize:17, bold:true, color:'1A1D27', fontFace:'Calibri', align:'center', valign:'middle', margin:0 });
+        allRuns = [];
+
+        const socialAll2 = r => r._canal==='DIGITAL' && String(r._famLabel||'').trim().toUpperCase()==='SOCIAL NETWORKS';
+        addStatsText2('Social', statsByPredicate2(socialAll2));
+        addFocusAlerts2('Social', socialAll2);
+        const paidProducts2=['FACEBOOK (SPONSORED POST)','INSTAGRAM (SPONSORED POST)','TIK TOK (SPONSORED POST)'];
+        const organicProducts2=['INSIDER','INSTAGRAM (ORGANICO)','REDES SOCIALES ORGANICAS','TIK TOK (ORGANICO)'];
+        addStatsText2('Social Paid', statsByPredicate2(r => r._canal==='DIGITAL' && paidProducts2.includes(String(r[COL_PROD]||'').trim().toUpperCase())), true);
+        addStatsText2('Social Organic', statsByPredicate2(r => r._canal==='DIGITAL' && organicProducts2.includes(String(r[COL_PROD]||'').trim().toUpperCase())), true);
+        allRuns.push({text:' ',options:{fontSize:4,color:'FFFFFF',breakLine:true}});
+
+        addFamilyAnalysis2('Display','Display');
+
+        // Programática vive en PROG_DATA (Excel específico), no en DATA.
+        {
+          const mesesProg = usaTodos2 ? null : new Set(ordenados2);
+          const progRows = (PROG_DATA||[]).filter(r => String(r._year)===String(yr2) && (!mesesProg || mesesProg.has(r._mes)));
+          const cIng = progRows.reduce((s,r)=>s+(r._ingActual||0),0);
+          const pIng = progRows.reduce((s,r)=>s+(r._ingAnt||0),0);
+          const dIng = pct2(cIng,pIng);
+          const cPos = progRows.filter(r=>(r._ingActual||0)>0);
+          const pPos = progRows.filter(r=>(r._ingAnt||0)>0);
+          const cPm = cPos.length ? cIng/cPos.length : 0;
+          const pPm = pPos.length ? pIng/pPos.length : 0;
+          const dPm = pct2(cPm,pPm);
+          allRuns.push({ text:'▸  ', options:{ bold:true, fontSize:12, color:'D4960A' } });
+          allRuns.push({ text:'Programática', options:{ bold:true, fontSize:12, color:'1A1D27' } });
+          allRuns.push({ text:' → ', options:{ fontSize:12, color:'BBBBBB' } });
+          if(!progRows.length) {
+            allRuns.push({ text:'No hay datos de Programática para el periodo seleccionado.', options:{ fontSize:10.5, color:'666666', italic:true } });
+          } else {
+            allRuns.push({ text:`El ingreso programático es de ${fmtEurS2(cIng)}`, options:{ fontSize:10.5, color:'555555' } });
+            if(dIng!==null) allRuns.push({ text:` (${pctTxt2(dIng)} vs ${prevYr2})`, options:{ fontSize:10.5, bold:true, color:dIng>=0?'16A34A':'DC2626' } });
+            allRuns.push({ text:` repartido en ${cPos.length} líneas con ingreso positivo. El ingreso medio por línea es ${fmtEurS2(cPm)}`, options:{ fontSize:10.5, color:'555555' } });
+            if(dPm!==null) allRuns.push({ text:` (${pctTxt2(dPm)})`, options:{ fontSize:10.5, bold:true, color:dPm>=0?'16A34A':'DC2626' } });
+            allRuns.push({ text:'. ', options:{ fontSize:10.5, color:'555555' } });
+            if(dIng!==null) {
+              const lectura=dIng>=0?'La familia aporta crecimiento al negocio digital en el periodo analizado.':'La familia resta ingreso frente al periodo comparable y conviene revisar los anunciantes que concentran la pérdida.';
+              allRuns.push({ text:lectura, options:{ fontSize:10.5, color:'555555', italic:true } });
+            }
+          }
+          allRuns.push({ text:' ', options:{ fontSize:10.5, breakLine:true } });
+        }
+
+        sPart2.addText(allRuns, {
+          x:0.45, y:1.28, w:9.1, h:4.25,
           fontFace:'Calibri', valign:'top', wrap:true,
         });
+
+
+        // Tercera diapositiva: PALANCAS DE CRECIMIENTO · DIGITAL.
+        // Bloque independiente del diagnóstico. Una única caja editable de texto.
+        // En 2026 Social Paid se excluye SOLO de este análisis de palancas por la activación excepcional de 2025.
+        {
+          const sGrowth = newSlide('Palancas de Crecimiento · DIGITAL');
+          sGrowth.addShape(pres.shapes.RECTANGLE, { x:0, y:0.585, w:10, h:0.45, fill:{color:'F5F6F8'}, line:{color:'F5F6F8'} });
+          sGrowth.addText('Palancas de Crecimiento · DIGITAL', { x:0.3, y:0.63, w:9.4, h:0.42, fontSize:17, bold:true, color:'1A1D27', fontFace:'Calibri', align:'center', valign:'middle', margin:0 });
+          sGrowth.addText('No son previsiones: identifican oportunidades sobre referencias ya alcanzadas en el periodo comparable. En 2026, Social Paid se excluye únicamente de este análisis por su base excepcional de 2025.', { x:0.55, y:1.08, w:8.9, h:0.34, fontSize:8.2, italic:true, color:'7A8198', fontFace:'Calibri', align:'center', margin:0 });
+
+          const oppsGrowth=[];
+          function calcGrowthStats(rows){
+            const paid=rows.filter(r=>(r._ingreso||0)>0);
+            const ing=rows.reduce((a,r)=>a+(r._ingreso||0),0);
+            return {ing,n:paid.length,pm:paid.length?ing/paid.length:0};
+          }
+          function addRecoveryOpp(name, pred, pubLabel=''){
+            const c=calcGrowthStats(cur2.filter(pred));
+            const p=calcGrowthStats(prev2.filter(pred));
+            if(!c.n || !p.n || !p.pm) return;
+            if(c.pm < p.pm){
+              const potential=(p.pm-c.pm)*c.n;
+              if(potential>0) oppsGrowth.push({
+                type:'RECUPERAR PRECIO', name, pub:pubLabel, potential,
+                detail:`El presupuesto medio baja de ${fmtEurS2(p.pm)} a ${fmtEurS2(c.pm)} (${pctTxt2(pct2(c.pm,p.pm))}). Con las ${c.n} activaciones actuales, recuperar el ticket anterior aportaría aproximadamente ${fmtEurS2(potential)} sin aumentar volumen.`
+              });
+            }
+            if(c.n < p.n && c.pm>0){
+              const lost=p.n-c.n, potential=lost*c.pm;
+              if(potential>0) oppsGrowth.push({
+                type:'RECUPERAR VOLUMEN', name, pub:pubLabel, potential,
+                detail:`Hay ${lost} activaciones menos que en ${prevYr2} (${p.n} → ${c.n}). Recuperarlas al presupuesto medio actual de ${fmtEurS2(c.pm)} supondría aproximadamente ${fmtEurS2(potential)} adicionales.`
+              });
+            }
+          }
+
+          const prodPredGrowth = prod => r => r._canal==='DIGITAL' && String(r[COL_PROD]||'').trim().toUpperCase()===prod;
+          const is2026Growth = String(yr2)==='2026';
+          const socialPaidGrowth = r=>r._canal==='DIGITAL' && paidProducts2.includes(String(r[COL_PROD]||'').trim().toUpperCase());
+          const socialOrganicGrowth = r=>r._canal==='DIGITAL' && organicProducts2.includes(String(r[COL_PROD]||'').trim().toUpperCase());
+
+          addRecoveryOpp('Branded Content', prodPredGrowth('BRANDED CONTENT'));
+          addRecoveryOpp('Branded Content Video', prodPredGrowth('BRANDED CONTENT VIDEO'));
+          if(!is2026Growth) addRecoveryOpp('Social Paid', socialPaidGrowth);
+          addRecoveryOpp('Social Organic', socialOrganicGrowth);
+          addRecoveryOpp('Display', r=>r._canal==='DIGITAL' && String(r._famLabel||'').trim().toUpperCase()==='DISPLAY');
+
+          // Foco accionable en las cuatro marcas. En 2026 Social = Organic para esta slide;
+          // desde 2027 se vuelven a evaluar Paid y Organic por separado.
+          const growthFamilies=[
+            ['Branded Content', prodPredGrowth('BRANDED CONTENT')],
+            ['Branded Content Video', prodPredGrowth('BRANDED CONTENT VIDEO')],
+            ['Social Organic', socialOrganicGrowth]
+          ];
+          if(!is2026Growth) growthFamilies.push(['Social Paid', socialPaidGrowth]);
+          FOCUS_PUBS2.forEach(fp=>growthFamilies.forEach(([name,pred])=>{
+            addRecoveryOpp(name, r=>pred(r) && fp.test(pubKeyFocus2(r)), fp.label);
+          }));
+
+          // Venta cruzada BC Video: referencia observada entre las cuatro marcas.
+          const cross=[];
+          FOCUS_PUBS2.forEach(fp=>{
+            const bc=calcGrowthStats(cur2.filter(r=>prodPredGrowth('BRANDED CONTENT')(r)&&fp.test(pubKeyFocus2(r))));
+            const vid=calcGrowthStats(cur2.filter(r=>prodPredGrowth('BRANDED CONTENT VIDEO')(r)&&fp.test(pubKeyFocus2(r))));
+            if(bc.n>0) cross.push({fp,bc,vid,ratio:vid.n/bc.n});
+          });
+          const validRatios=cross.filter(x=>x.bc.n>=3).map(x=>x.ratio);
+          const refRatio=validRatios.length?Math.max(...validRatios):0;
+          if(refRatio>0){
+            cross.forEach(x=>{
+              const target=Math.floor(x.bc.n*refRatio);
+              const extra=Math.max(0,target-x.vid.n);
+              const ticket=x.vid.pm>0?x.vid.pm:(cross.filter(z=>z.vid.pm>0).reduce((a,z)=>a+z.vid.pm,0)/(cross.filter(z=>z.vid.pm>0).length||1));
+              const potential=extra*ticket;
+              if(extra>0 && ticket>0 && potential>0) oppsGrowth.push({
+                type:'VENTA CRUZADA', name:'Branded Content Video', pub:x.fp.label, potential,
+                detail:`Tiene ${x.bc.n} activaciones de BC y ${x.vid.n} de BC Video. Alcanzar la penetración Video/BC ya observada en otra de las cuatro marcas implicaría unas ${extra} activaciones adicionales, equivalentes a aproximadamente ${fmtEurS2(potential)} al ticket de referencia.`
+              });
+            });
+          }
+
+          // 1) Para una misma marca/producto, conservar solo la palanca de mayor impacto.
+          const bestByKey=new Map();
+          oppsGrowth.forEach(o=>{
+            const k=`${o.name}::${o.pub||'TOTAL'}`;
+            if(!bestByKey.has(k)||bestByKey.get(k).potential<o.potential) bestByKey.set(k,o);
+          });
+          let growthCandidates=[...bestByKey.values()].filter(o=>o.potential>=1000);
+
+          // 2) Evitar doble conteo visual: si hay oportunidades específicas por marca para un producto,
+          // no mostrar además el TOTAL de ese mismo producto como si fuera otra oportunidad independiente.
+          const namesWithSpecific=new Set(growthCandidates.filter(o=>o.pub).map(o=>o.name));
+          growthCandidates=growthCandidates.filter(o=>o.pub || !namesWithSpecific.has(o.name));
+          const topGrowth=growthCandidates.sort((a,b)=>b.potential-a.potential).slice(0,5);
+
+          if(!topGrowth.length){
+            sGrowth.addText('No se detectan palancas cuantificables suficientemente relevantes con los filtros seleccionados.', {x:1,y:2.3,w:8,h:0.8,fontSize:16,color:'777777',fontFace:'Calibri',align:'center',valign:'middle'});
+          } else {
+            const runs=[];
+            const typeColor=t=>t==='RECUPERAR PRECIO'?'7C3AED':t==='RECUPERAR VOLUMEN'?'D4960A':'0D9488';
+            topGrowth.forEach((o,i)=>{
+              runs.push({text:'▸  ',options:{fontSize:12,bold:true,color:'D4960A'}});
+              runs.push({text:o.type+' · ',options:{fontSize:11,bold:true,color:typeColor(o.type)}});
+              runs.push({text:o.name+(o.pub?` · ${o.pub}`:''),options:{fontSize:11.5,bold:true,color:'1A1D27'}});
+              runs.push({text:`  ${fmtEurS2(o.potential)}`,options:{fontSize:11.5,bold:true,color:'16A34A',breakLine:true}});
+              runs.push({text:o.detail,options:{fontSize:10.2,color:'555B6E',breakLine:true}});
+              if(i<topGrowth.length-1) runs.push({text:' ',options:{fontSize:7,breakLine:true}});
+            });
+            sGrowth.addText(runs,{x:0.7,y:1.58,w:8.6,h:3.95,fontFace:'Calibri',valign:'top',wrap:true,margin:0.03,fit:'shrink'});
+          }
+          // No se suma un potencial total: las palancas pueden pertenecer a niveles que se solapan.
+        }
       }
 
       // SLIDE 3: ANÁLISIS DE SECTORES
@@ -9074,7 +9518,7 @@ async function exportarPPT() {
           }
 
           s.addText(runs3, {
-            x:0.45, y:1.35, w:9.1, h:4.1,
+            x:0.45, y:1.28, w:9.1, h:4.25,
             fontFace:'Calibri', valign:'top', wrap:true,
           });
         }
@@ -9401,8 +9845,14 @@ async function exportarPPT() {
         await addImgFull(s, img2, y, 2.2);
       }
 
+      // SLIDES 6-7: Familias · capturar cada estado real del toggle
+      // Guardamos el estado actual para restaurarlo al terminar las dos capturas.
+      const famWasAcumulado = document.getElementById('famToggleBtnAcumulado')?.classList.contains('active');
+
       // SLIDE 6: Familias Mensual
       {
+        setFamMode('mensual');
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const s = newSlide('Familias · Evolución Mensual');
         const img = await capture(cardOf('fam-mes-table'));
         await addImgFull(s, img, 1.12, 5.0);
@@ -9410,39 +9860,68 @@ async function exportarPPT() {
 
       // SLIDE 7: Familias Acumulada
       {
+        setFamMode('acumulado');
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const s = newSlide('Familias · Evolución Acumulada');
         const img = await capture(cardOf('fam-mes-acum-table'));
         await addImgFull(s, img, 1.12, 5.0);
       }
 
-      // SLIDE 8: Total Marcas Hearst
-      {
-        const s = newSlide('Total Marcas Hearst');
-        const img = await capture(cardOf('mc-pubtotal-table'));
-        await addImgFull(s, img, 1.12, 5.0);
-      }
+      // Dejar el dashboard como estaba antes de exportar.
+      setFamMode(famWasAcumulado ? 'acumulado' : 'mensual');
 
-      // SLIDE 9: Digital + Print
+      // SLIDES 8-9: Total Marcas Hearst dividido en dos vistas para mejorar legibilidad
+      // Se usa la MISMA tabla del dashboard: primero Publicación + Total Marca,
+      // y después el desglose Digital + Print + Eventos.
       {
-        const s = newSlide('Publicaciones · Digital y Print');
-        const img1 = await capture(cardOf('mc-pubdig-table'));
-        const img2 = await capture(cardOf('mc-pubprint-table'));
-        await addImgPair(s, img1, img2, 1.12, 5.0);
-      }
+        const card = cardOf('mc-pubtotal-table');
+        const table = document.querySelector('#mc-pubtotal-table table');
+        const topHeaders = table ? table.querySelectorAll('thead tr:first-child th') : [];
+        const cardRect = card ? card.getBoundingClientRect() : null;
+        const digitalRect = topHeaders.length >= 3 ? topHeaders[2].getBoundingClientRect() : null;
+        const splitRatio = (cardRect && digitalRect && cardRect.width > 0)
+          ? Math.max(0.25, Math.min(0.75, (digitalRect.left - cardRect.left) / cardRect.width))
+          : 0.415;
 
-      // SLIDE 10: Eventos + Print+Eventos
-      {
-        const s = newSlide('Publicaciones · Eventos y Print+Eventos');
-        const img1 = await capture(cardOf('mc-pubeve-table'));
-        const img2 = await capture(cardOf('mc-pubprinteve-table'));
-        await addImgPair(s, img1, img2, 1.12, 5.0);
+        async function captureHorizontalSlice(el, fromRatio, toRatio) {
+          if (!el) return null;
+          const full = await html2canvas(el, H2C_OPTS);
+          const x0 = Math.max(0, Math.round(full.width * fromRatio));
+          const x1 = Math.min(full.width, Math.round(full.width * toRatio));
+          const w = Math.max(1, x1 - x0);
+          const cropped = document.createElement('canvas');
+          cropped.width = w;
+          cropped.height = full.height;
+          const ctx = cropped.getContext('2d');
+          ctx.drawImage(full, x0, 0, w, full.height, 0, 0, w, full.height);
+          return cropped.toDataURL('image/png');
+        }
+
+        // SLIDE 8: Publicación + TOTAL MARCA
+        {
+          const s = newSlide('Total Marcas Hearst');
+          const img = await captureHorizontalSlice(card, 0, splitRatio);
+          await addImgFull(s, img, 1.12, 5.0);
+        }
+
+        // SLIDE 9: DIGITAL + PRINT + EVENTOS
+        {
+          const s = newSlide('Total Marcas Hearst · Desglose por Canal');
+          const img = await captureHorizontalSlice(card, splitRatio, 1);
+          await addImgFull(s, img, 1.12, 5.0);
+        }
       }
 
       // SLIDE 11: PORTADILLA - SECTORES
       newPortadilla('Sectores', '🏭');
 
-      // SLIDE 12: Ingresos por Sector
+      // SLIDE 12: Ingresos por Sector — siempre CON Programática en el PPT
       {
+        btn.textContent = '⏳ Sectores con Programática...';
+        if (PROG_DATA && PROG_DATA.length) {
+          setSecTableProgMode('con');
+          await new Promise(r => setTimeout(r, 250));
+        }
         const s = newSlide('Ingresos por Sector');
         const img = await capture(cardOf('mc-sector-table'));
         await addImgFull(s, img, 1.12, 5.0);
@@ -9671,13 +10150,15 @@ async function exportarPPT() {
         // Para el año anterior
         const allData = mGetChannelData();
         const prevYearRows = allData.filter(r => r._yearRaw === yrAnterior);
-        const prevFiltered = prevYearRows.filter(r => {
+        let prevFiltered = prevYearRows.filter(r => {
+          const globalareas = mGetSelected('globalarea');
           const areas = mGetSelected('area');
           const sects = mGetSelected('sector');
           const fams = mGetSelected('familia');
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
+          if (!globalareas.includes('all') && !globalareas.includes((r[COL_AREA_GLOBAL] || '').trim())) return false;
           if (!areas.includes('all') && !areas.includes((r[COL_AREA] || '').trim())) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
@@ -10516,7 +10997,7 @@ async function exportarPPT() {
           });
         });
         
-        s.addText('ℹ️ El ingreso de programática no está asociado a anunciantes concretos. Se agrupa en GOOGLE, APPNEXUS, etc.', {
+        s.addText('ℹ️ Programática incluida: el ingreso se reparte entre los anunciantes reales del Excel de Programática, manteniendo el mismo total.', {
           x: 0.3, y: 5.2, w: 9.4, h: 0.2,
           fontSize: 6, italic: true, color: '888888', fontFace: 'Calibri', align: 'left'
         });
@@ -10589,7 +11070,7 @@ async function exportarPPT() {
           });
         });
         
-        s.addText('ℹ️ El ingreso de programática no está asociado a anunciantes concretos. Se agrupa en GOOGLE, APPNEXUS, etc.', {
+        s.addText('ℹ️ Programática incluida: el ingreso se reparte entre los anunciantes reales del Excel de Programática, manteniendo el mismo total.', {
           x: 0.3, y: 5.2, w: 9.4, h: 0.2,
           fontSize: 6, italic: true, color: '888888', fontFace: 'Calibri', align: 'left'
         });
@@ -10768,20 +11249,22 @@ async function exportarPPT() {
         }
         
         // Obtener datos del año actual
-        const curFiltered = mGetFiltered();
+        let curFiltered = mGetFiltered();
         
         // Para el año anterior: filtrar manualmente por los MISMOS meses
         const allData = mGetChannelData();
         const prevYearRows = allData.filter(r => r._yearRaw === yrAnterior);
         
         // Aplicar filtros manualmente incluyendo meses con _mesRaw
-        const prevFiltered = prevYearRows.filter(r => {
+        let prevFiltered = prevYearRows.filter(r => {
+          const globalareas = mGetSelected('globalarea');
           const areas = mGetSelected('area');
           const sects = mGetSelected('sector');
           const fams = mGetSelected('familia');
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
+          if (!globalareas.includes('all') && !globalareas.includes((r[COL_AREA_GLOBAL] || '').trim())) return false;
           if (!areas.includes('all') && !areas.includes((r[COL_AREA] || '').trim())) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
@@ -10793,8 +11276,16 @@ async function exportarPPT() {
         });
         
         // Filtrar por canal si no es GLOBAL
-        const curData = canal === 'GLOBAL' ? curFiltered : curFiltered.filter(r => r._canal === canal);
-        const prevData = canal === 'GLOBAL' ? prevFiltered : prevFiltered.filter(r => r._canal === canal);
+        let curData = canal === 'GLOBAL' ? curFiltered : curFiltered.filter(r => r._canal === canal);
+        let prevData = canal === 'GLOBAL' ? prevFiltered : prevFiltered.filter(r => r._canal === canal);
+
+        // PPT ANUNCIANTES: siempre CON Programática en Global y Digital.
+        // Repartimos el ingreso que en DATA está bajo Google entre los anunciantes reales
+        // del Excel de Programática, restando el mismo importe a Google (el total no cambia).
+        if (PROG_DATA && PROG_DATA.length && (canal === 'GLOBAL' || canal === 'DIGITAL')) {
+          curData = curData.concat(progDetailRowsForYear(yr, '_ingActual', findVendorsAnunKey(curData)));
+          prevData = prevData.concat(progDetailRowsForYear(yrAnterior, '_ingAnt', findVendorsAnunKey(prevData)));
+        }
         
         // Agrupar por anunciante
         function agruparPorAnunciante(rows) {
@@ -10851,20 +11342,22 @@ async function exportarPPT() {
         const mesesLabel = usaTodosMeses ? 'Todos los meses' : mesesSel.map(m => MESES_SHORT[m] || m).join(', ');
         
         // Obtener datos del año actual (ya filtrados por meses seleccionados)
-        const curFiltered = mGetFiltered();
+        let curFiltered = mGetFiltered();
         
         // Para el año anterior: filtrar manualmente por los MISMOS meses
         const allData = mGetChannelData();
         const prevYearRows = allData.filter(r => r._yearRaw === yrAnterior);
         
         // Aplicar filtros manualmente incluyendo meses con _mesRaw
-        const prevFiltered = prevYearRows.filter(r => {
+        let prevFiltered = prevYearRows.filter(r => {
+          const globalareas = mGetSelected('globalarea');
           const areas = mGetSelected('area');
           const sects = mGetSelected('sector');
           const fams = mGetSelected('familia');
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
+          if (!globalareas.includes('all') && !globalareas.includes((r[COL_AREA_GLOBAL] || '').trim())) return false;
           if (!areas.includes('all') && !areas.includes((r[COL_AREA] || '').trim())) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
@@ -10876,6 +11369,13 @@ async function exportarPPT() {
           
           return true;
         });
+
+        // PPT ANUNCIANTES: perdidos/ganados también se calculan CON Programática.
+        // Se mantiene el total y solo se redistribuye Google -> anunciante real.
+        if (PROG_DATA && PROG_DATA.length) {
+          curFiltered = curFiltered.concat(progDetailRowsForYear(yr, '_ingActual', findVendorsAnunKey(curFiltered)));
+          prevFiltered = prevFiltered.concat(progDetailRowsForYear(yrAnterior, '_ingAnt', findVendorsAnunKey(prevFiltered)));
+        }
 
         // ═══════════════════════════════════════════════════════════════════
         // NUEVO: Agrupar SOLO por Anunciante
@@ -11246,283 +11746,7 @@ async function exportarPPT() {
 
       
 
-      // ═══════════════════════════════════════════════════════════════════════════
-      // SECCIÓN: PROYECCIONES
-      // ═══════════════════════════════════════════════════════════════════════════
-      
-      // PORTADILLA - PROYECCIONES
-      newPortadilla('Proyecciones', '📊');
-
-      // ─────────────────────────────────────────────────────────────────────────
-      // SLIDE: PROYECCIONES - TOTAL HEARST POR PUBLICACIONES
-      // ─────────────────────────────────────────────────────────────────────────
-      {
-        const s = newSlide('Proyecciones · Total Publicaciones');
-        btn.textContent = '⏳ Proyecciones Publicaciones...';
-        
-        // Obtener datos
-        const objetivos = loadObjetivos();
-        const filt = mGetFiltered();
-        const yr = document.getElementById('m-f-year').value;
-        const showYoY = (yr === '2026');
-        
-        // Calcular datos por publicación
-        const datosPublicaciones = [];
-        let sumObjTotal = 0, sumIngTotal = 0;
-        let sumYoYData = { ingPrevCerrado: 0, ingPrevTotal: 0 };
-        
-        PUBLICACIONES_FIJAS.forEach(pub => {
-          const obj = objetivos[pub] || {};
-          const objTotal = (obj.madrid || 0) + (obj.barcelona || 0) + (obj.internacional || 0);
-          const ingresos = calcularIngresosExcel(pub, filt);
-          
-          let yoyTotal = null;
-          if (showYoY) {
-            const prevRows = getPrevRowsPub(pub, null);
-            yoyTotal = calcYoYFromRows(prevRows);
-            if (yoyTotal) {
-              sumYoYData.ingPrevCerrado += yoyTotal.ingPrevCerrado;
-              sumYoYData.ingPrevTotal += yoyTotal.ingPrevTotal;
-            }
-          }
-          
-          datosPublicaciones.push({
-            pub: pub,
-            objTotal: objTotal,
-            ingTotal: ingresos.total,
-            yoyTotal: yoyTotal
-          });
-          
-          sumObjTotal += objTotal;
-          sumIngTotal += ingresos.total;
-        });
-        
-        // Calcular YoY total
-        const yoySumTotal = sumYoYData.ingPrevTotal > 0 
-          ? { pct: (sumYoYData.ingPrevCerrado / sumYoYData.ingPrevTotal) * 100 }
-          : null;
-        
-        // Solo subtítulo a la derecha (el título ya está en la barra superior del slide)
-        s.addText(`Año ${yr !== 'all' ? yr : 'Todos'} · Obj. Total, % vs Obj., % Real '25`, {
-          x: 5.0, y: 0.78, w: 4.0, h: 0.25,
-          fontSize: 9, color: '666666', fontFace: 'Calibri', align: 'right'
-        });
-        
-        // Tabla centrada - más arriba para aprovechar espacio
-        const tableY = 1.05;
-        const tableW = 8.0;
-        const tableX = 1.0; // Centrado: (10 - 8) / 2 = 1.0
-        const colWidths = [2.5, 1.8, 1.8, 1.9];
-        const colX = [1.0, 3.5, 5.3, 7.1];
-        const headers = ['Publicación', 'Obj. Total', '% vs Obj.', "% Real '25"];
-        
-        // Header
-        s.addShape(pres.shapes.RECTANGLE, { 
-          x: tableX, y: tableY, w: tableW, h: 0.28, fill: { color: 'F59E0B' }, line: { color: 'F59E0B' }
-        });
-        
-        headers.forEach((h, i) => {
-          s.addText(h, { 
-            x: colX[i], y: tableY, w: colWidths[i], h: 0.28, 
-            fontSize: 8, bold: true, color: 'FFFFFF', fontFace: 'Calibri', 
-            align: i === 0 ? 'left' : 'center', valign: 'middle', margin: [0,4,0,4]
-          });
-        });
-        
-        // Fila TOTAL (primera, destacada)
-        const totalRowY = tableY + 0.28;
-        s.addShape(pres.shapes.RECTANGLE, { 
-          x: tableX, y: totalRowY, w: tableW, h: 0.32, fill: { color: 'FEF3C7' }, line: { color: 'FEF3C7' }
-        });
-        
-        const pctVsObjTotal = sumObjTotal > 0 ? (sumIngTotal / sumObjTotal * 100) : 0;
-        const pctVsObjColor = pctVsObjTotal >= 100 ? '16A34A' : pctVsObjTotal >= 80 ? 'F59E0B' : 'DC2626';
-        
-        s.addText('TOTAL', { x: colX[0], y: totalRowY, w: colWidths[0], h: 0.32, fontSize: 9, bold: true, color: '1A1D27', fontFace: 'Calibri', align: 'left', valign: 'middle', margin: [0,4,0,4] });
-        s.addText(fmtK(sumObjTotal), { x: colX[1], y: totalRowY, w: colWidths[1], h: 0.32, fontSize: 9, bold: true, color: '1A1D27', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-        {
-          const totalArrow = yoySumTotal ? (pctVsObjTotal >= yoySumTotal.pct ? ' ▲' : ' ▼') : '';
-          const totalArrowColor = yoySumTotal ? (pctVsObjTotal >= yoySumTotal.pct ? '16A34A' : 'DC2626') : pctVsObjColor;
-          s.addText([
-            { text: pctVsObjTotal.toFixed(1) + '%', options: { color: pctVsObjColor, bold: true } },
-            { text: totalArrow, options: { color: totalArrowColor, bold: true } }
-          ], { x: colX[2], y: totalRowY, w: colWidths[2], h: 0.32, fontSize: 9, fontFace: 'Calibri', align: 'center', valign: 'middle' });
-        }
-        s.addText(yoySumTotal ? yoySumTotal.pct.toFixed(1) + '%' : '—', { x: colX[3], y: totalRowY, w: colWidths[3], h: 0.32, fontSize: 9, bold: true, color: '7C3AED', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-        
-        // Filas de publicaciones
-        const rowH = 0.27;
-        datosPublicaciones.forEach((item, idx) => {
-          const rowY = totalRowY + 0.32 + (idx * rowH);
-          const bgColor = idx % 2 === 0 ? 'FFFFFF' : 'F5F5F5';
-          
-          s.addShape(pres.shapes.RECTANGLE, { 
-            x: tableX, y: rowY, w: tableW, h: rowH, fill: { color: bgColor }, line: { color: bgColor }
-          });
-          
-          const pctVsObj = item.objTotal > 0 ? (item.ingTotal / item.objTotal * 100) : 0;
-          const pctColor = pctVsObj >= 100 ? '16A34A' : pctVsObj >= 80 ? 'F59E0B' : 'DC2626';
-          const yoyPct = item.yoyTotal ? item.yoyTotal.pct : null;
-          const arrow = (item.objTotal > 0 && yoyPct !== null) ? (pctVsObj >= yoyPct ? ' ▲' : ' ▼') : '';
-          const arrowColor = (item.objTotal > 0 && yoyPct !== null) ? (pctVsObj >= yoyPct ? '16A34A' : 'DC2626') : pctColor;
-          
-          s.addText(item.pub, { x: colX[0], y: rowY, w: colWidths[0], h: rowH, fontSize: 7, color: '333333', fontFace: 'Calibri', align: 'left', valign: 'middle', margin: [0,4,0,4] });
-          s.addText(item.objTotal > 0 ? fmtK(item.objTotal) : '—', { x: colX[1], y: rowY, w: colWidths[1], h: rowH, fontSize: 7, color: '333333', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-          if (item.objTotal > 0) {
-            s.addText([
-              { text: pctVsObj.toFixed(1) + '%', options: { color: pctColor } },
-              { text: arrow, options: { color: arrowColor } }
-            ], { x: colX[2], y: rowY, w: colWidths[2], h: rowH, fontSize: 7, fontFace: 'Calibri', align: 'center', valign: 'middle' });
-          } else {
-            s.addText('—', { x: colX[2], y: rowY, w: colWidths[2], h: rowH, fontSize: 7, color: '999999', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-          }
-          s.addText(item.yoyTotal ? item.yoyTotal.pct.toFixed(1) + '%' : '—', { x: colX[3], y: rowY, w: colWidths[3], h: rowH, fontSize: 7, color: '7C3AED', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-        });
-      }
-
-      // ─────────────────────────────────────────────────────────────────────────
-      // SLIDE: PROYECCIONES - TOTAL HEARST POR SECTORES
-      // ─────────────────────────────────────────────────────────────────────────
-      {
-        const s = newSlide('Proyecciones · Total Sectores');
-        btn.textContent = '⏳ Proyecciones Sectores...';
-        
-        const filt = mGetFiltered();
-        const yr = document.getElementById('m-f-year').value;
-        const showYoY = (yr === '2026');
-        
-        // Normalizar sector
-        function normSector(str) {
-          return (str || '').toUpperCase()
-            .replace(/Á/g,'A').replace(/É/g,'E').replace(/Í/g,'I').replace(/Ó/g,'O').replace(/Ú/g,'U')
-            .replace(/À/g,'A').replace(/È/g,'E').replace(/Ì/g,'I').replace(/Ò/g,'O').replace(/Ù/g,'U')
-            .trim();
-        }
-        
-        // Calcular ingresos por sector
-        const ingMap = new Map();
-        filt.forEach(r => {
-          const sec = (r._sectorClean || '').toUpperCase();
-          if (!sec) return;
-          const secNorm = normSector(sec);
-          if (!ingMap.has(secNorm)) ingMap.set(secNorm, 0);
-          ingMap.set(secNorm, ingMap.get(secNorm) + (r._ingreso || 0));
-        });
-        
-        // Obtener sectores con objetivos
-        const sectoresConObj = Object.keys(OBJETIVOS_SECTORES);
-        
-        // Calcular datos por sector
-        const datosSectores = sectoresConObj.map(sec => {
-          const obj = OBJETIVOS_SECTORES[sec] || {};
-          const objTotal = (obj.madrid || 0) + (obj.barcelona || 0) + (obj.internacional || 0);
-          const ingTotal = ingMap.get(normSector(sec)) || 0;
-          
-          let yoyTotal = null;
-          if (showYoY && typeof getPrevRowsSector === 'function') {
-            const prevRows = getPrevRowsSector(sec);
-            yoyTotal = calcYoYFromRows(prevRows);
-          }
-          
-          return { sec, objTotal, ingTotal, yoyTotal };
-        }).sort((a, b) => b.objTotal - a.objTotal);
-        
-        // Totales
-        let sumObjTotal = 0, sumIngTotal = 0;
-        let sumYoYData = { ingPrevCerrado: 0, ingPrevTotal: 0 };
-        datosSectores.forEach(d => {
-          sumObjTotal += d.objTotal;
-          sumIngTotal += d.ingTotal;
-          if (d.yoyTotal) {
-            sumYoYData.ingPrevCerrado += d.yoyTotal.ingPrevCerrado || 0;
-            sumYoYData.ingPrevTotal += d.yoyTotal.ingPrevTotal || 0;
-          }
-        });
-        const yoySumTotal = sumYoYData.ingPrevTotal > 0 
-          ? { pct: (sumYoYData.ingPrevCerrado / sumYoYData.ingPrevTotal) * 100 }
-          : null;
-        
-        // Solo subtítulo a la derecha (el título ya está en la barra superior del slide)
-        s.addText(`Año ${yr !== 'all' ? yr : 'Todos'} · Obj. Total, % vs Obj., % Real '25`, {
-          x: 5.0, y: 0.78, w: 4.0, h: 0.25,
-          fontSize: 9, color: '666666', fontFace: 'Calibri', align: 'right'
-        });
-        
-        // Tabla centrada - más arriba para aprovechar espacio
-        const tableY = 1.05;
-        const tableW = 8.0;
-        const tableX = 1.0;
-        const colWidths = [2.5, 1.8, 1.8, 1.9];
-        const colX = [1.0, 3.5, 5.3, 7.1];
-        const headers = ['Sector', 'Obj. Total', '% vs Obj.', "% Real '25"];
-        
-        // Header
-        s.addShape(pres.shapes.RECTANGLE, { 
-          x: tableX, y: tableY, w: tableW, h: 0.28, fill: { color: '7C3AED' }, line: { color: '7C3AED' }
-        });
-        
-        headers.forEach((h, i) => {
-          s.addText(h, { 
-            x: colX[i], y: tableY, w: colWidths[i], h: 0.28, 
-            fontSize: 8, bold: true, color: 'FFFFFF', fontFace: 'Calibri', 
-            align: i === 0 ? 'left' : 'center', valign: 'middle', margin: [0,4,0,4]
-          });
-        });
-        
-        // Fila TOTAL
-        const totalRowY = tableY + 0.28;
-        s.addShape(pres.shapes.RECTANGLE, { 
-          x: tableX, y: totalRowY, w: tableW, h: 0.32, fill: { color: 'EDE9FE' }, line: { color: 'EDE9FE' }
-        });
-        
-        const pctVsObjTotal = sumObjTotal > 0 ? (sumIngTotal / sumObjTotal * 100) : 0;
-        const pctVsObjColor = pctVsObjTotal >= 100 ? '16A34A' : pctVsObjTotal >= 80 ? 'F59E0B' : 'DC2626';
-        
-        s.addText('TOTAL', { x: colX[0], y: totalRowY, w: colWidths[0], h: 0.32, fontSize: 9, bold: true, color: '1A1D27', fontFace: 'Calibri', align: 'left', valign: 'middle', margin: [0,4,0,4] });
-        s.addText(fmtK(sumObjTotal), { x: colX[1], y: totalRowY, w: colWidths[1], h: 0.32, fontSize: 9, bold: true, color: '1A1D27', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-        {
-          const totalArrow = yoySumTotal ? (pctVsObjTotal >= yoySumTotal.pct ? ' ▲' : ' ▼') : '';
-          const totalArrowColor = yoySumTotal ? (pctVsObjTotal >= yoySumTotal.pct ? '16A34A' : 'DC2626') : pctVsObjColor;
-          s.addText([
-            { text: pctVsObjTotal.toFixed(1) + '%', options: { color: pctVsObjColor, bold: true } },
-            { text: totalArrow, options: { color: totalArrowColor, bold: true } }
-          ], { x: colX[2], y: totalRowY, w: colWidths[2], h: 0.32, fontSize: 9, fontFace: 'Calibri', align: 'center', valign: 'middle' });
-        }
-        s.addText(yoySumTotal ? yoySumTotal.pct.toFixed(1) + '%' : '—', { x: colX[3], y: totalRowY, w: colWidths[3], h: 0.32, fontSize: 9, bold: true, color: '7C3AED', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-        
-        // Filas de sectores
-        const rowH = 0.22;
-        datosSectores.forEach((item, idx) => {
-          const rowY = totalRowY + 0.32 + (idx * rowH);
-          const bgColor = idx % 2 === 0 ? 'FFFFFF' : 'F5F5F5';
-          
-          s.addShape(pres.shapes.RECTANGLE, { 
-            x: tableX, y: rowY, w: tableW, h: rowH, fill: { color: bgColor }, line: { color: bgColor }
-          });
-          
-          const pctVsObj = item.objTotal > 0 ? (item.ingTotal / item.objTotal * 100) : 0;
-          const pctColor = pctVsObj >= 100 ? '16A34A' : pctVsObj >= 80 ? 'F59E0B' : 'DC2626';
-          const yoyPct = item.yoyTotal ? item.yoyTotal.pct : null;
-          const arrow = (item.objTotal > 0 && yoyPct !== null) ? (pctVsObj >= yoyPct ? ' ▲' : ' ▼') : '';
-          const arrowColor = (item.objTotal > 0 && yoyPct !== null) ? (pctVsObj >= yoyPct ? '16A34A' : 'DC2626') : pctColor;
-          
-          s.addText(item.sec.substring(0, 30), { x: colX[0], y: rowY, w: colWidths[0], h: rowH, fontSize: 6.5, color: '333333', fontFace: 'Calibri', align: 'left', valign: 'middle', margin: [0,4,0,4] });
-          s.addText(item.objTotal > 0 ? fmtK(item.objTotal) : '—', { x: colX[1], y: rowY, w: colWidths[1], h: rowH, fontSize: 6.5, color: '333333', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-          if (item.objTotal > 0) {
-            s.addText([
-              { text: pctVsObj.toFixed(1) + '%', options: { color: pctColor } },
-              { text: arrow, options: { color: arrowColor } }
-            ], { x: colX[2], y: rowY, w: colWidths[2], h: rowH, fontSize: 6.5, fontFace: 'Calibri', align: 'center', valign: 'middle' });
-          } else {
-            s.addText('—', { x: colX[2], y: rowY, w: colWidths[2], h: rowH, fontSize: 6.5, color: '999999', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-          }
-          s.addText(item.yoyTotal ? item.yoyTotal.pct.toFixed(1) + '%' : '—', { x: colX[3], y: rowY, w: colWidths[3], h: rowH, fontSize: 6.5, color: '7C3AED', fontFace: 'Calibri', align: 'center', valign: 'middle' });
-        });
-      }
-
-
-
-      
+      // Proyecciones eliminadas de la exportación PPT: el bloque ya no existe en el dashboard.
 
       // ─────────────────────────────────────────────────────────────────────────
       // SLIDE FINAL: CIERRE
@@ -11552,6 +11776,13 @@ async function exportarPPT() {
       console.error('Error exportando PPT:', e);
       alert('Error al generar el PPT: ' + e.message);
     } finally {
+      // Restaurar los toggles de Sectores tal como estaban antes de exportar.
+      if (secTableProgMode !== pptOriginalSecTableProgMode) {
+        setSecTableProgMode(pptOriginalSecTableProgMode);
+      }
+      if (secTabProgMode !== pptOriginalSecTabProgMode) {
+        setSecTabProgMode(pptOriginalSecTabProgMode);
+      }
       btn.textContent = '⬇ Exportar PPT';
       btn.disabled = false;
     }
