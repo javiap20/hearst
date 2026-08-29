@@ -329,30 +329,33 @@ h1 {
 
 
 
+
+/* Filtros compactos */
+h1{margin-top:20px!important}
+.filtersRow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.filter-group{min-width:0!important;padding:10px 12px!important;margin:0!important;box-shadow:none!important}
+.filtersRow .filter-group,.f-areas,.f-familias,.f-canales,.f-vista{width:auto!important}
+.compact-filters-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 18px}
+.compact-filter{position:relative;background:#e2e8f0;border:1px solid rgba(148,163,184,.35);border-radius:10px;padding:9px 12px;color:#334155}
+.compact-filter summary{cursor:pointer;list-style:none;font-size:10px;font-weight:800;text-transform:uppercase;color:#475569;text-align:center}
+.compact-filter summary::-webkit-details-marker{display:none}
+.compact-filter summary:after{content:' ▾';color:#64748b}
+.compact-filter[open] summary:after{content:' ▴'}
+.compact-filter .filter-body{margin-top:10px}
+.compact-filter .chip{background:#0f172a}
+@media(max-width:900px){.filtersRow,.compact-filters-row{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
-<nav class="hn-bar" data-active="plataforma">
-  <div class="hn-inner" id="hnInner">
-    <a class="hn-link" data-id="global-reporting"  href="analisis-global.html">Global (REporting)</a>
-    <a class="hn-link" data-id="marca"             href="analisis-por-marca.html">Marca Hearst</a>
-    <a class="hn-link" data-id="anunciante"        href="analisis-por-anunciante.html">Anunciantes</a>
-    <a class="hn-link" data-id="plataforma"        href="anunciantes-desglosados-por-canales.html">Anunciantes & Plataformas</a>
-    <a class="hn-link" data-id="comparativa"       href="comparativa.html">Anunciantes (Comparativa)</a>
-    <a class="hn-link" data-id="familia-producto"  href="digital-desglose-por-producto.html">Familia & Producto</a>
-    <a class="hn-link" data-id="global-consulta"   href="dashboard.html">Global (Consulta)</a>
-    <a class="hn-link" data-id="presupuestos"      href="presupuestos-medios.html">Presupuestos Medios</a>
-    <a class="hn-link" data-id="alertas"           href="dashboard-alertas.html">Alertas</a>
-  </div>
-</nav>
+
 
 
 
 <h1>Ranking de Anunciantes - TOTAL HEARST</h1>
 <p class="subtitle">
   Desglose (de mayor a menor facturación) de los anunciantes que han tenido activaciones en los años seleccionados <br>
-  <em>(la facturación programática de esos anunciantes está incluida en Google. No hay desglose en el apartado programática)</em>
+  <em>(Programática se redistribuye desde Google al anunciante real usando PROGR; año actual: Imp.Neto a Comisionar · año anterior: Imp.Neto Ant.)</em>
 </p>
 
 <div class="container">
@@ -390,28 +393,11 @@ h1 {
             </div>
         </div>
 
-        <div class="filter-group f-areas filtersBlock">
-            <label>Áreas <span style="color:#64748b; font-size:10px; font-weight:400;">(puedes elegir varias)</span></label>
-            <div id="areasGrid" class="area-grid"></div>
-        </div>
-
-        <div class="filter-group f-familias">
-            <label>Familias <span style="color:#64748b; font-size:10px; font-weight:400;">(puedes elegir varias)</span></label>
-            <div id="familiasGrid" class="family-grid"></div>
-        </div>
-
-        <div style="display:flex; gap:15px; flex-wrap:wrap; margin-top:15px; margin-bottom:22px;">
-            <div class="filter-group f-canales" style="flex:1; min-width:220px;">
-                <label>Canales <span style="color:#64748b; font-size:10px; font-weight:400;">(puedes elegir uno, varios o ninguno)</span></label>
-                <div id="channelGrid" class="channel-grid"></div>
-            </div>
-            <div class="filter-group f-vista" style="flex:0 0 auto; min-width:180px;">
-                <label style="color:#34d399;">Vista rápida <span style="color:#64748b; font-size:10px; font-weight:400;">(filtra el ranking)</span></label>
-                <div id="vistaGrid" class="channel-grid" style="margin-top:8px; gap:8px;">
-                    <div class="chip chip-vista chip-green" id="chipGanados" onclick="toggleVista('GANADOS')">🟢 GANADOS</div>
-                    <div class="chip chip-vista chip-red"   id="chipPerdidos" onclick="toggleVista('PERDIDOS')">🔴 PERDIDOS</div>
-                </div>
-            </div>
+        <div class="compact-filters-row">
+          <details class="compact-filter"><summary>Oficina de venta / Centro de coste</summary><div class="filter-body"><div id="areasGrid" class="area-grid"></div></div></details>
+          <details class="compact-filter"><summary>Familias</summary><div class="filter-body"><div id="familiasGrid" class="family-grid"></div></div></details>
+          <details class="compact-filter"><summary>Canales</summary><div class="filter-body"><div id="channelGrid" class="channel-grid"></div></div></details>
+          <details class="compact-filter"><summary>Vista rápida</summary><div class="filter-body"><div id="vistaGrid" class="channel-grid"><div class="chip chip-vista chip-green" id="chipGanados" onclick="toggleVista('GANADOS')">🟢 GANADOS</div><div class="chip chip-vista chip-red" id="chipPerdidos" onclick="toggleVista('PERDIDOS')">🔴 PERDIDOS</div></div></div></details>
         </div>
 
         <div id="resultsContent" style="display:none">
@@ -477,6 +463,8 @@ h1 {
 
 <script>
 let rawData = [];
+let baseRawData = [];
+const PROGRAMATICA_URL = 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBRiKDRGWyhSLPu93vPFOLmAWX_tVsvzvinkrrg8Iym2qE';
 const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 let selM1 = new Set(), selM2 = new Set();
 let selAreas = new Set();
@@ -564,7 +552,7 @@ function getChannel(d) { return d._channel || 'SIN CANAL'; }
 function processWorkbook(arrayBuffer) {
     const wb = XLSX.read(new Uint8Array(arrayBuffer), {type:'array'});
     const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-    rawData = json.map(d => {
+    baseRawData = json.map(d => {
         const famRaw = String(d['Familia'] || d['FAMILIA'] || '');
         const pub = String(d['Publicación'] || d['PUBLICACION'] || '').trim().toUpperCase();
         const mesStr = String(d['Mes inserción'] || d['MES_INSERCION'] || '').toUpperCase();
@@ -580,16 +568,24 @@ function processWorkbook(arrayBuffer) {
             Marca: marcaRaw || null,
             Producto: producto || 'SIN PRODUCTO',
             Publi: PUB_MAP[pub] || pub,
-            Area: String(d['ÁREAS'] || d['AREA'] || d['área'] || d['area'] || 'SIN ÁREA').trim().toUpperCase(),
+            Area: String(d['Oficina de venta / Centro de coste'] || d['OFICINA DE VENTA / CENTRO DE COSTE'] || d['Oficina de Venta / Centro de Coste'] || 'SIN OFICINA').trim().toUpperCase(),
             Sector: String(d['Sector'] || d['SECTOR'] || d['sector'] || 'SIN SECTOR').trim().toUpperCase().replace(/^\d+\s*\*\s*/, ''),
             Familia: tipos.family || (famRaw.trim().toUpperCase() || 'SIN FAMILIA'),
             _channel: tipos.isEvent ? 'EVENTOS' : tipos.isProg ? 'PROGRAMÁTICA' : tipos.isPrint ? 'PRINT' : 'DIGITAL',
             ...tipos
         };
     }).filter(d => d.Año !== '' && d.Publi !== 'BOOK');
+    rawData = baseRawData.slice();
+    refreshFiltersAfterLoad();
+}
+
+function refreshFiltersAfterLoad() {
     const years = [...new Set(rawData.map(d => d.Año))].sort().reverse();
     fYear1.innerHTML = `<option value="">Elige un año</option>` + years.map(y => `<option>${y}</option>`).join('');
     fYear2.innerHTML = `<option value="">Año a comparar</option>` + years.map(y => `<option>${y}</option>`).join('');
+    // Preseleccionar los dos años más recientes para que el dashboard pinte datos al cargar.
+    if (years.length) fYear1.value = years[0];
+    if (years.length > 1) fYear2.value = years[1];
     const pubs = [...new Set(rawData.map(d => d.Publi))].sort();
     fPub.innerHTML = `<option value="TODOS">Todas las Marcas</option>` + pubs.map(p => `<option>${p}</option>`).join('');
     const sectors = [...new Set(rawData.map(d => d.Sector))].sort();
@@ -601,20 +597,70 @@ function processWorkbook(arrayBuffer) {
     buildChips('channelGrid', CHANNELS, selChannels, 'chip-red');
     createMonthChips('months1', selM1);
     createMonthChips('months2', selM2);
+    // Preseleccionar automáticamente los meses ya cerrados (anteriores al mes actual).
+    const closedCount = new Date().getMonth();
+    selM1.clear(); selM2.clear();
+    MESES.slice(0, closedCount).forEach(m => { selM1.add(m); selM2.add(m); });
+    document.querySelectorAll('#months1 .chip').forEach((c,i)=>c.classList.toggle('active', i < closedCount));
+    document.querySelectorAll('#months2 .chip').forEach((c,i)=>c.classList.toggle('active', i < closedCount));
     document.getElementById('mainUI').style.display = 'block';
     document.getElementById('resultsContent').style.display = 'none';
+    if (fYear1.value && fYear2.value) render();
 }
 
-fetch('https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCpQL7XxQQyQKzfLOSsA9_LAXGIt4j0H90jLe6ctOGg5uE')
-  .then(r => { if (!r.ok) throw new Error('No se pudo cargar el archivo'); return r.arrayBuffer(); })
-  .then(buffer => {
-      document.getElementById('loadCard').querySelector('label').innerText = '✓ Datos cargados automáticamente: https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCpQL7XxQQyQKzfLOSsA9_LAXGIt4j0H90jLe6ctOGg5uE';
-      document.getElementById('fileInput').style.display = 'none';
-      processWorkbook(buffer);
-  })
-  .catch(() => {
-      document.getElementById('loadCard').querySelector('label').innerText = 'Carga automática no disponible. Carga el Excel manualmente:';
-  });
+const MAIN_DATA_URL = 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCpQL7XxQQyQKzfLOSsA9_LAXGIt4j0H90jLe6ctOGg5uE';
+
+function parseProgAmount(v) {
+    if (v == null || v === '') return 0;
+    if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+    const txt = String(v).trim().replace(/\s/g,'').replace(/\.(?=\d{3}(?:\D|$))/g,'').replace(',','.').replace(/[^0-9.-]/g,'');
+    const n = Number(txt);
+    return Number.isFinite(n) ? n : 0;
+}
+
+function applyProgrammaticWorkbook(arrayBuffer) {
+    const wb = XLSX.read(new Uint8Array(arrayBuffer), {type:'array'});
+    const sheetName = wb.SheetNames.find(n => n.toUpperCase() === 'ANALIZADOR GENERAL') || wb.SheetNames.find(n => n.toUpperCase() !== 'META') || wb.SheetNames[0];
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:''});
+    const years = rows.map(r => Number(r['Año inserción'] || r['ANO INSERCION'] || r['AÑO INSERCION'])).filter(Number.isFinite);
+    const currentYear = years.length ? Math.max(...years) : null;
+    if (!currentYear) return;
+    const priorYear = currentYear - 1;
+    const synthetic = [];
+    rows.forEach(r => {
+        const year = Number(r['Año inserción'] || r['ANO INSERCION'] || r['AÑO INSERCION']);
+        if (year !== currentYear && year !== priorYear) return;
+        const amount = year === currentYear ? parseProgAmount(r['Imp.Neto a Comisionar']) : parseProgAmount(r['Imp.Neto Ant.']);
+        if (!amount) return;
+        const adv = String(r['PROGR'] || r['Progr'] || r['progr'] || r['Anunciante'] || '').trim().toUpperCase();
+        if (!adv || adv === 'GOOGLE') return;
+        const mesStr = String(r['Mes inserción'] || '').toUpperCase();
+        const mes = MESES.find(m => mesStr.includes(m)) || 'OTROS';
+        const pubRaw = String(r['Publicación'] || r['PUBLICACION'] || '').trim().toUpperCase();
+        const publi = PUB_MAP[pubRaw] || pubRaw || 'PROGRAMÁTICA';
+        const sector = String(r['Sector'] || 'SIN SECTOR').trim().toUpperCase().replace(/^\d+\s*\*\s*/, '');
+        const area = String(r['Oficina de venta / Centro de coste'] || r['OFICINA DE VENTA / CENTRO DE COSTE'] || r['Oficina de Venta / Centro de Coste'] || r['AREA'] || r['ÁREAS'] || r['Area'] || 'SIN OFICINA').trim().toUpperCase();
+        const marca = String(r['Marca'] || '').trim().toUpperCase() || null;
+        const common = {Año:String(year), Mes:mes, Marca:marca, Producto:'PROGRAMÁTICA', Publi:publi, Area:area, Sector:sector, Familia:'PROGRAMÁTICA', _channel:'PROGRAMÁTICA', isEvent:false, isProg:true, isPrint:false, isDigital:false, family:'PROGRAMÁTICA'};
+        synthetic.push({...common, ingreso:amount, Anunciante:adv, _progReassigned:true});
+        synthetic.push({...common, ingreso:-amount, Anunciante:'GOOGLE', _progReassigned:true, _progAnti:true});
+    });
+    rawData = baseRawData.concat(synthetic);
+    refreshFiltersAfterLoad();
+}
+
+Promise.all([
+  fetch(MAIN_DATA_URL).then(r => { if (!r.ok) throw new Error('No se pudo cargar el archivo principal'); return r.arrayBuffer(); }),
+  fetch(PROGRAMATICA_URL).then(r => { if (!r.ok) throw new Error('No se pudo cargar Programática'); return r.arrayBuffer(); })
+]).then(([mainBuffer, progBuffer]) => {
+    processWorkbook(mainBuffer);
+    applyProgrammaticWorkbook(progBuffer);
+    document.getElementById('loadCard').querySelector('label').innerText = '✓ Datos + Programática cargados automáticamente desde SharePoint';
+    document.getElementById('fileInput').style.display = 'none';
+}).catch(err => {
+    console.error(err);
+    document.getElementById('loadCard').querySelector('label').innerText = 'Carga automática incompleta. Puedes cargar el Excel principal manualmente:';
+});
 
 fileInput.onchange = e => {
     const f = e.target.files[0];
