@@ -31,7 +31,10 @@
   main{padding:24px 32px 60px;max-width:1400px;margin:0 auto;}
   .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:16px;}
   .mf-label{font-size:12.5px;font-weight:600;color:var(--muted);margin-right:2px;white-space:nowrap;}
-  .month-filter{display:none;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;}
+  .month-filter{display:none;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;}
+  .filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .filter-divider{width:1px;height:30px;background:var(--border);margin:0 2px;flex:0 0 1px;}
+  .year-filter{display:none;align-items:center;gap:8px;}
   .mf-chips{display:flex;gap:4px;flex-wrap:wrap;}
   .mf-chip{padding:5px 10px;border-radius:14px;border:1px solid var(--border);background:#f4f6f9;font-size:12px;cursor:pointer;color:var(--text);user-select:none;transition:.15s;}
   .mf-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
@@ -49,10 +52,16 @@
   .pub-row .mf-chip{font-size:9px;padding:3px 8px;}
   .empty-state{background:#fff;border:1px dashed var(--border);border-radius:10px;padding:60px 20px;text-align:center;color:var(--muted);}
   .empty-state b{color:var(--text);}
-  .tab-bar{display:none;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);flex-wrap:wrap;}
-  .tab-btn{padding:9px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;background:#f4f6f9;margin-bottom:-2px;transition:.15s;user-select:none;white-space:nowrap;}
-  .tab-btn:hover{color:var(--navy);background:#eef2f7;}
-  .tab-btn.active{color:var(--navy);background:#fff;border-color:var(--border);border-bottom-color:#fff;font-weight:700;}
+  .area-commercial-row{display:none;grid-template-columns:minmax(0,1fr) minmax(360px,.55fr);gap:14px;margin-bottom:14px;}
+  .tab-bar{display:flex;gap:8px;margin-bottom:0;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .area-label{width:100%;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 2px;}
+  .commercial-card{display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .commercial-card .comercial-filter{min-width:0;}
+  .commercial-card .comercial-filter input{max-width:none;}
+  @media(max-width:900px){.area-commercial-row{grid-template-columns:1fr;}}
+  .tab-btn{padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--navy);cursor:pointer;border:1px solid var(--border);border-radius:16px;background:#f4f6f9;transition:.15s;user-select:none;white-space:nowrap;}
+  .tab-btn:hover{border-color:var(--accent);}
+  .tab-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600;}
 
   /* ── Filtro de Comercial ── */
   .comercial-filter{display:flex;align-items:center;gap:8px;flex:1;min-width:260px;position:relative;}
@@ -61,8 +70,9 @@
   #comercialClearBtn{display:none;}
 
   /* ── Filtro de Sector ── */
+  #sectorFilterWrap{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:14px;margin-bottom:16px;}
   .sector-filters-label{font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 8px;}
-  .sector-btns{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;}
+  .sector-btns{display:flex;flex-wrap:wrap;gap:8px;margin:0;}
   .sector-btn{padding:7px 14px;border-radius:16px;border:1px solid var(--border);background:#f4f6f9;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--navy);user-select:none;transition:.15s;}
   .sector-btn:hover{border-color:var(--accent);}
   .sector-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
@@ -122,6 +132,7 @@
   /* ── Selector de vista por canal: Anunciantes / Franja presupuestaria ── */
   .channel-title-row{justify-content:space-between;gap:14px;flex-wrap:wrap;}
   .channel-title-label{display:flex;align-items:center;gap:8px;}
+  .channel-title-note{font-size:10.5px;font-weight:500;color:var(--muted);margin-left:2px;}
   .channel-view-toggle{display:inline-flex;align-items:center;gap:3px;padding:3px;background:#eef2f7;border:1px solid var(--border);border-radius:9px;}
   .channel-view-btn{border:none;background:transparent;color:var(--muted);font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:.15s;}
   .channel-view-btn:hover{color:var(--navy);background:#fff;}
@@ -218,12 +229,21 @@
 
 <main>
   <div id="monthFilter" class="month-filter">
-    <span class="mf-label">Meses:</span>
-    <div class="mf-chips" id="mfChips"></div>
-    <div class="mf-actions">
-      <button class="mf-btn" id="mfNone" onclick="setMonthMode('none')">Ninguno</button>
-      <button class="mf-btn active" id="mfClosed" onclick="setMonthMode('closed')">Cerrados</button>
-      <button class="mf-btn" id="mfAll" onclick="setMonthMode('all')">Todos</button>
+    <div class="filter-row">
+      <div class="year-filter" id="yearFilter">
+        <span class="mf-label">Año:</span>
+        <select class="sort-select" id="yearSelect" onchange="onYearChange()" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;"></select>
+      </div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-row" style="flex:1;">
+      <span class="mf-label">Meses:</span>
+      <div class="mf-chips" id="mfChips"></div>
+      <div class="mf-actions">
+        <button class="mf-btn" id="mfNone" onclick="setMonthMode('none')">Ninguno</button>
+        <button class="mf-btn active" id="mfClosed" onclick="setMonthMode('closed')">Cerrados</button>
+        <button class="mf-btn" id="mfAll" onclick="setMonthMode('all')">Todos</button>
+      </div>
     </div>
   </div>
 
@@ -238,26 +258,24 @@
     <div id="pubGroups"></div>
   </div>
 
-  <div class="toolbar" id="toolbar" style="display:none">
-    <div class="comercial-filter">
-      <span class="mf-label">Comercial:</span>
-      <input type="text" id="comercialInput" list="comercialDatalist" placeholder="Escribe o selecciona un comercial…" oninput="onComercialInput()" autocomplete="off">
-      <datalist id="comercialDatalist"></datalist>
-      <button class="mf-btn" id="comercialClearBtn" onclick="clearComercial()">✕</button>
+  <div class="area-commercial-row" id="areaCommercialRow">
+    <div class="tab-bar" id="tabBar">
+      <div class="area-label">ÁREA COMERCIAL</div>
+      <div class="tab-btn active" data-tab="todos" onclick="switchTab('todos',this)">Todos</div>
+      <div class="tab-btn" data-tab="madrid-lujo" onclick="switchTab('madrid-lujo',this)">Madrid Lujo</div>
+      <div class="tab-btn" data-tab="madrid-lifestyle" onclick="switchTab('madrid-lifestyle',this)">Madrid Lifestyle</div>
+      <div class="tab-btn" data-tab="barcelona" onclick="switchTab('barcelona',this)">Barcelona</div>
+      <div class="tab-btn" data-tab="internacional" onclick="switchTab('internacional',this)">Internacional</div>
+      <div class="tab-btn" data-tab="programatica" onclick="switchTab('programatica',this)">Programática</div>
     </div>
-    <div class="year-filter" id="yearFilter" style="display:none;align-items:center;gap:8px;">
-      <span class="mf-label">Año:</span>
-      <select class="sort-select" id="yearSelect" onchange="onYearChange()" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;"></select>
+    <div class="commercial-card">
+      <div class="area-label">COMERCIAL</div>
+      <div class="comercial-filter">
+        <input type="text" id="comercialInput" list="comercialDatalist" placeholder="Escribe o selecciona un comercial…" oninput="onComercialInput()" autocomplete="off">
+        <datalist id="comercialDatalist"></datalist>
+        <button class="mf-btn" id="comercialClearBtn" onclick="clearComercial()">✕</button>
+      </div>
     </div>
-  </div>
-
-  <div class="tab-bar" id="tabBar">
-    <div class="tab-btn active" data-tab="todos" onclick="switchTab('todos',this)">Todos</div>
-    <div class="tab-btn" data-tab="madrid-lujo" onclick="switchTab('madrid-lujo',this)">Madrid Lujo</div>
-    <div class="tab-btn" data-tab="madrid-lifestyle" onclick="switchTab('madrid-lifestyle',this)">Madrid Lifestyle</div>
-    <div class="tab-btn" data-tab="barcelona" onclick="switchTab('barcelona',this)">Barcelona</div>
-    <div class="tab-btn" data-tab="internacional" onclick="switchTab('internacional',this)">Internacional</div>
-    <div class="tab-btn" data-tab="programatica" onclick="switchTab('programatica',this)">Programática</div>
   </div>
 
   <div id="sectorFilterWrap" style="display:none">
@@ -731,7 +749,7 @@ function onYearChange(){
   render();
 }
 function showUI(){
-  document.getElementById('toolbar').style.display='flex';
+  const areaRow=document.getElementById('areaCommercialRow'); if(areaRow) areaRow.style.display='grid';
   document.getElementById('pubFilter').style.display='flex'; // .pub-filter usa flex-direction:column
   document.getElementById('tabBar').style.display='flex';
   document.getElementById('sectorFilterWrap').style.display='block';
@@ -890,14 +908,21 @@ function populateSectorButtons(){
   const set=new Set(DATA.map(d=>d.sector).filter(Boolean));
   const sectors=Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
   const wrap=document.getElementById('sectorBtns');
-  wrap.innerHTML=sectors.map(s=>`<div class="sector-btn">${s}</div>`).join('');
-  wrap.querySelectorAll('.sector-btn').forEach((btn,i)=>{
+  wrap.innerHTML=`<div class="sector-btn sector-all${selectedSector?'':' active'}">Todos</div>`+sectors.map(s=>`<div class="sector-btn">${s}</div>`).join('');
+  const allBtn=wrap.querySelector('.sector-all');
+  allBtn.addEventListener('click',()=>{
+    selectedSector='';
+    wrap.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('active'));
+    allBtn.classList.add('active');
+    render();
+  });
+  wrap.querySelectorAll('.sector-btn:not(.sector-all)').forEach((btn,i)=>{
     const s=sectors[i];
     btn.classList.toggle('active', normalize(s)===normalize(selectedSector));
     btn.addEventListener('click',()=>{
       selectedSector=(normalize(selectedSector)===normalize(s))?'':s;
       wrap.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('active'));
-      if(selectedSector) btn.classList.add('active');
+      if(selectedSector) btn.classList.add('active'); else allBtn.classList.add('active');
       render();
     });
   });
@@ -1178,7 +1203,7 @@ function computeProductosParaCanal(canal,franja){
 function renderCanalHeader(canal){
   const mode=canalViewMode[canal]||'anunciantes';
   return `<div class="block-card-title channel-title-row">
-    <span class="channel-title-label"><span class="${CANAL_DOT[canal]}">●</span> ${canal}</span>
+    <span class="channel-title-label"><span class="${CANAL_DOT[canal]}">●</span> ${canal}${canal==='Digital'?'<span class="channel-title-note">(no se tienen en cuenta las familias de programática)</span>':''}</span>
     <span class="channel-view-toggle" aria-label="Vista de ${escapeHtml(canal)}">
       <button type="button" class="channel-view-btn${mode==='anunciantes'?' active':''}" data-canal-view="anunciantes" data-canal="${escapeHtml(canal)}">Anunciantes</button>
       <button type="button" class="channel-view-btn${mode==='franjas'?' active':''}" data-canal-view="franjas" data-canal="${escapeHtml(canal)}">Franja Presupuestaria</button>
