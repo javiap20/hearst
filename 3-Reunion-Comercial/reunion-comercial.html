@@ -8629,6 +8629,10 @@ async function exportarPPT() {
       return null;
     }
     if (wasHidden) { el.style.display = origDisplay; el.style.visibility = origVis; }
+    if (!canvas || canvas.width <= 0 || canvas.height <= 0) {
+      console.warn('PPT: captura omitida porque html2canvas devolvió un canvas vacío.', el);
+      return null;
+    }
     return canvas.toDataURL('image/png');
   }
 
@@ -9957,16 +9961,53 @@ async function exportarPPT() {
 
         async function captureHorizontalSlice(el, fromRatio, toRatio) {
           if (!el) return null;
-          const full = await html2canvas(el, H2C_OPTS);
-          const x0 = Math.max(0, Math.round(full.width * fromRatio));
-          const x1 = Math.min(full.width, Math.round(full.width * toRatio));
-          const w = Math.max(1, x1 - x0);
-          const cropped = document.createElement('canvas');
-          cropped.width = w;
-          cropped.height = full.height;
-          const ctx = cropped.getContext('2d');
-          ctx.drawImage(full, x0, 0, w, full.height, 0, 0, w, full.height);
-          return cropped.toDataURL('image/png');
+
+          // El elemento puede estar temporalmente oculto o sin layout.
+          // En ese caso lo hacemos medible antes de pedir la captura.
+          const origDisplay = el.style.display;
+          const origVis = el.style.visibility;
+          const wasHidden = window.getComputedStyle(el).display === 'none';
+          if (wasHidden) {
+            el.style.display = 'block';
+            el.style.visibility = 'hidden';
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          }
+
+          let full = null;
+          try {
+            full = await html2canvas(el, H2C_OPTS);
+
+            // drawImage lanza InvalidStateError si el canvas origen mide 0.
+            // Si html2canvas devuelve una captura vacía, no intentamos recortarla.
+            if (!full || full.width <= 0 || full.height <= 0) {
+              console.warn('PPT: captura horizontal omitida porque el canvas está vacío.', el);
+              return null;
+            }
+
+            const x0 = Math.max(0, Math.min(full.width - 1, Math.round(full.width * fromRatio)));
+            const x1 = Math.max(x0 + 1, Math.min(full.width, Math.round(full.width * toRatio)));
+            const w = x1 - x0;
+            const h = full.height;
+
+            if (w <= 0 || h <= 0) return null;
+
+            const cropped = document.createElement('canvas');
+            cropped.width = w;
+            cropped.height = h;
+            const ctx = cropped.getContext('2d');
+            if (!ctx) return null;
+
+            ctx.drawImage(full, x0, 0, w, h, 0, 0, w, h);
+            return cropped.toDataURL('image/png');
+          } catch (e) {
+            console.warn('PPT: error al capturar/recortar Total Marcas Hearst:', e);
+            return null;
+          } finally {
+            if (wasHidden) {
+              el.style.display = origDisplay;
+              el.style.visibility = origVis;
+            }
+          }
         }
 
         // SLIDE 8: Publicación + TOTAL MARCA
