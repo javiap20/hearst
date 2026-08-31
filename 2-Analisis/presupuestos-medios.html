@@ -36,12 +36,12 @@ body {
   min-height: 100vh;
   padding: 0;
 }
-.mono { font-family: 'DM Mono', monospace; }
+.mono { font-family: Arial, Helvetica, sans-serif; }
 
 /* TOPBAR */
 .topbar {
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
+  background: #172554;
+  border-bottom: 1px solid #0f1b3d;
   padding: 0 24px;
   height: 56px;
   display: flex;
@@ -59,13 +59,14 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: #fff;
 }
 .topbar-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
 .data-badge {
-  font-size: 11px; color: var(--text3);
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 6px; padding: 3px 10px;
-  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: #334155;
+  background: #f8fafc; border: 1px solid rgba(255,255,255,.35);
+  border-radius: 6px; padding: 2px 8px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* UPLOAD AREA */
@@ -125,7 +126,7 @@ body {
 .filter-block {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
-  padding: 14px 24px;
+  padding: 9px 24px;
 }
 .filter-block-title {
   font-size: 10px;
@@ -133,15 +134,15 @@ body {
   letter-spacing: 0.1em;
   color: var(--text3);
   font-weight: 500;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 .filters-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 9px;
   align-items: flex-end;
 }
-.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group { display: flex; flex-direction: column; gap: 3px; }
 .filter-group label {
   font-size: 10px;
   text-transform: uppercase;
@@ -154,15 +155,15 @@ body {
   border: 1px solid var(--border2);
   border-radius: var(--radius);
   color: var(--text);
-  padding: 7px 12px;
-  font-size: 13px;
+  padding: 5px 9px;
+  font-size: 12px;
   font-family: 'DM Sans', sans-serif;
   cursor: pointer;
   outline: none;
-  min-width: 140px;
+  min-width: 120px;
 }
 .filter-group select:focus, .filter-group input:focus { border-color: var(--accent); }
-.filter-group input { min-width: 200px; }
+.filter-group input { min-width: 170px; }
 
 /* MONTH CHIPS */
 .months-row {
@@ -174,9 +175,9 @@ body {
 .month-chip {
   display: inline-flex;
   align-items: center;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 18px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   border: 1.5px solid var(--border2);
@@ -213,8 +214,8 @@ body {
   align-self: flex-end;
 }
 .zero-btn {
-  padding: 7px 14px;
-  font-size: 12px;
+  padding: 5px 10px;
+  font-size: 11px;
   font-family: 'DM Sans', sans-serif;
   cursor: pointer;
   border: none;
@@ -259,11 +260,12 @@ body {
 .summary-card .s-val {
   font-size: 22px;
   font-weight: 600;
-  font-family: 'DM Mono', monospace;
+  font-family: Arial, Helvetica, sans-serif;
   color: var(--text);
   letter-spacing: -0.5px;
 }
-.summary-card .s-label { font-size: 11px; color: var(--text3); }
+.summary-card .s-label { font-size: 11px; color: var(--text3); text-align:center; }
+.summary-card { text-align:center; align-items:center; }
 .summary-card.accent { border-top: 3px solid var(--accent); }
 .summary-card.green  { border-top: 3px solid var(--green); }
 .summary-card.amber  { border-top: 3px solid var(--amber); }
@@ -283,6 +285,43 @@ body {
 }
 .info-note.hidden { display: none; }
 .info-note .info-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.view-toggle-row{display:flex;justify-content:center;margin:2px 0 0;}
+.view-toggle{display:inline-flex;border:1px solid var(--border2);border-radius:9px;overflow:hidden;background:var(--bg3);}
+.view-btn{border:0;background:transparent;color:var(--text3);padding:6px 18px;font:600 11px 'DM Sans',sans-serif;cursor:pointer;}
+.view-btn+ .view-btn{border-left:1px solid var(--border2);}
+.view-btn.active{background:var(--accent);color:#fff;}
+.monthly-table th,.monthly-table td{text-align:center!important;white-space:nowrap;}
+.monthly-table th:first-child,.monthly-table td:first-child{text-align:center!important;position:sticky;left:0;z-index:2;background:var(--bg2);min-width:210px;}
+.monthly-table thead th{background:#172554!important;color:#fff!important;border-bottom-color:#0f1b3d!important;}
+.monthly-table thead th:first-child{background:#172554!important;color:#fff!important;z-index:3;}
+.monthly-table td{font-family:Arial,Helvetica,sans-serif;font-size:11px;}
+.monthly-table td:first-child{font-family:'DM Sans',sans-serif;font-weight:600;}
+.monthly-table .month-open{color:#a7a9b8!important;font-weight:500!important;}
+.monthly-table .month-open-head{color:#94a3b8!important;}
+/* Meses cerrados: presupuesto en verde petroleo, separado del navy de cabeceras */
+.monthly-table tbody tr.product-row td:not(:first-child):not(.month-open),
+.monthly-table tbody tr.pub-detail-row td:not(:first-child):not(.month-open){color:#0f766e;font-weight:700;}
+.monthly-table thead th:not(:first-child):not(.month-open-head){color:#fff!important;}
+.monthly-table .month-expand{border:0;background:transparent;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 6px 2px 0;vertical-align:1px;}
+.monthly-table .month-expand.open{transform:rotate(90deg);display:inline-block;}
+.monthly-table .pub-detail-row td{font-size:10px!important;background:#f7f8fa;}
+.monthly-table .pub-detail-row td:first-child{font-weight:400!important;color:var(--text2);padding-left:30px!important;}
+.monthly-table.focus-product tr.product-row:not(.focused) td{color:#c3c5ce!important;background:#fafafa!important;}
+.monthly-table.focus-product tr.product-row:not(.focused) td:first-child{color:#b7b9c3!important;}
+.monthly-table.focus-product tr.product-row:not(.focused) .month-expand{color:#c3c5ce!important;}
+.monthly-table tr.product-row.focused td{background:#fff!important;}
+.monthly-table .monthly-family-header td{text-align:left!important;font-family:'DM Sans',sans-serif!important;font-size:11px!important;font-weight:700!important;color:var(--text3)!important;background:#f0f1f6!important;position:static!important;}
+.monthly-table.focus-product .monthly-family-header td{color:#aeb0ba!important;}
+.monthly-table .pub-label{font-size:10px;}
+
+
+.trend-table th,.trend-table td{text-align:center!important;vertical-align:middle;}
+.trend-table thead th{background:#172554!important;color:#fff!important;border-bottom-color:#0f1b3d!important;}
+.trend-table .trend-family-header td{text-align:left!important;font-family:'DM Sans',sans-serif!important;font-size:11px!important;font-weight:700!important;color:var(--text3)!important;background:#f0f1f6!important;}
+.trend-table .trend-product{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;min-width:260px;}
+.trend-cell{padding:5px 12px!important;}
+.trend-svg{display:block;margin:0 auto;overflow:visible;}
+.trend-empty{font-size:10px;color:var(--text3);font-style:italic;}
 
 /* TABLE */
 .table-wrap {
@@ -316,11 +355,11 @@ td {
 }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: #f0f4ff !important; }
-td.num { text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; }
-td.num-neutral { text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+td.num { text-align: right; font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 600; }
+td.num-neutral { text-align: right; font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: var(--text3); }
 td.neg { color: var(--coral) !important; }
 td.pos { color: var(--green) !important; }
-td.avg-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700; color: var(--accent); }
+td.avg-col { text-align: right; font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: 700; color: var(--accent); }
 
 /* FAMILY GROUP HEADER */
 .family-header td {
@@ -352,7 +391,7 @@ td.avg-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 12
 .empty-state { text-align: center; color: var(--text3); padding: 40px; font-size: 13px; }
 
 /* VS AÑO ANTERIOR */
-.vs-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; white-space: nowrap; }
+.vs-col { text-align: right; font-family: Arial, Helvetica, sans-serif; font-size: 11px; white-space: nowrap; }
 .vs-up {
   color: var(--green);
   font-weight: 700;
@@ -368,7 +407,7 @@ td.avg-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 12
 /* SOURCE PILL */
 .source-pill {
   font-size: 11px; padding: 3px 10px;
-  border-radius: 20px; font-family: 'DM Mono', monospace;
+  border-radius: 20px; font-family: Arial, Helvetica, sans-serif;
 }
 .source-pill.auto  { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
 .source-pill.manual { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
@@ -416,7 +455,7 @@ td.avg-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 12
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 11px;
-  font-family: 'DM Mono', monospace;
+  font-family: Arial, Helvetica, sans-serif;
   white-space: nowrap;
 }
 .sector-chip .sc-label {
@@ -532,7 +571,7 @@ td.avg-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 12
   font-size: 11px;
 }
 .tt-row .tt-area { color: #b8b8d0; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tt-row .tt-val { font-family: 'DM Mono', monospace; font-weight: 700; }
+.tt-row .tt-val { font-family: Arial, Helvetica, sans-serif; font-weight: 700; }
 .tt-above { color: #4ade80; }
 .tt-below { color: #f87171; }
 .tt-equal { color: #9999bb; }
@@ -547,7 +586,58 @@ td.avg-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 12
   display: flex;
   justify-content: space-between;
 }
-.tt-avg-line span { font-family: 'DM Mono', monospace; color: #aaaacc; font-weight: 600; }
+.tt-avg-line span { font-family: Arial, Helvetica, sans-serif; color: #aaaacc; font-weight: 600; }
+
+/* ACUMULADO: misma cabecera navy que Mes a Mes + contenido centrado */
+.main-table:not(.monthly-table) thead th{background:#172554!important;color:#fff!important;border-bottom-color:#0f1b3d!important;text-align:center!important;}
+.main-table:not(.monthly-table) tbody td{text-align:center!important;font-weight:400!important;}
+.main-table:not(.monthly-table) tbody td.num{font-weight:400!important;}
+.main-table:not(.monthly-table) tbody td.avg-col,.main-table:not(.monthly-table) tbody td.vs-col{font-weight:700!important;}
+.main-table:not(.monthly-table) tbody td.avg-col *,.main-table:not(.monthly-table) tbody td.vs-col *{font-weight:700!important;}
+.main-table:not(.monthly-table) tbody td strong{font-weight:400!important;}
+.main-table:not(.monthly-table) tbody td.avg-col strong,.main-table:not(.monthly-table) tbody td.vs-col strong{font-weight:700!important;}
+.main-table:not(.monthly-table) .family-header td{text-align:left!important;font-weight:700!important;}
+
+/* V11: activaciones bajo presupuesto + fila total destacada al desplegar */
+.monthly-table .month-cell-value{display:block;line-height:1.25;}
+.monthly-table .month-cell-count{display:block;margin-top:3px;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:400!important;color:#16a34a!important;line-height:1.15;}
+.monthly-table tr.product-row.focused td{background:#fff3cd!important;}
+.monthly-table tr.product-row.focused:hover td{background:#ffedb5!important;}
+.monthly-table tr.product-row.focused td:first-child{background:#fff3cd!important;}
+
+
+/* V12: vista Por Tramos */
+.period-table th,.period-table td{text-align:center!important;vertical-align:middle;}
+.period-table thead th{background:#172554!important;color:#fff!important;border-bottom-color:#0f1b3d!important;}
+.period-table .period-family-header td{text-align:left!important;font-family:'DM Sans',sans-serif!important;font-size:11px!important;font-weight:700!important;color:var(--text3)!important;background:#f0f1f6!important;}
+.period-table .period-product{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;min-width:210px;}
+.period-stack{display:flex;flex-direction:column;gap:4px;align-items:center;}
+.period-line{font-family:Arial,Helvetica,sans-serif;font-size:10.5px;line-height:1.2;font-weight:700;}
+.period-line .period-label{display:block;min-width:0;margin:0 0 2px 0;font-family:'DM Sans',sans-serif;font-size:8.5px;font-weight:400;color:var(--text3);}
+.period-line.p1{color:#0f766e}.period-line.p2{color:#b45309}.period-line.p3{color:#7c3aed}
+.period-empty{color:#b6b8c2;font-size:10px;display:block;}
+.period-value{display:block;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;line-height:1.2;}
+
+/* V14: Por Tramos - negrita, meses abiertos y tooltip de activaciones */
+.period-table .period-line{font-weight:700;}
+.period-table .period-line .period-label{font-weight:400;}
+.period-table .period-open .period-line,.period-table .period-open .period-label,.period-table .period-open .period-empty{color:#a7a9b8!important;}
+.period-table .period-open-head{color:#94a3b8!important;}
+.period-cell{position:relative;cursor:default;}
+.period-tip{display:none;position:fixed;z-index:10000;min-width:270px;background:#172554;color:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 10px 28px rgba(15,23,42,.28);font-family:'DM Sans',sans-serif;text-align:left;pointer-events:none;}
+.period-tip.visible{display:block;}
+.period-tip-title{font-size:12px;font-weight:700;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,.18);}
+.period-tip-row{display:flex;justify-content:space-between;gap:24px;align-items:center;padding:5px 0;font-size:12px;}
+.period-tip-row strong{font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#fff;}
+
+
+/* V15: legibilidad cifras con Arial */
+td.num, td.num-neutral, td.avg-col, .vs-col,
+.monthly-table td:not(:first-child), .period-line,
+.tt-row .tt-val, .tt-avg-line span, .sector-chip {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+.period-line { font-weight: 700 !important; }
 </style>
 </head>
 <body>
@@ -621,8 +711,8 @@ td.avg-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 12
       <div class="filter-group">
         <label>Precio medio</label>
         <div class="zero-toggle-wrap">
-          <button class="zero-btn active" id="btn-con-ceros" onclick="setZeroMode('con')">Con líneas a 0 €</button>
-          <button class="zero-btn" id="btn-sin-ceros" onclick="setZeroMode('sin')">Sin líneas a 0 €</button>
+          <button class="zero-btn" id="btn-con-ceros" onclick="setZeroMode('con')">Con líneas a 0 €</button>
+          <button class="zero-btn active" id="btn-sin-ceros" onclick="setZeroMode('sin')">Sin líneas a 0 €</button>
         </div>
       </div>
     </div>
@@ -639,9 +729,17 @@ td.avg-col { text-align: right; font-family: 'DM Mono', monospace; font-size: 12
       <span class="info-icon">💡</span>
       <span id="info-text"></span>
     </div>
+    <div class="view-toggle-row">
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-acc" onclick="setViewMode('acc')">Acumulado</button>
+        <button class="view-btn" id="view-month" onclick="setViewMode('month')">Mes a Mes</button>
+        <button class="view-btn" id="view-trend" onclick="setViewMode('trend')">Evolución</button>
+        <button class="view-btn" id="view-period" onclick="setViewMode('period')">Por Tramos</button>
+      </div>
+    </div>
     <div class="table-wrap">
       <div class="table-scroll">
-        <table>
+        <table class="main-table">
           <thead id="thead"></thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -662,6 +760,21 @@ const COL_YEAR   = 'Año inserción';
 const COL_ING    = 'Imp.Neto a Comisionar';
 const COL_AREA   = 'ÁREAS';
 const COL_SECTOR = 'Sector';
+const COL_COM    = 'Comercial';
+const COL_ORDEN  = 'Clase de orden';
+const COL_DIAS   = 'DÍAS';
+function parseDiasDate(v){
+  if(v instanceof Date && !isNaN(v)) return v;
+  if(typeof v==='number' && Number.isFinite(v)){
+    const d=XLSX.SSF.parse_date_code(v);
+    return d ? new Date(d.y,d.m-1,d.d) : null;
+  }
+  const t=String(v??'').trim();
+  if(!t) return null;
+  const dm=t.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
+  if(dm){let y=+dm[3];if(y<100)y+=2000;return new Date(y,+dm[2]-1,+dm[1]);}
+  const d=new Date(t); return isNaN(d)?null:d;
+}
 const SHEET_NAME = 'Analizador general';
 
 // ── Rutas a intentar en orden. Edita este array para añadir o cambiar nombres.
@@ -680,7 +793,9 @@ const FAM_PRINT   = new Set(['CERTIFICACIÓN','CONVENCIONAL','Curated','ELEMENTO
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let DATA = [];
 let selectedMonths = new Set();
-let zeroMode = 'con';
+let zeroMode = 'sin';
+let viewMode = 'acc';
+let expandedMonthlyProduct = null;
 
 // ─── AUTO-LOAD ────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -757,6 +872,39 @@ function processFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
+function getMetaLoadDate(wb) {
+  const metaName = wb.SheetNames.find(n => String(n).trim().toLowerCase() === 'meta');
+  if (!metaName) return null;
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[metaName], { header: 1, defval: '', raw: true });
+  const fmtDate = v => {
+    if (v instanceof Date && !isNaN(v)) return v.toLocaleDateString('es-ES');
+    if (typeof v === 'number' && v > 30000 && v < 70000) {
+      const d = XLSX.SSF.parse_date_code(v);
+      if (d) return new Date(d.y, d.m-1, d.d).toLocaleDateString('es-ES');
+    }
+    const t = String(v ?? '').trim();
+    const m = t.match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\b/);
+    if (m) {
+      let y = +m[3]; if (y < 100) y += 2000;
+      const d = new Date(y, +m[2]-1, +m[1]);
+      if (!isNaN(d)) return d.toLocaleDateString('es-ES');
+    }
+    return null;
+  };
+  // Prioridad: celdas próximas a etiquetas que contengan fecha/carga/actualización.
+  for (let r=0; r<rows.length; r++) for (let c=0; c<rows[r].length; c++) {
+    const label = String(rows[r][c] ?? '').toLowerCase();
+    if (label.includes('fecha') || label.includes('carga') || label.includes('actualiz')) {
+      for (const v of [rows[r][c+1], rows[r+1]?.[c], rows[r][c]]) {
+        const f=fmtDate(v); if (f) return f;
+      }
+    }
+  }
+  // Fallback: primera fecha reconocible de Meta.
+  for (const row of rows) for (const v of row) { const f=fmtDate(v); if (f) return f; }
+  return null;
+}
+
 function processArrayBuffer(buffer, fileName, source) {
   try {
     const wb = XLSX.read(buffer, { type: 'array' });
@@ -773,10 +921,18 @@ function processArrayBuffer(buffer, fileName, source) {
       _area:    (row[COL_AREA]   || '').trim(),
       _sector:  (row[COL_SECTOR] || '').trim(),
       _pub:     (row[COL_PUB]   || '').trim(),
+      _anun:    (row[COL_ANUN]  || '').trim(),
+      _marca:   (row[COL_MARCA] || '').trim(),
+      _com:     (row[COL_COM]   || row['Comercial Venta'] || row['COMERCIAL'] || '').trim(),
+      _orden:   (row[COL_ORDEN] || row['Clase Orden'] || '').trim(),
+      _diasDate: parseDiasDate(row[COL_DIAS] ?? row['DIAS'] ?? row['Días'] ?? row['Dias']),
     }));
 
+    const metaDate = getMetaLoadDate(wb);
     document.getElementById('top-badge').style.display = '';
-    document.getElementById('top-badge').textContent = DATA.length.toLocaleString('es-ES') + ' registros · ' + fileName;
+    document.getElementById('top-badge').textContent = metaDate
+      ? `Excel cargado · ${metaDate}`
+      : 'Excel cargado';
 
     const ind = document.getElementById('source-indicator');
     ind.style.display = '';
@@ -807,15 +963,38 @@ function populateFilters() {
     o.value = y; o.textContent = y;
     yrSel.appendChild(o);
   });
-  buildMonthChips();
+  const currentYear = String(new Date().getFullYear());
+  if (years.includes(currentYear)) yrSel.value = currentYear;
+
+  // Por defecto: meses cerrados (todos los anteriores al mes en curso).
+  selectMonthPreset('closed', false);
+}
+
+function availableMonths() {
+  const available = new Set(DATA.map(r => r._mes).filter(Boolean));
+  return MESES_ORDER.filter(m => available.has(m));
+}
+
+function sameMonthSelection(list) {
+  return selectedMonths.size === list.length && list.every(m => selectedMonths.has(m));
 }
 
 function buildMonthChips() {
-  const availableMeses = new Set(DATA.map(r => r._mes).filter(Boolean));
-  const meses = MESES_ORDER.filter(m => availableMeses.has(m));
+  const meses = availableMonths();
+  const currentMonthIndex = new Date().getMonth();
+  const closed = meses.filter(m => MESES_ORDER.indexOf(m) < currentMonthIndex);
+  const current = meses.filter(m => MESES_ORDER.indexOf(m) === currentMonthIndex);
   const container = document.getElementById('months-row');
-  const allActive = selectedMonths.size === 0;
-  let html = `<span class="month-chip chip-all ${allActive ? 'active' : ''}" onclick="toggleMonth('all')">Todos</span>`;
+  const allActive = sameMonthSelection(meses);
+  const closedActive = sameMonthSelection(closed);
+  const noneActive = selectedMonths.size === 0;
+  const currentActive = sameMonthSelection(current);
+
+  let html = `
+    <span class="month-chip chip-all ${allActive ? 'active' : ''}" onclick="selectMonthPreset('all')">Todos</span>
+    <span class="month-chip chip-all ${closedActive ? 'active' : ''}" onclick="selectMonthPreset('closed')">Meses cerrados</span>
+    <span class="month-chip chip-all ${noneActive ? 'active' : ''}" onclick="selectMonthPreset('none')">Ninguno</span>
+    <span class="month-chip chip-all ${currentActive ? 'active' : ''}" onclick="selectMonthPreset('current')">Mes en curso</span>`;
   meses.forEach(m => {
     const active = selectedMonths.has(m);
     const short  = MESES_SHORT[m] || m;
@@ -825,12 +1004,20 @@ function buildMonthChips() {
 }
 
 // ─── INTERACTIONS ─────────────────────────────────────────────────────────────
+function selectMonthPreset(mode, doRender = true) {
+  const meses = availableMonths();
+  const currentMonthIndex = new Date().getMonth();
+  if (mode === 'all') selectedMonths = new Set(meses);
+  else if (mode === 'closed') selectedMonths = new Set(meses.filter(m => MESES_ORDER.indexOf(m) < currentMonthIndex));
+  else if (mode === 'current') selectedMonths = new Set(meses.filter(m => MESES_ORDER.indexOf(m) === currentMonthIndex));
+  else selectedMonths = new Set();
+  buildMonthChips();
+  if (doRender) renderTable();
+}
+
 function toggleMonth(mes) {
-  if (mes === 'all') selectedMonths.clear();
-  else {
-    if (selectedMonths.has(mes)) selectedMonths.delete(mes);
-    else selectedMonths.add(mes);
-  }
+  if (selectedMonths.has(mes)) selectedMonths.delete(mes);
+  else selectedMonths.add(mes);
   buildMonthChips();
   renderTable();
 }
@@ -849,353 +1036,395 @@ function getFiltered() {
   return DATA.filter(r => {
     if (yr    !== 'all' && r._year  !== yr)    return false;
     if (canal !== 'all' && r._canal !== canal) return false;
-    if (selectedMonths.size > 0 && !selectedMonths.has(r._mes)) return false;
+    if (!selectedMonths.has(r._mes)) return false;
     return true;
   });
 }
 
+// ─── BUSINESS LOGIC: ACTIVACIONES REALES ───────────────────────────────────────
+function norm(v) {
+  return String(v ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
+function cents(v) { return Math.round((Number(v)||0)*100); }
+function round2(v) { return Math.round((Number(v)||0)*100)/100; }
+function teamOf(r) {
+  const o=norm(r._orden), a=norm(r._area);
+  const first=o.charAt(0);
+  if(first==='j') return 'Internacional';
+  if(first==='p'||first==='q') return 'Programatica';
+  if(a.includes('programat')) return 'Programatica';
+  if(a.includes('barcelona')) return 'Barcelona';
+  if(a.includes('internacional')) return 'Internacional';
+  return 'Madrid';
+}
+const COST_PRODUCTS = new Set([
+  'article (production cost)','costes fabricacion produccion','costes realizacion',
+  'gastos ejecucion (production cost)','costes curated'
+]);
+function isCostProduct(r){ return COST_PRODUCTS.has(norm(r._prod)); }
+function repairKey(r){
+  return [r._anun,r._marca,r._pub,r._com,r._prod,r._fam,r._canal,teamOf(r)].map(norm).join('|||');
+}
+function scopeKey(r){ return [r._year,r._fam,r._prod,r._pub,r._canal].map(norm).join('|||'); }
+
+function processRealBusiness(sourceRows){
+  const rows=sourceRows.filter(r=>!isCostProduct(r)).map((r,i)=>({...r,_sourceOrder:i,_team:teamOf(r)}));
+  const originalZeros=rows.filter(r=>cents(r._ingreso)===0);
+  const negativesRaw=rows.filter(r=>cents(r._ingreso)<0);
+  const byScope=new Map();
+  rows.filter(r=>cents(r._ingreso)!==0).forEach(r=>{
+    const k=scopeKey(r); if(!byScope.has(k)) byScope.set(k,[]); byScope.get(k).push(r);
+  });
+  const repairedPos=[];
+  byScope.forEach(scopeRows=>{
+    const groups=new Map();
+    scopeRows.forEach(r=>{ const k=repairKey(r); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push({...r}); });
+    groups.forEach(gr=>{
+      const pos=gr.filter(r=>cents(r._ingreso)>0).map(r=>({...r,_used:false}));
+      const neg=gr.filter(r=>cents(r._ingreso)<0).map(r=>({...r,_used:false}));
+      // 1) exact repairs first
+      neg.forEach(n=>{
+        const target=Math.abs(cents(n._ingreso));
+        const p=pos.find(x=>!x._used && cents(x._ingreso)===target);
+        if(p){p._used=true;n._used=true;}
+      });
+      // 2) partial repairs against largest compatible positive
+      neg.forEach(n=>{
+        if(n._used) return;
+        const target=Math.abs(cents(n._ingreso));
+        const cand=pos.filter(x=>!x._used && cents(x._ingreso)>target)
+          .sort((a,b)=>b._ingreso-a._ingreso || a._sourceOrder-b._sourceOrder)[0];
+        if(cand){ cand._ingreso=round2(cand._ingreso-Math.abs(n._ingreso)); n._used=true; }
+      });
+      pos.filter(p=>!p._used && cents(p._ingreso)>0).forEach(p=>repairedPos.push(p));
+    });
+  });
+
+  // Madrid + Barcelona shared sales: one-to-one, after repairs.
+  const sharedGroups=new Map(), others=[];
+  repairedPos.forEach(r=>{
+    if(r._team!=='Madrid' && r._team!=='Barcelona'){ others.push(r); return; }
+    const k=[scopeKey(r),norm(r._anun),norm(r._marca),cents(r._ingreso)].join('|||');
+    if(!sharedGroups.has(k)) sharedGroups.set(k,[]); sharedGroups.get(k).push(r);
+  });
+  const real=[...others];
+  sharedGroups.forEach(gr=>{
+    const madrid=gr.filter(r=>r._team==='Madrid');
+    const barna=gr.filter(r=>r._team==='Barcelona');
+    const usedB=new Set();
+    madrid.forEach(m=>{
+      const bi=barna.findIndex((b,i)=>!usedB.has(i) && norm(b._com)!==norm(m._com));
+      if(bi>=0){
+        const b=barna[bi]; usedB.add(bi);
+        real.push({...m,_ingreso:round2(m._ingreso+b._ingreso),_area:'Madrid + Barcelona',_com:[m._com,b._com].filter(Boolean).join(' + '),_shared:true});
+      } else real.push(m);
+    });
+    barna.forEach((b,i)=>{ if(!usedB.has(i)) real.push(b); });
+  });
+  return {real, zeros:originalZeros, negativesRaw};
+}
+
 // ─── RENDER ───────────────────────────────────────────────────────────────────
+
+function setViewMode(mode){
+  viewMode=mode;
+  document.getElementById('view-acc').classList.toggle('active',mode==='acc');
+  document.getElementById('view-month').classList.toggle('active',mode==='month');
+  document.getElementById('view-trend').classList.toggle('active',mode==='trend');
+  document.getElementById('view-period').classList.toggle('active',mode==='period');
+  renderTable();
+}
+
+function monthlyClosedIndex(){
+  const yr=document.getElementById('f-year').value;
+  const now=new Date();
+  if(yr==='all') return now.getMonth()-1;
+  const y=parseInt(yr,10);
+  if(y<now.getFullYear()) return 11;
+  if(y>now.getFullYear()) return -1;
+  return now.getMonth()-1;
+}
+
+function toggleMonthlyProduct(encodedProd){
+  const prod=decodeURIComponent(encodedProd);
+  expandedMonthlyProduct = expandedMonthlyProduct===prod ? null : prod;
+  renderMonthlyTable();
+}
+
+function renderMonthlyTable(){
+  const yr=document.getElementById('f-year').value;
+  const canal=document.getElementById('f-canal').value;
+  const search=document.getElementById('f-search').value.toLowerCase().trim();
+  const source=DATA.filter(r=>(yr==='all'||r._year===yr)&&(canal==='all'||r._canal===canal));
+  const productFamily=new Map();
+  source.filter(r=>!isCostProduct(r)).forEach(r=>{
+    if(!productFamily.has(r._prod)) productFamily.set(r._prod,r._fam||'(sin familia)');
+  });
+  const products=[...new Set(source.filter(r=>!isCostProduct(r)).map(r=>r._prod))]
+    .filter(p=>!search||p.toLowerCase().includes(search))
+    .sort((a,b)=>{
+      const fa=productFamily.get(a)||'', fb=productFamily.get(b)||'';
+      if(fa!==fb) return fa.localeCompare(fb,'es');
+      return a.localeCompare(b,'es');
+    });
+  const monthMaps={}, pubMonthMaps={};
+  MESES_ORDER.forEach(m=>{
+    const proc=processRealBusiness(source.filter(r=>r._mes===m));
+    const mp=new Map(), pp=new Map();
+    proc.real.forEach(r=>{
+      const k=r._prod; if(!mp.has(k))mp.set(k,{sum:0,real:0,zeros:0}); const x=mp.get(k);x.sum+=r._ingreso;x.real++;
+      if(!pp.has(k))pp.set(k,new Map()); const pm=pp.get(k); const pk=r._pub||'(sin publicación)';
+      if(!pm.has(pk))pm.set(pk,{sum:0,real:0,zeros:0}); const px=pm.get(pk);px.sum+=r._ingreso;px.real++;
+    });
+    proc.zeros.forEach(r=>{
+      const k=r._prod; if(!mp.has(k))mp.set(k,{sum:0,real:0,zeros:0});mp.get(k).zeros++;
+      if(!pp.has(k))pp.set(k,new Map()); const pm=pp.get(k); const pk=r._pub||'(sin publicación)';
+      if(!pm.has(pk))pm.set(pk,{sum:0,real:0,zeros:0});pm.get(pk).zeros++;
+    });
+    monthMaps[m]=mp; pubMonthMaps[m]=pp;
+  });
+  const closedIdx=monthlyClosedIndex();
+  document.getElementById('thead').innerHTML='<tr><th>Producto</th>'+MESES_ORDER.map((m,i)=>`<th class="${i>closedIdx?'month-open-head':''}">${MESES_SHORT[m]}</th>`).join('')+'</tr>';
+  const tbody=document.getElementById('tbody');
+  const table=tbody.closest('table');
+  table.classList.add('monthly-table');
+  table.classList.toggle('focus-product',!!expandedMonthlyProduct);
+  if(!products.length){tbody.innerHTML='<tr><td colspan="13" class="empty-state">Sin datos para los filtros seleccionados</td></tr>';return;}
+  if(expandedMonthlyProduct && !products.includes(expandedMonthlyProduct)) expandedMonthlyProduct=null;
+  let html='';
+  let currentFam=null;
+  products.forEach(prod=>{
+    const fam=productFamily.get(prod)||'(sin familia)';
+    if(fam!==currentFam){
+      currentFam=fam;
+      html+=`<tr class="family-header monthly-family-header"><td colspan="13">📁 ${fam}</td></tr>`;
+    }
+    const focused=expandedMonthlyProduct===prod;
+    html+=`<tr class="product-row ${focused?'focused':''}"><td><button class="month-expand ${focused?'open':''}" onclick="toggleMonthlyProduct('${encodeURIComponent(prod)}')">▶</button>${prod}</td>`+
+      MESES_ORDER.map((m,i)=>{
+        const x=monthMaps[m].get(prod); if(!x)return `<td class="${i>closedIdx?'month-open':''}">—</td>`;
+        const den=zeroMode==='con'?x.real+x.zeros:x.real;
+        return `<td class="${i>closedIdx?'month-open':''}">${den?`<span class="month-cell-value">${fmt(x.sum/den)}</span><span class="month-cell-count">(${den} activaci${den===1?'ón':'ones'})</span>`:'—'}</td>`;
+      }).join('')+'</tr>';
+    if(focused){
+      const pubs=new Set();
+      MESES_ORDER.forEach(m=>{const pm=pubMonthMaps[m].get(prod); if(pm) pm.forEach((_,k)=>pubs.add(k));});
+      [...pubs].sort((a,b)=>a.localeCompare(b,'es')).forEach(pub=>{
+        html+=`<tr class="pub-detail-row"><td><span class="pub-label">↳ ${pub}</span></td>`+
+          MESES_ORDER.map((m,i)=>{
+            const pm=pubMonthMaps[m].get(prod); const x=pm&&pm.get(pub); if(!x)return `<td class="${i>closedIdx?'month-open':''}">—</td>`;
+            const den=zeroMode==='con'?x.real+x.zeros:x.real;
+            return `<td class="${i>closedIdx?'month-open':''}">${den?`<span class="month-cell-value">${fmt(x.sum/den)}</span><span class="month-cell-count">(${den} activaci${den===1?'ón':'ones'})</span>`:'—'}</td>`;
+          }).join('')+'</tr>';
+      });
+    }
+  });
+  tbody.innerHTML=html;
+}
+
+
+function renderTrendTable(){
+  const yr=document.getElementById('f-year').value;
+  const canal=document.getElementById('f-canal').value;
+  const search=document.getElementById('f-search').value.toLowerCase().trim();
+  const source=DATA.filter(r=>(yr==='all'||r._year===yr)&&(canal==='all'||r._canal===canal));
+  const productFamily=new Map();
+  source.filter(r=>!isCostProduct(r)).forEach(r=>{if(!productFamily.has(r._prod))productFamily.set(r._prod,r._fam||'(sin familia)');});
+  const products=[...new Set(source.filter(r=>!isCostProduct(r)).map(r=>r._prod))]
+    .filter(p=>!search||p.toLowerCase().includes(search))
+    .sort((a,b)=>(productFamily.get(a)||'').localeCompare(productFamily.get(b)||'','es')||a.localeCompare(b,'es'));
+  const monthMaps={};
+  MESES_ORDER.forEach(m=>{
+    const proc=processRealBusiness(source.filter(r=>r._mes===m));
+    const mp=new Map();
+    proc.real.forEach(r=>{if(!mp.has(r._prod))mp.set(r._prod,{sum:0,real:0,zeros:0});const x=mp.get(r._prod);x.sum+=r._ingreso;x.real++;});
+    proc.zeros.forEach(r=>{if(!mp.has(r._prod))mp.set(r._prod,{sum:0,real:0,zeros:0});mp.get(r._prod).zeros++;});
+    monthMaps[m]=mp;
+  });
+  const closedIdx=monthlyClosedIndex();
+  const tbody=document.getElementById('tbody'), table=tbody.closest('table');
+  table.classList.remove('monthly-table'); table.classList.add('trend-table');
+  document.getElementById('thead').innerHTML='<tr><th>Producto</th><th>Evolución mensual del presupuesto medio</th></tr>';
+  if(!products.length){tbody.innerHTML='<tr><td colspan="2" class="empty-state">Sin datos para los filtros seleccionados</td></tr>';return;}
+  const spark=prod=>{
+    const vals=MESES_ORDER.map(m=>{const x=monthMaps[m].get(prod);if(!x)return null;const den=zeroMode==='con'?x.real+x.zeros:x.real;return den?x.sum/den:null;});
+    const valid=vals.map((v,i)=>({v,i})).filter(x=>x.v!==null);
+    if(valid.length<2)return '<span class="trend-empty">Sin datos suficientes</span>';
+    const w=720,h=42,p=5,min=Math.min(...valid.map(x=>x.v)),max=Math.max(...valid.map(x=>x.v)),range=(max-min)||1;
+    const xy=x=>({x:p+x.i*(w-p*2)/11,y:h-p-((x.v-min)/range)*(h-p*2)});
+    const closed=valid.filter(x=>x.i<=closedIdx), open=valid.filter(x=>x.i>=Math.max(0,closedIdx));
+    const pts=a=>a.map(x=>{const q=xy(x);return q.x.toFixed(1)+','+q.y.toFixed(1)}).join(' ');
+    const circles=valid.map(x=>{const q=xy(x);return `<circle cx="${q.x}" cy="${q.y}" r="2.2" fill="${x.i<=closedIdx?'#0f766e':'#a7a9b8'}"><title>${MESES_SHORT[MESES_ORDER[x.i]]}: ${fmt(x.v)}</title></circle>`;}).join('');
+    return `<svg class="trend-svg" viewBox="0 0 ${w} ${h}" width="100%" height="42" aria-label="Evolución mensual">${closed.length>1?`<polyline points="${pts(closed)}" fill="none" stroke="#0f766e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}${open.length>1?`<polyline points="${pts(open)}" fill="none" stroke="#a7a9b8" stroke-width="1.5" stroke-dasharray="4 4" stroke-linecap="round" stroke-linejoin="round"/>`:''}${circles}</svg>`;
+  };
+  let html='',currentFam=null;
+  products.forEach(prod=>{const fam=productFamily.get(prod)||'(sin familia)';if(fam!==currentFam){currentFam=fam;html+=`<tr class="family-header trend-family-header"><td colspan="2">📁 ${fam}</td></tr>`;}html+=`<tr><td class="trend-product">${prod}</td><td class="trend-cell">${spark(prod)}</td></tr>`;});
+  tbody.innerHTML=html;
+}
+function renderPeriodTable(){
+  const yr=document.getElementById('f-year').value;
+  const search=document.getElementById('f-search').value.toLowerCase().trim();
+  // Esta vista es deliberadamente solo DIGITAL + Sponsorship/Social Networks.
+  const source=DATA.filter(r=>(yr==='all'||r._year===yr) && r._canal==='DIGITAL' && ['sponsorship','social networks'].includes(norm(r._fam)) && !isCostProduct(r));
+  const productFamily=new Map();
+  source.forEach(r=>{if(!productFamily.has(r._prod))productFamily.set(r._prod,r._fam||'(sin familia)');});
+  const products=[...new Set(source.map(r=>r._prod))].filter(p=>!search||p.toLowerCase().includes(search)).sort((a,b)=>(productFamily.get(a)||'').localeCompare(productFamily.get(b)||'','es')||a.localeCompare(b,'es'));
+  const maps={};
+  MESES_ORDER.forEach(m=>{
+    maps[m]={};
+    const monthRows=source.filter(r=>r._mes===m && r._diasDate instanceof Date && !isNaN(r._diasDate));
+    const mi=MESES_ORDER.indexOf(m);
+    const targetYear=yr==='all' ? null : parseInt(yr,10);
+    const tramos=[
+      {key:'p1',rows:monthRows.filter(r=>{const y=targetYear??parseInt(r._year,10);return r._diasDate < new Date(y,mi,11);})},
+      {key:'p2',rows:monthRows.filter(r=>{const y=targetYear??parseInt(r._year,10);return r._diasDate >= new Date(y,mi,11) && r._diasDate < new Date(y,mi,21);})},
+      {key:'p3',rows:monthRows.filter(r=>{const y=targetYear??parseInt(r._year,10);return r._diasDate >= new Date(y,mi,21);})}
+    ];
+    tramos.forEach(t=>{
+      const proc=processRealBusiness(t.rows), mp=new Map();
+      proc.real.forEach(r=>{if(!mp.has(r._prod))mp.set(r._prod,{sum:0,real:0,zeros:0});const x=mp.get(r._prod);x.sum+=r._ingreso;x.real++;});
+      proc.zeros.forEach(r=>{if(!mp.has(r._prod))mp.set(r._prod,{sum:0,real:0,zeros:0});mp.get(r._prod).zeros++;});
+      maps[m][t.key]=mp;
+    });
+  });
+  const tbody=document.getElementById('tbody'),table=tbody.closest('table');
+  table.classList.remove('monthly-table','trend-table');table.classList.add('period-table');
+  const closedIdx=monthlyClosedIndex();
+  document.getElementById('thead').innerHTML='<tr><th>Producto</th>'+MESES_ORDER.map((m,i)=>`<th class="${i>closedIdx?'period-open-head':''}">${MESES_SHORT[m]}</th>`).join('')+'</tr>';
+  if(!products.length){tbody.innerHTML='<tr><td colspan="13" class="empty-state">Sin datos de Sponsorship / Social Networks Digital para este año</td></tr>';return;}
+  const cell=(prod,m)=>{
+    const defs=[['p1','Hasta 10'],['p2','11–20'],['p3','21–fin']];
+    const counts={};
+    const lines=defs.map(([k,label])=>{
+      const x=maps[m][k].get(prod);
+      const den=x?(zeroMode==='con'?x.real+x.zeros:x.real):0; counts[k]=den;
+      if(!x)return `<div class="period-line ${k}"><span class="period-label">${label}</span><span class="period-empty">—</span></div>`;
+      return `<div class="period-line ${k}"><span class="period-label">${label}</span>${den?`<span class="period-value">${fmt(x.sum/den)}</span>`:'<span class="period-empty">—</span>'}</div>`;
+    }).join('');
+    const tip=defs.map(([k,label])=>`<div class="period-tip-row"><span>${label}</span><strong>${counts[k]} activaci${counts[k]===1?'ón':'ones'}</strong></div>`).join('');
+    return `<div class="period-stack">${lines}</div><div class="period-tip"><div class="period-tip-title">${MESES_SHORT[m]} · ${prod}</div>${tip}</div>`;
+  };
+  let html='',currentFam=null;
+  products.forEach(prod=>{const fam=productFamily.get(prod)||'(sin familia)';if(fam!==currentFam){currentFam=fam;html+=`<tr class="family-header period-family-header"><td colspan="13">📁 ${fam}</td></tr>`;}html+=`<tr><td class="period-product">${prod}</td>${MESES_ORDER.map((m,i)=>`<td class="period-cell ${i>closedIdx?'period-open':''}" onmouseenter="showPeriodTip(this)" onmouseleave="hidePeriodTip(this)">${cell(prod,m)}</td>`).join('')}</tr>`;});
+  tbody.innerHTML=html;
+}
+
+function showPeriodTip(cell){
+  const tip=cell.querySelector('.period-tip'); if(!tip)return;
+  tip.classList.add('visible');
+  tip.style.visibility='hidden';
+  const r=cell.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight, gap=10, margin=8;
+  let left=r.right+gap;
+  if(left+w>window.innerWidth-margin) left=r.left-w-gap;
+  left=Math.max(margin,Math.min(left,window.innerWidth-w-margin));
+  let top=r.top+(r.height-h)/2;
+  top=Math.max(margin,Math.min(top,window.innerHeight-h-margin));
+  tip.style.left=left+'px'; tip.style.top=top+'px'; tip.style.visibility='visible';
+}
+function hidePeriodTip(cell){const tip=cell.querySelector('.period-tip');if(tip)tip.classList.remove('visible');}
+
 function renderTable() {
-  const rows   = getFiltered();
+  const tableEl=document.getElementById('tbody').closest('table');
+  tableEl.classList.toggle('monthly-table',viewMode==='month');
+  tableEl.classList.toggle('trend-table',viewMode==='trend');
+  tableEl.classList.toggle('period-table',viewMode==='period');
+  if(viewMode==='month'){ renderMonthlyTable(); return; }
+  if(viewMode==='trend'){ renderTrendTable(); return; }
+  if(viewMode==='period'){ renderPeriodTable(); return; }
+  const rawRows = getFiltered();
   const search = document.getElementById('f-search').value.toLowerCase().trim();
   const sortBy = document.getElementById('f-sort').value;
-  const yr     = document.getElementById('f-year').value;
+  const yr = document.getElementById('f-year').value;
+  const processed = processRealBusiness(rawRows);
 
-  // ── Build current-year aggregates ──
-  const map = new Map();
-  rows.forEach(r => {
-    const key = r._prod + '|||' + r._canal;
-    if (!map.has(key)) map.set(key, {
-      prod: r._prod, canal: r._canal, fam: r._fam,
-      lineas: 0, pos: 0, neg: 0, cero: 0,
-      sumaPos: 0, sumaNeg: 0,
-      areaMap: new Map(),
-      sectorMap: new Map(),
-      pubMap: new Map(),
-    });
-    const g = map.get(key);
-    g.lineas++;
-    if (r._ingreso > 0)       { g.pos++;  g.sumaPos += r._ingreso; }
-    else if (r._ingreso < 0)  { g.neg++;  g.sumaNeg += r._ingreso; }
-    else                      { g.cero++; }
-    // area breakdown
-    const areaKey = r._area || '(sin área)';
-    if (!g.areaMap.has(areaKey)) g.areaMap.set(areaKey, { lineas: 0, cero: 0, sumaPos: 0, sumaNeg: 0 });
-    const ag = g.areaMap.get(areaKey);
-    ag.lineas++;
-    if (r._ingreso > 0)      { ag.sumaPos += r._ingreso; }
-    else if (r._ingreso < 0) { ag.sumaNeg += r._ingreso; }
-    else                     { ag.cero++; }
-    // sector breakdown
-    const sectorKey = r._sector || '(sin sector)';
-    if (!g.sectorMap.has(sectorKey)) g.sectorMap.set(sectorKey, { lineas: 0, cero: 0, sumaPos: 0, sumaNeg: 0 });
-    const sg = g.sectorMap.get(sectorKey);
-    sg.lineas++;
-    if (r._ingreso > 0)      { sg.sumaPos += r._ingreso; }
-    else if (r._ingreso < 0) { sg.sumaNeg += r._ingreso; }
-    else                     { sg.cero++; }
-    // publicación breakdown
-    const pubKey = r._pub || '(sin publicación)';
-    if (!g.pubMap.has(pubKey)) g.pubMap.set(pubKey, { lineas: 0, cero: 0, sumaPos: 0, sumaNeg: 0 });
-    const pg = g.pubMap.get(pubKey);
-    pg.lineas++;
-    if (r._ingreso > 0)      { pg.sumaPos += r._ingreso; }
-    else if (r._ingreso < 0) { pg.sumaNeg += r._ingreso; }
-    else                     { pg.cero++; }
-  });
-
-  // ── Build previous-year aggregates (only when a specific year is selected) ──
-  const prevMap = new Map();
-  if (yr !== 'all') {
-    const prevYr = String(parseInt(yr, 10) - 1);
-    const canal  = document.getElementById('f-canal').value;
-    DATA.filter(r => {
-      if (r._year !== prevYr) return false;
-      if (canal !== 'all' && r._canal !== canal) return false;
-      if (selectedMonths.size > 0 && !selectedMonths.has(r._mes)) return false;
-      return true;
-    }).forEach(r => {
-      const key = r._prod + '|||' + r._canal;
-      if (!prevMap.has(key)) prevMap.set(key, { lineas: 0, cero: 0, sumaPos: 0, sumaNeg: 0 });
-      const g = prevMap.get(key);
-      g.lineas++;
-      if (r._ingreso > 0)      { g.sumaPos += r._ingreso; }
-      else if (r._ingreso < 0) { g.sumaNeg += r._ingreso; }
-      else                     { g.cero++; }
-    });
+  const map=new Map();
+  function ensure(r){
+    const key=r._prod+'|||'+r._canal;
+    if(!map.has(key)) map.set(key,{prod:r._prod,canal:r._canal,fam:r._fam,lineas:0,pos:0,neg:0,cero:0,sumaPos:0,sumaNeg:0,areaMap:new Map(),sectorMap:new Map(),pubMap:new Map()});
+    return map.get(key);
   }
-
-  let items = [...map.values()].map(g => {
-    const neto = g.sumaPos + g.sumaNeg;
-    const avgCon  = g.lineas > 0 ? neto / g.lineas : 0;
-    const lineasSinCero = g.lineas - g.cero;
-    const avgSin  = lineasSinCero > 0 ? neto / lineasSinCero : 0;
-
-    // Previous year comparison
-    let avgPrev = null;
-    if (yr !== 'all') {
-      const key = g.prod + '|||' + g.canal;
-      const p = prevMap.get(key);
-      if (p) {
-        const pNeto = p.sumaPos + p.sumaNeg;
-        if (zeroMode === 'con') {
-          avgPrev = p.lineas > 0 ? pNeto / p.lineas : 0;
-        } else {
-          const pSinCero = p.lineas - p.cero;
-          avgPrev = pSinCero > 0 ? pNeto / pSinCero : 0;
-        }
-      }
+  // Real activations define numerator and positive denominator.
+  processed.real.forEach(r=>{
+    const g=ensure(r); g.lineas++; g.pos++; g.sumaPos+=r._ingreso;
+    for(const [mp,keyName,label] of [[g.areaMap,r._area,'area'],[g.sectorMap,r._sector,'sector'],[g.pubMap,r._pub,'pub']]){
+      const k=keyName||'(sin dato)'; if(!mp.has(k)) mp.set(k,{lineas:0,cero:0,sumaPos:0,sumaNeg:0});
+      const x=mp.get(k); x.lineas++; x.sumaPos+=r._ingreso;
     }
-
-    // Compute area averages (for tooltip)
-    const areas = [];
-    g.areaMap.forEach((ag, areaName) => {
-      const aNeto = ag.sumaPos + ag.sumaNeg;
-      let aAvg;
-      if (zeroMode === 'sin') {
-        const aSin = ag.lineas - ag.cero;
-        aAvg = aSin > 0 ? aNeto / aSin : 0;
-      } else {
-        aAvg = ag.lineas > 0 ? aNeto / ag.lineas : 0;
-      }
-      areas.push({ area: areaName, avg: aAvg });
-    });
-    areas.sort((a, b) => b.avg - a.avg);
-
-    // Compute sector averages (for expand row)
-    const sectors = [];
-    g.sectorMap.forEach((sg, sectorName) => {
-      const sNeto = sg.sumaPos + sg.sumaNeg;
-      let sAvg;
-      if (zeroMode === 'sin') {
-        const sSin = sg.lineas - sg.cero;
-        sAvg = sSin > 0 ? sNeto / sSin : 0;
-      } else {
-        sAvg = sg.lineas > 0 ? sNeto / sg.lineas : 0;
-      }
-      sectors.push({ area: sectorName, avg: sAvg });
-    });
-    sectors.sort((a, b) => b.avg - a.avg);
-
-    // Compute publication averages (for tooltip, filtered to product's canal)
-    const pubs = [];
-    g.pubMap.forEach((pg, pubName) => {
-      const pNeto = pg.sumaPos + pg.sumaNeg;
-      let pAvg;
-      if (zeroMode === 'sin') {
-        const pSin = pg.lineas - pg.cero;
-        pAvg = pSin > 0 ? pNeto / pSin : 0;
-      } else {
-        pAvg = pg.lineas > 0 ? pNeto / pg.lineas : 0;
-      }
-      pubs.push({ pub: pubName, avg: pAvg });
-    });
-    pubs.sort((a, b) => b.avg - a.avg);
-
-    return { ...g, neto, avgCon, avgSin, avgPrev, areas, sectors, pubs };
   });
+  // Original zeros count only in "con 0" denominator.
+  processed.zeros.forEach(r=>{
+    const g=ensure(r); g.lineas++; g.cero++;
+    for(const [mp,keyName] of [[g.areaMap,r._area],[g.sectorMap,r._sector],[g.pubMap,r._pub]]){
+      const k=keyName||'(sin dato)'; if(!mp.has(k)) mp.set(k,{lineas:0,cero:0,sumaPos:0,sumaNeg:0});
+      const x=mp.get(k); x.lineas++; x.cero++;
+    }
+  });
+  // Raw negatives are audit information only; they NEVER affect real income/count.
+  processed.negativesRaw.forEach(r=>{ const g=ensure(r); g.neg++; g.sumaNeg+=r._ingreso; });
 
-  if (search) items = items.filter(g => g.prod.toLowerCase().includes(search));
+  const buildPrev=()=>{
+    if(yr==='all') return new Map();
+    const prevYr=String(parseInt(yr,10)-1), canal=document.getElementById('f-canal').value;
+    const rr=DATA.filter(r=>r._year===prevYr && (canal==='all'||r._canal===canal) && selectedMonths.has(r._mes));
+    const p=processRealBusiness(rr), pm=new Map();
+    function pe(r){const k=r._prod+'|||'+r._canal;if(!pm.has(k))pm.set(k,{real:0,zeros:0,sum:0});return pm.get(k)}
+    p.real.forEach(r=>{const x=pe(r);x.real++;x.sum+=r._ingreso});
+    p.zeros.forEach(r=>pe(r).zeros++);
+    return pm;
+  };
+  const prevMap=buildPrev();
 
-  const avg = g => zeroMode === 'con' ? g.avgCon : g.avgSin;
-  if (sortBy === 'familia') {
-    items.sort((a, b) => {
-      const fa = a.fam || ''; const fb = b.fam || '';
-      if (fa !== fb) return fa.localeCompare(fb);
-      return avg(b) - avg(a);
-    });
-  } else if (sortBy === 'lineas') {
-    items.sort((a, b) => b.lineas - a.lineas);
-  } else if (sortBy === 'neto') {
-    items.sort((a, b) => b.neto - a.neto);
-  } else if (sortBy === 'avg') {
-    items.sort((a, b) => avg(b) - avg(a));
-  } else {
-    items.sort((a, b) => a.prod.localeCompare(b.prod));
-  }
+  let items=[...map.values()].map(g=>{
+    const neto=g.sumaPos; const realCount=g.pos; const conCount=realCount+g.cero;
+    const avgCon=conCount?neto/conCount:0, avgSin=realCount?neto/realCount:0;
+    let avgPrev=null;
+    if(yr!=='all'){
+      const p=prevMap.get(g.prod+'|||'+g.canal);
+      if(p){const den=zeroMode==='con'?p.real+p.zeros:p.real; avgPrev=den?p.sum/den:0;}
+    }
+    const makeBreak=(mp,nameField)=>[...mp.entries()].map(([name,x])=>{const den=zeroMode==='con'?x.lineas:x.lineas-x.cero;return {[nameField]:name,avg:den?x.sumaPos/den:0}}).sort((a,b)=>b.avg-a.avg);
+    return {...g,neto,avgCon,avgSin,avgPrev,areas:makeBreak(g.areaMap,'area'),sectors:makeBreak(g.sectorMap,'area'),pubs:makeBreak(g.pubMap,'pub')};
+  });
+  if(search) items=items.filter(g=>g.prod.toLowerCase().includes(search));
+  const avg=g=>zeroMode==='con'?g.avgCon:g.avgSin;
+  if(sortBy==='familia') items.sort((a,b)=>(a.fam||'').localeCompare(b.fam||'')||avg(b)-avg(a));
+  else if(sortBy==='lineas') items.sort((a,b)=>b.lineas-a.lineas);
+  else if(sortBy==='neto') items.sort((a,b)=>b.neto-a.neto);
+  else if(sortBy==='avg') items.sort((a,b)=>avg(b)-avg(a));
+  else items.sort((a,b)=>a.prod.localeCompare(b.prod));
 
-  const totalLineas = items.reduce((s, g) => s + g.lineas, 0);
-  const totalNeto   = items.reduce((s, g) => s + g.neto, 0);
-  const totalCeros  = items.reduce((s, g) => s + g.cero, 0);
-  document.getElementById('summary-bar').innerHTML = `
+  const totalLineas=items.reduce((s,g)=>s+g.lineas,0), totalNeto=rawRows.reduce((s,r)=>s+r._ingreso,0), totalCeros=items.reduce((s,g)=>s+g.cero,0);
+  document.getElementById('summary-bar').innerHTML=`
     <div class="summary-card accent"><div class="s-val">${items.length}</div><div class="s-label">productos distintos</div></div>
-    <div class="summary-card purple"><div class="s-val">${fmtNum(totalLineas)}</div><div class="s-label">líneas totales</div></div>
-    <div class="summary-card green"><div class="s-val">${fmt(totalNeto)}</div><div class="s-label">ingreso neto total</div></div>
-    <div class="summary-card amber"><div class="s-val">${fmtNum(totalCeros)}</div><div class="s-label">líneas a 0 €</div></div>
-  `;
+    <div class="summary-card purple"><div class="s-val">${fmtNum(totalLineas)}</div><div class="s-label">activaciones + ceros originales</div></div>
+    <div class="summary-card green"><div class="s-val">${fmt(totalNeto)}</div><div class="s-label">ingreso total</div></div>
+    <div class="summary-card amber"><div class="s-val">${fmtNum(totalCeros)}</div><div class="s-label">líneas originales a 0 €</div></div>`;
+  const note=document.getElementById('info-note'); note.classList.remove('hidden');
+  document.getElementById('info-text').innerHTML=zeroMode==='sin'
+    ? '<strong>Modo activo: Sin líneas originales a 0 €.</strong> Reparos exactos desaparecen; reparos parciales se aplican a la positiva compatible de mayor importe; ventas conjuntas Madrid + Barcelona se fusionan 1 a 1. El presupuesto medio = ingreso real ÷ activaciones reales.'
+    : '<strong>Modo activo: Con líneas originales a 0 €.</strong> Mismo ingreso real procesado, dividido entre activaciones reales + líneas originalmente a 0 €. Un reparo exacto nunca se convierte en una línea a 0 €.';
 
-  const note = document.getElementById('info-note');
-  note.classList.remove('hidden');
-  if (zeroMode === 'sin') {
-    document.getElementById('info-text').innerHTML = '<strong>Modo activo: No incluye líneas a 0 €.</strong> El presupuesto medio se calcula dividiendo el ingreso neto entre todas las líneas con valor superior a cero (exceptuando los reparos). En la tabla se muestra la columna "Líneas a 0 €" para mayor claridad.';
-  } else {
-    document.getElementById('info-text').innerHTML = '<strong>Modo activo: Incluye líneas a 0 €.</strong> El presupuesto medio se calcula dividiendo el ingreso neto entre todas las líneas (exceptuando los reparos).';
-  }
-
-  const showCeroCol = zeroMode === 'sin';
-  const showVsCol   = yr !== 'all';
-  const totalCols   = 10 + (showCeroCol ? 1 : 0) + (showVsCol ? 1 : 0);
-  const prevYrLabel = yr !== 'all' ? String(parseInt(yr, 10) - 1) : '';
-  document.getElementById('thead').innerHTML = `<tr>
-    <th>Producto</th><th>Canal</th><th>Familia</th>
-    <th class="num">Líneas<br>totales</th>
-    <th class="num" style="color:var(--green)">Líneas<br>positivas</th>
-    <th class="num" style="color:var(--coral)">Líneas<br>negativas</th>
-    ${showCeroCol ? '<th class="num" style="color:var(--amber)">Líneas<br>a 0 €</th>' : ''}
-    <th class="num">Suma<br>bruta (+)</th>
-    <th class="num">Suma<br>negativa</th>
-    <th class="num">Ingreso<br>neto</th>
-    <th class="num" style="color:var(--accent)">Precio medio${zeroMode === 'sin' ? '<br><span style="font-size:9px;font-weight:400">(sin 0 €)</span>' : '<br><span style="font-size:9px;font-weight:400">(con 0 €)</span>'}</th>
-    ${showVsCol ? `<th class="num" style="color:var(--text2)">vs ${prevYrLabel}<br><span style="font-size:9px;font-weight:400">variación</span></th>` : ''}
-  </tr>`;
-
-  const tbody = document.getElementById('tbody');
-  if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="${totalCols}" class="empty-state">Sin datos para los filtros seleccionados</td></tr>`;
-    return;
-  }
-
-  const canalClass = { DIGITAL:'badge-D', PRINT:'badge-P', EVENTOS:'badge-E', OTROS:'badge-O' };
-  let html = '';
-  let currentFam = null;
-  const byFamilia = sortBy === 'familia';
-
-  items.forEach((g, idx) => {
-    if (byFamilia && g.fam !== currentFam) {
-      currentFam = g.fam;
-      html += `<tr class="family-header"><td colspan="${totalCols}">📁 ${g.fam || '(sin familia)'}</td></tr>`;
-    }
-    const avgVal = zeroMode === 'con' ? g.avgCon : g.avgSin;
-    const rowId = 'row-' + idx;
-
-    // Build tooltip content (by ÁREA)
-    let ttRows = '';
-    if (g.areas.length > 0) {
-      g.areas.forEach(s => {
-        const cls = s.avg > avgVal ? 'tt-above' : s.avg < avgVal ? 'tt-below' : 'tt-equal';
-        ttRows += `<div class="tt-row">
-          <span class="tt-area">${s.area}</span>
-          <span class="tt-val ${cls}">${fmt(s.avg)}</span>
-        </div>`;
-      });
-    } else {
-      ttRows = `<div class="tt-row"><span class="tt-area" style="font-style:italic">Sin datos de área</span></div>`;
-    }
-
-    // Build tooltip sector rows (right column)
-    let ttSectorRows = '';
-    if (g.sectors.length > 0) {
-      g.sectors.forEach(s => {
-        const cls = s.avg > avgVal ? 'tt-above' : s.avg < avgVal ? 'tt-below' : 'tt-equal';
-        ttSectorRows += `<div class="tt-row">
-          <span class="tt-area">${s.area}</span>
-          <span class="tt-val ${cls}">${fmt(s.avg)}</span>
-        </div>`;
-      });
-    } else {
-      ttSectorRows = `<div class="tt-row"><span class="tt-area" style="font-style:italic">Sin datos de sector</span></div>`;
-    }
-    // Build tooltip publication rows (third column)
-    let ttPubRows = '';
-    if (g.pubs.length > 0) {
-      g.pubs.forEach(p => {
-        const cls = p.avg > avgVal ? 'tt-above' : p.avg < avgVal ? 'tt-below' : 'tt-equal';
-        ttPubRows += `<div class="tt-row">
-          <span class="tt-area">${p.pub}</span>
-          <span class="tt-val ${cls}">${fmt(p.avg)}</span>
-        </div>`;
-      });
-    } else {
-      ttPubRows = `<div class="tt-row"><span class="tt-area" style="font-style:italic">Sin datos de publicación</span></div>`;
-    }
-    let vsHtml = '';
-    if (showVsCol) {
-      if (g.avgPrev === null) {
-        vsHtml = `<td class="vs-col"><span class="vs-na">Sin datos ${prevYrLabel}</span></td>`;
-      } else if (g.avgPrev === 0) {
-        vsHtml = `<td class="vs-col"><span class="vs-na">Precio prev. 0 €</span></td>`;
-      } else {
-        const diff = avgVal - g.avgPrev;
-        const pct  = (diff / Math.abs(g.avgPrev)) * 100;
-        const sign  = diff >= 0 ? '+' : '';
-        const cls   = diff >= 0 ? 'vs-up' : 'vs-down';
-        const arrow = diff >= 0 ? '▲' : '▼';
-        vsHtml = `<td class="vs-col">
-          <span class="${cls}">${arrow} ${sign}${pct.toFixed(1)}%</span>
-          <span class="vs-bruto ${cls}">(${sign}${fmt(diff)})</span>
-        </td>`;
-      }
-    }
-
-    // Sector expand chips HTML (by SECTOR)
-    let sectorChips = '';
-    if (g.sectors.length > 0) {
-      g.sectors.forEach(s => {
-        const cls = s.avg > avgVal ? 'sc-above' : s.avg < avgVal ? 'sc-below' : 'sc-equal';
-        sectorChips += `<span class="sector-chip">
-          <span class="sc-label">${s.area}</span>
-          <span class="sc-val ${cls}">${fmt(s.avg)}</span>
-        </span>`;
-      });
-    } else {
-      sectorChips = `<span style="font-size:11px;color:var(--text3);font-style:italic">Sin datos de sector</span>`;
-    }
-
-    html += `<tr data-rowid="${rowId}">
-      <td>
-        <button class="expand-btn" id="btn-${rowId}" onclick="toggleSector('${rowId}')">▶</button>
-        <strong>${g.prod}</strong>
-        <span class="tooltip-wrap">
-          <span class="tt-trigger" id="tti-${rowId}"
-            onmouseenter="showTooltip('tti-${rowId}','tt-${rowId}')"
-            onmouseleave="hideTooltip('tt-${rowId}')"
-            onclick="toggleTooltip(event,'tti-${rowId}','tt-${rowId}')">i</span>
-          <div class="tooltip-box" id="tt-${rowId}">
-            <div class="tt-cols">
-              <div>
-                <div class="tt-title">Presupuesto medio por área</div>
-                ${ttRows}
-                <div class="tt-avg-line">Media del producto <span>${fmt(avgVal)}</span></div>
-              </div>
-              <div style="border-left:1px solid rgba(255,255,255,0.08);padding-left:16px">
-                <div class="tt-title">Presupuesto medio por sector</div>
-                ${ttSectorRows}
-                <div class="tt-avg-line">Media del producto <span>${fmt(avgVal)}</span></div>
-              </div>
-              <div style="border-left:1px solid rgba(255,255,255,0.08);padding-left:16px">
-                <div class="tt-title">Presupuesto medio por publicación</div>
-                ${ttPubRows}
-                <div class="tt-avg-line">Media del producto <span>${fmt(avgVal)}</span></div>
-              </div>
-            </div>
-          </div>
-        </span>
-      </td>
-      <td><span class="badge ${canalClass[g.canal] || 'badge-O'}">${g.canal}</span></td>
-      <td style="font-size:11px;color:var(--text3)">${g.fam}</td>
-      <td class="num">${fmtNum(g.lineas)}</td>
-      <td class="num pos">${fmtNum(g.pos)}</td>
-      <td class="num ${g.neg > 0 ? 'neg' : 'num-neutral'}">${fmtNum(g.neg)}</td>
-      ${showCeroCol ? `<td class="num ${g.cero > 0 ? '' : 'num-neutral'}" style="${g.cero > 0 ? 'color:var(--amber)' : ''}">${fmtNum(g.cero)}</td>` : ''}
-      <td class="num">${fmt(g.sumaPos)}</td>
-      <td class="num ${g.sumaNeg < 0 ? 'neg' : 'num-neutral'}">${g.sumaNeg !== 0 ? fmt(g.sumaNeg) : '—'}</td>
-      <td class="num"><strong>${fmt(g.neto)}</strong></td>
-      <td class="avg-col">${fmt(avgVal)}</td>
-      ${vsHtml}
-    </tr>
-    <tr class="sector-row" id="sector-${rowId}" style="display:none">
-      <td colspan="${totalCols}">
-        <div class="sector-inner">
-          <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;margin-right:4px;white-space:nowrap">Por sector →</span>
-          ${sectorChips}
-        </div>
-      </td>
-    </tr>`;
+  const showCeroCol=zeroMode==='sin', showVsCol=yr!=='all';
+  const totalCols=10+(showCeroCol?1:0)+(showVsCol?1:0), prevYrLabel=yr!=='all'?String(parseInt(yr,10)-1):'';
+  document.getElementById('thead').innerHTML=`<tr><th>Producto</th><th>Canal</th><th>Familia</th>
+    <th class="num">Líneas<br>cómputo</th><th class="num" style="color:var(--green)">Activaciones<br>reales</th><th class="num" style="color:var(--coral)">Negativas<br>origen</th>
+    ${showCeroCol?'<th class="num" style="color:var(--amber)">Líneas<br>a 0 €</th>':''}<th class="num">Ingreso<br>real</th><th class="num">Negativas<br>origen</th><th class="num">Ingreso<br>real</th>
+    <th class="num" style="color:var(--accent)">Precio medio${zeroMode==='sin'?'<br><span style="font-size:9px;font-weight:400">(sin 0 €)</span>':'<br><span style="font-size:9px;font-weight:400">(con 0 €)</span>'}</th>
+    ${showVsCol?`<th class="num" style="color:var(--text2)">vs ${prevYrLabel}<br><span style="font-size:9px;font-weight:400">variación</span></th>`:''}</tr>`;
+  const tbody=document.getElementById('tbody'); if(!items.length){tbody.innerHTML=`<tr><td colspan="${totalCols}" class="empty-state">Sin datos para los filtros seleccionados</td></tr>`;return;}
+  const canalClass={DIGITAL:'badge-D',PRINT:'badge-P',EVENTOS:'badge-E',OTROS:'badge-O'}; let html='',currentFam=null; const byFamilia=sortBy==='familia';
+  items.forEach((g,idx)=>{
+    if(byFamilia&&g.fam!==currentFam){currentFam=g.fam;html+=`<tr class="family-header"><td colspan="${totalCols}">📁 ${g.fam||'(sin familia)'}</td></tr>`;}
+    const avgVal=avg(g),rowId='row-'+idx;
+    const mkRows=(arr,field)=>arr.length?arr.map(x=>`<div class="tt-row"><span class="tt-area">${x[field]}</span><span class="tt-val ${x.avg>avgVal?'tt-above':x.avg<avgVal?'tt-below':'tt-equal'}">${fmt(x.avg)}</span></div>`).join(''):'<div class="tt-row"><span class="tt-area" style="font-style:italic">Sin datos</span></div>';
+    const ttRows=mkRows(g.areas,'area'),ttSectorRows=mkRows(g.sectors,'area'),ttPubRows=mkRows(g.pubs,'pub');
+    let vsHtml=''; if(showVsCol){if(g.avgPrev===null||g.avgPrev===0)vsHtml=`<td class="vs-col"><span class="vs-na">Sin base ${prevYrLabel}</span></td>`;else{const diff=avgVal-g.avgPrev,pct=diff/Math.abs(g.avgPrev)*100,sign=diff>=0?'+':'',cls=diff>=0?'vs-up':'vs-down',arrow=diff>=0?'▲':'▼';vsHtml=`<td class="vs-col"><span class="${cls}">${arrow} ${sign}${pct.toFixed(1)}%</span><span class="vs-bruto ${cls}">(${sign}${fmt(diff)})</span></td>`;}}
+    const sectorChips=g.sectors.length?g.sectors.map(x=>`<span class="sector-chip"><span class="sc-label">${x.area}</span><span class="sc-val ${x.avg>avgVal?'sc-above':x.avg<avgVal?'sc-below':'sc-equal'}">${fmt(x.avg)}</span></span>`).join(''):'<span style="font-size:11px;color:var(--text3);font-style:italic">Sin datos de sector</span>';
+    html+=`<tr data-rowid="${rowId}"><td><button class="expand-btn" id="btn-${rowId}" onclick="toggleSector('${rowId}')">▶</button><strong>${g.prod}</strong><span class="tooltip-wrap"><span class="tt-trigger" id="tti-${rowId}" onmouseenter="showTooltip('tti-${rowId}','tt-${rowId}')" onmouseleave="hideTooltip('tt-${rowId}')" onclick="toggleTooltip(event,'tti-${rowId}','tt-${rowId}')">i</span><div class="tooltip-box" id="tt-${rowId}"><div class="tt-cols"><div><div class="tt-title">Presupuesto medio por área</div>${ttRows}<div class="tt-avg-line">Media del producto <span>${fmt(avgVal)}</span></div></div><div style="border-left:1px solid rgba(255,255,255,0.08);padding-left:16px"><div class="tt-title">Presupuesto medio por sector</div>${ttSectorRows}<div class="tt-avg-line">Media del producto <span>${fmt(avgVal)}</span></div></div><div style="border-left:1px solid rgba(255,255,255,0.08);padding-left:16px"><div class="tt-title">Presupuesto medio por publicación</div>${ttPubRows}<div class="tt-avg-line">Media del producto <span>${fmt(avgVal)}</span></div></div></div></div></span></td>
+      <td><span class="badge ${canalClass[g.canal]||'badge-O'}">${g.canal}</span></td><td style="font-size:11px;color:var(--text3)">${g.fam}</td><td class="num">${fmtNum(g.lineas)}</td><td class="num pos">${fmtNum(g.pos)}</td><td class="num ${g.neg?'neg':'num-neutral'}">${fmtNum(g.neg)}</td>${showCeroCol?`<td class="num" style="${g.cero?'color:var(--amber)':''}">${fmtNum(g.cero)}</td>`:''}<td class="num">${fmt(g.sumaPos)}</td><td class="num ${g.sumaNeg<0?'neg':'num-neutral'}">${g.sumaNeg?fmt(g.sumaNeg):'—'}</td><td class="num">${fmt(g.neto)}</td><td class="avg-col">${fmt(avgVal)}</td>${vsHtml}</tr>
+      <tr class="sector-row" id="sector-${rowId}" style="display:none"><td colspan="${totalCols}"><div class="sector-inner"><span style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:600;margin-right:4px;white-space:nowrap">Por sector →</span>${sectorChips}</div></td></tr>`;
   });
-  tbody.innerHTML = html;
-
-  // Close tooltips when clicking outside
-  document.addEventListener('click', closeTipsOutside, { once: false });
+  tbody.innerHTML=html;
 }
 
 // ─── TOOLTIP HELPERS ──────────────────────────────────────────────────────────
