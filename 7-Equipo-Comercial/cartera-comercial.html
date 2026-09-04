@@ -11,7 +11,8 @@
     --border:#e2e6ec;--text:#1f2937;--muted:#6b7280;
   }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--text);}
+  button,input,select{font-family:inherit;}
+  body{margin:0;font-family:Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--text);}
   header{background:linear-gradient(90deg,var(--navy),var(--navy-light));color:#fff;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
   header h1{margin:0;font-size:20px;font-weight:600;letter-spacing:.3px;}
   header .subtitle{font-size:13px;color:#c9d6e8;margin-top:4px;}
@@ -198,7 +199,59 @@
   .cartera-view-btn:disabled{opacity:.45;cursor:not-allowed;}
   .cartera-area-context{margin:-6px 0 15px;padding:8px 11px;border-left:3px solid var(--accent);background:#f0f8ff;color:#36516f;font-size:11.5px;line-height:1.4;}
   .cartera-area-context strong{color:var(--navy);}
-  @media(max-width:760px){.cartera-view-toggle{width:100%;margin-left:0}.cartera-view-btn{flex:1;padding-left:8px;padding-right:8px}.cartera-title-line{align-items:flex-start;}}
+  .commercial-overview-wrap{display:flex;flex-direction:column;align-items:center;margin:0 0 18px;}
+  .commercial-overview-toggle{border:1px solid #7e22ce;background:linear-gradient(135deg,#f3e8ff,#eef6ff);color:#5b21b6;border-radius:18px;padding:8px 18px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(91,33,182,.12);transition:.15s;white-space:nowrap;}
+  .commercial-overview-toggle:hover{transform:translateY(-1px);box-shadow:0 6px 15px rgba(91,33,182,.18);}
+  .commercial-overview-panel{width:100%;margin-top:10px;background:#fff;border:1px solid #d9c6ef;border-radius:10px;padding:14px 16px;box-shadow:0 4px 14px rgba(13,35,64,.06);}
+  .commercial-overview-note{font-size:10.5px;color:var(--muted);margin:0 0 9px;text-align:center;}
+  table.commercial-overview-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+  table.commercial-overview-table th{background:var(--navy);color:#fff;padding:0;font-weight:700;text-align:center;}
+  .overview-sort-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:36px;padding:8px 7px;border:0;background:transparent;color:#fff;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;text-align:center;}
+  .overview-sort-btn:hover{background:rgba(255,255,255,.10);}
+  .overview-sort-btn .overview-sort-arrow{font-size:11px;line-height:1;opacity:.72;}
+  .overview-sort-btn.active .overview-sort-arrow{opacity:1;font-weight:900;}
+  table.commercial-overview-table th:first-child,table.commercial-overview-table td:first-child{text-align:center;width:26%;}
+  table.commercial-overview-table th:nth-child(2),table.commercial-overview-table td:nth-child(2){width:13%;}
+  table.commercial-overview-table th:nth-child(3),table.commercial-overview-table td:nth-child(3){width:11%;}
+  table.commercial-overview-table th:nth-child(4),table.commercial-overview-table td:nth-child(4){width:16%;}
+  table.commercial-overview-table th:nth-child(5),table.commercial-overview-table td:nth-child(5){width:12%;}
+  table.commercial-overview-table th:nth-child(6),table.commercial-overview-table td:nth-child(6){width:15%;}
+  table.commercial-overview-table th:nth-child(7),table.commercial-overview-table td:nth-child(7){width:9%;}
+  table.commercial-overview-table th:nth-child(8),table.commercial-overview-table td:nth-child(8){width:11%;}
+  table.commercial-overview-table td{padding:8px 7px;border-bottom:1px solid var(--border);text-align:center;}
+  table.commercial-overview-table tbody tr:hover{background:#f8fafc;}
+  .overview-name{font-weight:800;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .overview-total{font-weight:800;color:var(--navy);}
+  .overview-positive{font-weight:800;color:var(--green);}
+  .overview-commercial{font-weight:800;color:#0e7490;}
+  .overview-low{font-weight:800;color:#d97706;}
+  .overview-zero{font-weight:800;color:#2563eb;}
+  .overview-active{font-weight:900;color:var(--green);}
+  .overview-contact{font-weight:800;color:#7e22ce;}
+  .overview-na{color:var(--muted);font-weight:600;}
+  .overview-empty{padding:12px;color:var(--muted);text-align:center;font-style:italic;}
+  .commercial-overview-hover-cell{position:relative;cursor:default;}
+  .overview-hover-number{display:inline-block;min-width:2ch;}
+  .commercial-overview-tooltip{display:none;position:fixed;z-index:9999;width:min(760px,calc(100vw - 32px));max-height:none;overflow:visible;pointer-events:none;background:#fff;border:1px solid #d9c6ef;border-radius:10px;box-shadow:0 12px 28px rgba(13,35,64,.18);padding:12px 15px;text-align:center;}
+  .commercial-overview-tooltip.open{display:block;}
+  .commercial-overview-tooltip-title{font-size:11px;font-weight:800;color:var(--navy);margin:0 0 7px;}
+  .commercial-overview-tooltip-sub{font-size:9.5px;color:var(--muted);margin:0 0 8px;}
+  .commercial-overview-tooltip-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 10px;text-align:center;}
+  .commercial-overview-tooltip-item{padding:5px 4px;border-radius:6px;background:#f8fafc;color:var(--text);font-size:10px;line-height:1.2;border:1px solid #edf0f4;}
+  .commercial-overview-tooltip-empty{color:var(--muted);font-style:italic;font-size:10px;}
+  .commercial-overview-total-row td{background:#eef2f7;border-top:2px solid #cbd5e1;border-bottom:none;font-weight:800;color:var(--navy);}
+  .commercial-overview-total-row td.overview-positive{color:var(--green);}
+  .commercial-overview-total-row td.overview-commercial{color:#0e7490;}
+  .commercial-overview-total-row td.overview-missing{color:var(--red);}
+  .commercial-overview-total-row td.overview-zero{color:#2563eb;}
+  .commercial-overview-total-row td.overview-active{color:var(--green);}
+  .commercial-overview-total-row td.overview-contact{color:#7e22ce;}
+  @media(max-width:760px){
+    .cartera-view-toggle{width:100%;margin-left:0}.cartera-view-btn{flex:1;padding-left:8px;padding-right:8px}.cartera-title-line{align-items:flex-start;}
+    .commercial-overview-panel{overflow-x:auto;}
+    table.commercial-overview-table{font-size:10.5px;min-width:900px;}
+    .commercial-overview-toggle{font-size:11.5px;padding:8px 14px;}
+  }
 </style>
 </head>
 <body>
@@ -264,10 +317,13 @@
     </div>
   </div>
 
+  <div id="commercialOverviewWrap" class="commercial-overview-wrap" style="display:none"></div>
+
   <div id="blocksContainer">
     <div class="empty-state"><p>📊 <b>Sin datos</b></p><p>Esperando la carga automática de los Excel…</p></div>
   </div>
 </main>
+<div id="commercialOverviewTooltip" class="commercial-overview-tooltip" role="dialog" aria-live="polite"></div>
 
 <script>
 let DATA = [];
@@ -285,8 +341,14 @@ let selectedComercial = '';
 let carteraSortMode = 'income-desc';
 let carteraViewMode = 'full'; // full = Cartera Completa (Todas las Áreas); area = solo el área comercial seleccionada
 let ALL_COMERCIALES = [];
+let commercialOverviewOpen = false;
+let commercialOverviewSortKey = 'comercial';
+let commercialOverviewSortDir = 1;
+let commercialOverviewCache = null;
+let commercialOverviewCacheKey = '';
+let CARTERA_CONTACT_COL_FOUND = false;
 const CANAL_FECHAS = {};
-let CARTERA_BY_COMERCIAL = {}; // normalize(comercial) -> array de {anunciante, marca}
+let CARTERA_BY_COMERCIAL = {}; // normalize(comercial) -> Map de {anunciante, marca, contactado, comercial}
 let CARTERA_ANUNCIANTES_COMUNES = new Set(); // anunciantes presentes en Madrid y Barcelona según la hoja 'Anunciantes comunes'
 
 const EXCEL_URLS = {
@@ -322,7 +384,8 @@ const CARTERA_HEADER_ALIASES = {
   marca:      ['marca'],
   comercial:  ['comercial'],
   sector:     ['sector del anunciante','sector anunciante','sector'],
-  oficina:    ['oficina de venta','oficina','area','área']
+  oficina:    ['oficina de venta','oficina','area','área'],
+  contactado: ['contactado','contactada','contactados','contactadas','contacto']
 };
 const PROGRAMATICA_HEADER_ALIASES = {
   anunciante: ['progr','anunciante programatica','anunciante programática','anunciante'],
@@ -449,6 +512,10 @@ function formatEUR(val){
   const str=Math.abs(Math.round(val)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
   return sign+str+'\u00A0\u20AC';
 }
+function formatInt(val){
+  if(val===null||val===undefined||isNaN(val)) return '-';
+  return Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+}
 function formatPct(val){
   if(val===null||val===undefined||!isFinite(val)) return '-';
   return (val>=0?'+':'')+val.toFixed(1)+'%';
@@ -482,11 +549,11 @@ function updateMonthBtns(mode){
   document.getElementById('mfClosed').classList.toggle('active', mode==='closed');
   document.getElementById('mfAll').classList.toggle('active', mode==='all');
 }
-function setMonthMode(mode){
+function applyMonthMode(mode){
+  commercialOverviewCache=null; commercialOverviewCacheKey='';
   const allData=DATA.concat(PROGRAMATICA_DATA);
   const allMonths=new Set(allData.map(d=>d.mes).filter(m=>m!==null));
   const sorted=Array.from(allMonths).sort((a,b)=>a-b);
-  const chips=document.getElementById('mfChips');
 
   if(mode==='none'){
     selectedMonths=new Set();
@@ -496,29 +563,47 @@ function setMonthMode(mode){
     selectedMonths=new Set(sorted);
   }
 
-  chips.querySelectorAll('.mf-chip').forEach((c,i)=>{
-    c.classList.toggle('active', selectedMonths.has(sorted[i]));
-  });
+  const chips=document.getElementById('mfChips');
+  if(chips){
+    chips.querySelectorAll('.mf-chip').forEach((c,i)=>{
+      c.classList.toggle('active', selectedMonths.has(sorted[i]));
+    });
+  }
   updateMonthBtns(mode);
+}
+
+function setMonthMode(mode){
+  applyMonthMode(mode);
   render();
 }
 
 async function autoLoadFromServer(){
-  const canales=['Digital','Print','Eventos'];
-  await Promise.all(canales.map(async canal=>{
-    try{
-      const res=await fetch(EXCEL_URLS[canal],{cache:'no-cache'});
-      if(!res.ok) throw new Error('No encontrado');
-      const buffer=await res.arrayBuffer();
-      processWorkbook(new Uint8Array(buffer),canal,canal.toUpperCase()+'.xlsx');
-    }catch(e){ markCanalPending(canal); }
-  }));
+  // Cargamos Cartera en paralelo con los Excel de ingresos para que el resumen
+  // de comerciales no tenga que esperar a que terminen todos los demás ficheros.
+  const tareas=[
+    ...['Digital','Print','Eventos'].map(canal=>loadCanalFromServer(canal)),
+    loadProgramaticaFromServer(),
+    loadCarteraFromServer()
+  ];
+  await Promise.allSettled(tareas);
+}
+async function loadCanalFromServer(canal){
+  try{
+    const res=await fetch(EXCEL_URLS[canal],{cache:'no-cache'});
+    if(!res.ok) throw new Error('No encontrado');
+    const buffer=await res.arrayBuffer();
+    processWorkbook(new Uint8Array(buffer),canal,canal.toUpperCase()+'.xlsx');
+  }catch(e){ markCanalPending(canal); }
+}
+async function loadProgramaticaFromServer(){
   try{
     const res=await fetch(EXCEL_URLS.Programatica,{cache:'no-cache'});
     if(!res.ok) throw new Error('No encontrado');
     const buffer=await res.arrayBuffer();
     processProgramaticaWorkbook(new Uint8Array(buffer),'ANUNCIANTES PROGRAMATICA.xlsx');
   }catch(e){ markCanalPending('Programatica'); }
+}
+async function loadCarteraFromServer(){
   try{
     const res=await fetch(CARTERA_URL,{cache:'no-cache'});
     if(!res.ok) throw new Error('No encontrado');
@@ -558,7 +643,31 @@ function cleanSectorLabel(str){
   // El Excel de cartera trae el sector como "99002 * DECORACIÓN": nos quedamos solo con el texto.
   return String(str||'').replace(/^\s*\d+\s*\*\s*/,'').trim();
 }
+function parseContactado(val){
+  const n=normalize(val);
+  if(!n) return null;
+  if(['si','sí','yes','y','x','1','true','ok','contactado','contactada'].includes(n)) return true;
+  if(['no','n','0','false','pendiente','no contactado','no contactada'].includes(n)) return false;
+  return null;
+}
+
+function toggleCommercialOverview(){
+  commercialOverviewOpen=!commercialOverviewOpen;
+  if(commercialOverviewOpen && hasMesColumn){
+    applyMonthMode('all');
+  }
+  renderCommercialOverview();
+}
+
+// El resumen previo depende exclusivamente del Excel de Cartera. Debe aparecer
+// aunque todavía no haya datos de ingresos cargados o no se haya seleccionado
+// ningún comercial en el filtro principal.
+function hasCommercialOverviewData(){
+  return Object.keys(CARTERA_BY_COMERCIAL||{}).length>0;
+}
 function processCarteraWorkbook(data,filename){
+  commercialOverviewCache=null; commercialOverviewCacheKey='';
+  CARTERA_CONTACT_COL_FOUND=false;
   const wb=XLSX.read(data,{type:'array'});
   const byCom={};
   const comunes=new Set();
@@ -599,6 +708,8 @@ function processCarteraWorkbook(data,filename){
     const idxCom=findColIndex(hr,CARTERA_HEADER_ALIASES.comercial);
     const idxSector=findColIndex(hr,CARTERA_HEADER_ALIASES.sector);
     const idxOficina=findColIndex(hr,CARTERA_HEADER_ALIASES.oficina);
+    const idxContactado=findColIndex(hr,CARTERA_HEADER_ALIASES.contactado);
+    if(idxContactado!==-1) CARTERA_CONTACT_COL_FOUND=true;
     let hojaTuvoFilas=false;
     for(let i=headerRowIdx+1;i<rows.length;i++){
       const r=rows[i];
@@ -607,12 +718,15 @@ function processCarteraWorkbook(data,filename){
       if(!anun||!com) continue;
       const sector=idxSector!==-1?cleanSectorLabel(r[idxSector]):'';
       const area=normalizeSalesArea(sheetName)||(idxOficina!==-1?normalizeSalesArea(r[idxOficina]):'');
+      const contactado=idxContactado!==-1?parseContactado(r[idxContactado]):null;
       const key=resolveComercialKey(com);
       if(!byCom[key]) byCom[key]=new Map();
       const itemKey=resolveAnuncianteKey(anun);
       if(!byCom[key].has(itemKey)){
-        byCom[key].set(itemKey,{anunciante:anun,sector:sector,hoja:sheetName,area});
+        byCom[key].set(itemKey,{anunciante:anun,sector:sector,hoja:sheetName,area,contactado,comercial:com});
         count++;
+      }else if(contactado===true){
+        byCom[key].get(itemKey).contactado=true;
       }
       hojaTuvoFilas=true;
     }
@@ -623,6 +737,8 @@ function processCarteraWorkbook(data,filename){
   CARTERA_ANUNCIANTES_COMUNES=comunes;
   if(Object.keys(byCom).length===0){ markCarteraPending(); return; }
   markCarteraLoaded(filename,count,hojasLeidas);
+  populateComercialList();
+  renderCommercialOverview();
   render();
 }
 function markCanalLoaded(canal,filename,fecha){
@@ -820,6 +936,7 @@ function updateVisibleYears(){
   YEARS=arr.length>0?arr:[...ALL_YEARS].slice(-2);
 }
 function onYearChange(){
+  commercialOverviewCache=null; commercialOverviewCacheKey='';
   const sel=document.getElementById('yearSelect');
   selectedYear=parseInt(sel.value,10);
   updateVisibleYears();
@@ -889,6 +1006,10 @@ function updateBadges(){
 // ---- FILTRO DE COMERCIAL ----
 function populateComercialList(){
   const set=new Set(DATA.filter(d=>d.comercial).map(d=>d.comercial));
+  Object.values(CARTERA_BY_COMERCIAL||{}).forEach(items=>{
+    const first=Array.from(items||[])[0];
+    if(first?.comercial) set.add(first.comercial);
+  });
   ALL_COMERCIALES=Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
   // Solo mostramos en el desplegable los comerciales con ingreso (>0) en el año seleccionado.
   // La búsqueda por nombre exacto (onComercialInput) sigue funcionando contra ALL_COMERCIALES,
@@ -909,6 +1030,9 @@ function onComercialInput(){
   const match=ALL_COMERCIALES.find(c=>normalize(c)===valNorm);
   if(match){
     selectedComercial=match;
+    if(hasMesColumn){
+      applyMonthMode('closed');
+    }
     document.getElementById('comercialClearBtn').style.display='inline-block';
     render();
   } else {
@@ -921,6 +1045,9 @@ function clearComercial(){
   selectedComercial='';
   document.getElementById('comercialInput').value='';
   document.getElementById('comercialClearBtn').style.display='none';
+  if(hasMesColumn){
+    applyMonthMode('all');
+  }
   render();
 }
 function setCarteraSort(mode){
@@ -930,6 +1057,247 @@ function setCarteraSort(mode){
 function setCarteraView(mode){
   carteraViewMode=mode==='area'?'area':'full';
   render();
+}
+
+// ---- RESUMEN PREVIO DE CARTERAS POR COMERCIAL ----
+function buildCommercialOverview(){
+  const year=selectedYear;
+  const months=selectedMonths;
+  const useMonths=hasMesColumn&&months&&months.size>0;
+
+  // Para este resumen, el estado del anunciante se determina sobre el AÑO seleccionado.
+  // El filtro de meses no debe convertir en \"Con ingreso = 0 €\" a un anunciante que sí
+  // tiene ingreso en otros meses del mismo año.
+  const incomeIndex=new Map();
+  const commercialIncomeIndex=new Map();
+  const addIncome=(anun,importe)=>{
+    const k=resolveAnuncianteKey(anun);
+    if(!k) return;
+    incomeIndex.set(k,(incomeIndex.get(k)||0)+importe);
+  };
+  const addCommercialIncome=(com,anun,importe)=>{
+    const ck=resolveComercialKey(com);
+    const ak=resolveAnuncianteKey(anun);
+    if(!ck||!ak) return;
+    const key=ck+'|||'+ak;
+    commercialIncomeIndex.set(key,(commercialIncomeIndex.get(key)||0)+importe);
+  };
+  DATA.forEach(d=>{
+    if(d.canal==='__antivendors'||d.anio!==year) return;
+    addIncome(d.anunciante,d.importe);
+    addCommercialIncome(d.comercial,d.anunciante,d.importe);
+  });
+  PROGRAMATICA_DATA.forEach(d=>{
+    if(d.anio!==year) return;
+    addIncome(d.anunciante,programaticaImporteForYear(d,year));
+  });
+
+  // Presencia también limitada al AÑO seleccionado:
+  // - no aparece en ese año -> \"Sin ingreso\"
+  // - aparece en ese año y total anual = 0 -> \"Con ingreso = 0 €\"
+  // - aparece en ese año y total anual > 0 -> \"Con ingreso\"
+  const incomePresence=new Set();
+  DATA.forEach(d=>{
+    if(d.canal!=='__antivendors'&&d.anio===year&&d.anunciante){
+      incomePresence.add(resolveAnuncianteKey(d.anunciante));
+    }
+  });
+  PROGRAMATICA_DATA.forEach(d=>{
+    if(d.anio===year&&d.anunciante){
+      incomePresence.add(resolveAnuncianteKey(d.anunciante));
+    }
+  });
+
+  return Object.entries(CARTERA_BY_COMERCIAL||{}).map(([key,itemsMap])=>{
+    const items=Array.from(itemsMap.values());
+    const comercial=items.find(x=>x.comercial)?.comercial||key;
+    const total=items.length;
+    let conIngreso=0, conIngresoComercial=0, sinIngreso=0, conIngresoCero=0;
+    const sinIngresoNombres=[];
+
+    items.forEach(item=>{
+      const anunKey=resolveAnuncianteKey(item.anunciante);
+      const apareceEnIngresos=incomePresence.has(anunKey);
+      const ingreso=incomeIndex.get(anunKey)||0;
+
+      // Ingreso positivo del anunciante vendido específicamente por su comercial de cartera.
+      const comercialKey=resolveComercialKey(item.comercial||comercial);
+      const ingresoSuComercial=commercialIncomeIndex.get(comercialKey+'|||'+anunKey)||0;
+      if(!apareceEnIngresos){
+        // Está en Cartera pero no aparece en ningún Excel de ingresos.
+        sinIngreso++;
+        sinIngresoNombres.push(item.anunciante);
+      }else if(ingreso>0.005){
+        // Aparece en ingresos y tiene ingreso positivo en el periodo seleccionado.
+        conIngreso++;
+      }else{
+        // Aparece en ingresos, pero su ingreso del periodo seleccionado es 0 €.
+        conIngresoCero++;
+      }
+      if(ingresoSuComercial>0.005) conIngresoComercial++;
+    });
+
+    const contactados=items.filter(x=>x.contactado===true).length;
+    const pctActivos=total>0?(conIngreso/total*100):null;
+    const pctContactados=CARTERA_CONTACT_COL_FOUND&&total>0?(contactados/total*100):null;
+    return {comercial,total,conIngreso,conIngresoComercial,sinIngreso,conIngresoCero,contactados,pctActivos,pctContactados,sinIngresoNombres};
+  }).sort((a,b)=>a.comercial.localeCompare(b.comercial,'es'));
+}
+
+function setCommercialOverviewSort(key){
+  if(commercialOverviewSortKey===key){
+    commercialOverviewSortDir*=-1;
+  }else{
+    commercialOverviewSortKey=key;
+    commercialOverviewSortDir=1;
+  }
+  // Solo reordenamos los datos ya calculados. No volvemos a recorrer todos los Excel.
+  renderCommercialOverview(true);
+}
+
+function getCommercialOverviewSorted(rows){
+  const sorted=[...rows];
+  const key=commercialOverviewSortKey;
+  const dir=commercialOverviewSortDir;
+  const value=(r,k)=>{
+    if(k==='comercial') return r.comercial||'';
+    return Number.isFinite(r[k])?r[k]:-Infinity;
+  };
+  sorted.sort((a,b)=>{
+    const av=value(a,key), bv=value(b,key);
+    let cmp;
+    if(key==='comercial') cmp=String(av).localeCompare(String(bv),'es');
+    else cmp=av-bv;
+    if(cmp===0) cmp=String(a.comercial||'').localeCompare(String(b.comercial||''),'es');
+    return cmp*dir;
+  });
+  return sorted;
+}
+
+function commercialOverviewHeader(key,label){
+  const active=commercialOverviewSortKey===key;
+  const arrow=!active?'↕':(commercialOverviewSortDir===1?'▲':'▼');
+  return `<th><button type="button" class="overview-sort-btn${active?' active':''}" onclick="setCommercialOverviewSort('${key}')"><span>${label}</span><span class="overview-sort-arrow">${arrow}</span></button></th>`;
+}
+
+function showCommercialOverviewMissing(el, comercial){
+  if(window._commercialOverviewHideTimer){ clearTimeout(window._commercialOverviewHideTimer); window._commercialOverviewHideTimer=null; }
+  const tip=document.getElementById('commercialOverviewTooltip');
+  if(!tip) return;
+  const source=(commercialOverviewCache||[]).find(r=>String(r.comercial)===String(comercial));
+  const list=(source?.sinIngresoNombres||[]).slice().sort((a,b)=>String(a).localeCompare(String(b),'es'));
+  const safe=escapeHtml;
+  tip.innerHTML=`<div class="commercial-overview-tooltip-title">Sin ingreso · ${safe(comercial)}</div>
+    <div class="commercial-overview-tooltip-sub">Anunciantes de la cartera que no aparecen en ninguno de los Excel de ingresos del año seleccionado.</div>
+    ${list.length?`<div class="commercial-overview-tooltip-list">${list.map(n=>`<div class="commercial-overview-tooltip-item">${safe(n)}</div>`).join('')}</div>`:'<div class="commercial-overview-tooltip-empty">No hay anunciantes en esta categoría.</div>'}`;
+  const r=el.getBoundingClientRect();
+  tip.classList.add('open');
+  const w=tip.offsetWidth, h=tip.offsetHeight;
+  // Colocar la caja a la izquierda del numero para no tapar la celda que se esta consultando.
+  // Si no cabe a la izquierda, usamos la derecha como respaldo.
+  let left=r.left - w - 12;
+  let top=r.top + (r.height/2) - (h/2);
+  if(left < 16){
+    left=r.right + 12;
+  }
+  if(left+w>window.innerWidth-16){
+    left=Math.max(16,window.innerWidth-w-16);
+  }
+  if(top<16) top=16;
+  if(top+h>window.innerHeight-16) top=Math.max(16,window.innerHeight-h-16);
+  tip.style.left=`${Math.round(left)}px`;
+  tip.style.top=`${Math.round(top)}px`;
+}
+function hideCommercialOverviewMissing(){
+  window._commercialOverviewHideTimer=setTimeout(()=>{
+    const tip=document.getElementById('commercialOverviewTooltip');
+    if(tip) tip.classList.remove('open');
+  },120);
+}
+function escapeHtml(str){
+  return String(str??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function renderCommercialOverview(skipRebuild=false){
+  const wrap=document.getElementById('commercialOverviewWrap');
+  if(!wrap) return;
+  // El resumen previo solo tiene sentido sin comercial seleccionado.
+  // En cuanto se elige uno, desaparecen el toggle y la tabla completa.
+  if(selectedComercial){
+    wrap.style.display='none';
+    wrap.innerHTML='';
+    return;
+  }
+  if(!hasCommercialOverviewData()){
+    wrap.style.display='none';
+    return;
+  }
+
+  // IMPORTANTE: el resumen es lazy. Mientras el toggle esta cerrado NO hacemos
+  // ningun calculo sobre DATA/PROGRAMATICA. Esto evita recalcular cientos/miles
+  // de anunciantes cada vez que termina de cargar uno de los Excel.
+  const cacheKey=JSON.stringify([selectedYear,[...selectedMonths].sort((a,b)=>a-b),Object.keys(CARTERA_BY_COMERCIAL||{}).length,DATA.length,PROGRAMATICA_DATA.length,CARTERA_CONTACT_COL_FOUND]);
+  if(commercialOverviewOpen && (!skipRebuild && (!commercialOverviewCache || commercialOverviewCacheKey!==cacheKey))){
+    commercialOverviewCache=buildCommercialOverview();
+    commercialOverviewCacheKey=cacheKey;
+  }
+  const baseRows=commercialOverviewCache||[];
+  const rows=getCommercialOverviewSorted(baseRows);
+  wrap.style.display='flex';
+  const buttonLabel=commercialOverviewOpen?'▲ Ocultar resumen de carteras':'▼ Ver resumen de carteras por comercial';
+  const periodLabel='';
+  const note=CARTERA_CONTACT_COL_FOUND
+    ? `Año ${selectedYear}${periodLabel}. “Con ingreso” = aparece en los Excel de ingresos y tiene ingreso > 0 €. “Con ingreso de su comercial” = aparece en los Excel de ingresos y tiene ingreso > 0 € vendido por el comercial de su cartera. “Sin ingreso” = está en Cartera pero no aparece en ningún Excel de ingresos. “Con ingreso = 0 €” = aparece en los Excel de ingresos, pero suma 0 € en el periodo seleccionado.`
+    : `Año ${selectedYear}${periodLabel}. “Con ingreso” = aparece en los Excel de ingresos y tiene ingreso > 0 €. “Con ingreso de su comercial” = aparece en los Excel de ingresos y tiene ingreso > 0 € vendido por el comercial de su cartera. “Sin ingreso” = está en Cartera pero no aparece en ningún Excel de ingresos. “Con ingreso = 0 €” = aparece en los Excel de ingresos, pero suma 0 € en el periodo seleccionado. El Excel de Cartera no tiene una columna reconocible de “Contactado”, por lo que ese porcentaje se muestra como N/D.`;
+  const totals=rows.reduce((acc,r)=>{
+    acc.total+=r.total;
+    acc.conIngreso+=r.conIngreso;
+    acc.conIngresoComercial+=r.conIngresoComercial;
+    acc.sinIngreso+=r.sinIngreso;
+    acc.conIngresoCero+=r.conIngresoCero;
+    acc.contactados+=r.contactados||0;
+    return acc;
+  },{total:0,conIngreso:0,conIngresoComercial:0,sinIngreso:0,conIngresoCero:0,contactados:0});
+  const totalPctActivos=totals.total>0?(totals.conIngreso/totals.total*100):null;
+  const totalPctContactados=CARTERA_CONTACT_COL_FOUND&&totals.total>0?(totals.contactados/totals.total*100):null;
+  const body=rows.length?rows.map(r=>`<tr>
+      <td><span class="overview-name" title="${r.comercial}">${r.comercial}</span></td>
+      <td class="overview-total">${formatInt(r.total)}</td>
+      <td class="overview-positive">${formatInt(r.conIngreso)}</td>
+      <td class="overview-commercial">${formatInt(r.conIngresoComercial)}</td>
+      <td class="overview-missing commercial-overview-hover-cell" onmouseenter="showCommercialOverviewMissing(this, '${String(r.comercial).replaceAll("\\","\\\\").replaceAll("'","\\'")}')" onmouseleave="hideCommercialOverviewMissing()"><span class="overview-hover-number">${formatInt(r.sinIngreso)}</span></td>
+      <td class="overview-zero">${formatInt(r.conIngresoCero)}</td>
+      <td class="overview-active">${r.pctActivos===null?'N/D':r.pctActivos.toFixed(1)+'%'}</td>
+      <td class="overview-contact">${r.pctContactados===null?'<span class="overview-na">N/D</span>':r.pctContactados.toFixed(1)+'%'}</td>
+    </tr>`).join('') + `<tr class="commercial-overview-total-row">
+      <td><strong>TOTAL</strong></td>
+      <td class="overview-total">${formatInt(totals.total)}</td>
+      <td class="overview-positive">${formatInt(totals.conIngreso)}</td>
+      <td class="overview-commercial">${formatInt(totals.conIngresoComercial)}</td>
+      <td class="overview-missing">${formatInt(totals.sinIngreso)}</td>
+      <td class="overview-zero">${formatInt(totals.conIngresoCero)}</td>
+      <td class="overview-active">${totalPctActivos===null?'N/D':totalPctActivos.toFixed(1)+'%'}</td>
+      <td class="overview-contact">${totalPctContactados===null?'<span class="overview-na">N/D</span>':totalPctContactados.toFixed(1)+'%'}</td>
+    </tr>`:`<tr><td colspan="8" class="overview-empty">No se han podido leer comerciales desde el Excel de cartera.</td></tr>`;
+  wrap.innerHTML=`
+    <button type="button" class="commercial-overview-toggle" onclick="toggleCommercialOverview()">${buttonLabel}</button>
+    ${commercialOverviewOpen?`<div class="commercial-overview-panel">
+      <p class="commercial-overview-note">${note}</p>
+      <table class="commercial-overview-table">
+        <thead><tr>
+          ${commercialOverviewHeader('comercial','Comercial')}
+          ${commercialOverviewHeader('total','Anunciantes en cartera')}
+          ${commercialOverviewHeader('conIngreso','Con ingreso')}
+          ${commercialOverviewHeader('conIngresoComercial','Con ingreso de<br>su comercial')}
+          ${commercialOverviewHeader('sinIngreso','Sin ingreso')}
+          ${commercialOverviewHeader('conIngresoCero','Con ingreso = 0 €')}
+          ${commercialOverviewHeader('pctActivos','% activos')}
+          ${commercialOverviewHeader('pctContactados','% contactados')}
+        </tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>`:''}
+  `;
 }
 
 // ---- RENDER ----
@@ -997,6 +1365,7 @@ const SOCIAL_ORGANIC_MATCH=p=>{
 
 function render(){
   updateBadges();
+  renderCommercialOverview();
   const container=document.getElementById('blocksContainer');
 
   if(DATA.length===0){
