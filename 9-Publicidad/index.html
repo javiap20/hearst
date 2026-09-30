@@ -121,7 +121,7 @@ body::after {
 /* ── ÍNDICE RÁPIDO ── */
 .toc {
   width: 100%;
-  max-width: 720px;
+  max-width: 980px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -152,7 +152,7 @@ body::after {
 /* ── BLOQUE DE REPOSITORIO ── */
 .repo-block {
   width: 100%;
-  max-width: 1080px;
+  max-width: 1380px;
   margin-bottom: 20px;
   animation: fadeUp 0.5s ease both;
   scroll-margin-top: 24px;
@@ -294,13 +294,15 @@ body::after {
 .c-purple { --c: #a855f7;             --glow: rgba(168,85,247,0.12); }
 
 /* ── COLORES POR BLOQUE ── */
-.repo-0 .repo-title-icon { background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.25); }
+.repo-0 .repo-title-icon { background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25); }
 .repo-1 .repo-title-icon { background: rgba(61,214,140,0.12); border: 1px solid rgba(61,214,140,0.25); }
-.repo-2 .repo-title-icon { background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25); }
+.repo-2 .repo-title-icon { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
+.repo-3 .repo-title-icon { background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.25); }
 
-.repo-0 .repo-name { color: var(--accent-blue); }
+.repo-0 .repo-name { color: #a855f7; }
 .repo-1 .repo-name { color: var(--accent-green); }
-.repo-2 .repo-name { color: #a855f7; }
+.repo-2 .repo-name { color: var(--accent-amber); }
+.repo-3 .repo-name { color: var(--accent-blue); }
 
 /* ── SEPARADOR ENTRE BLOQUES ── */
 .repo-divider {
@@ -358,48 +360,40 @@ body::after {
 
   <!-- ÍNDICE RÁPIDO -->
   <nav class="toc">
+    <a href="#s-info">📋 Información &amp; análisis</a>
+    <a href="#s-equipo">👥 Equipo Comercial</a>
+    <a href="#s-anunciantes">🏢 Anunciantes</a>
     <a href="#s-ingresos">💰 Ingresos &amp; Facturación</a>
-    <a href="#s-equipo">🧑‍🤝‍🧑 Equipo Comercial</a>
-    <a href="#s-marcas">🏛️ Marcas Hearst</a>
   </nav>
 
 
   <!-- ══════════════════════════════════════════════
-       1. INGRESOS & FACTURACIÓN
+       1. INFORMACIÓN & ANÁLISIS
   ══════════════════════════════════════════════ -->
-  <div class="repo-block repo-0" id="s-ingresos">
+  <div class="repo-block repo-0" id="s-info">
     <div class="repo-title">
-      <div class="repo-title-icon">💰</div>
+      <div class="repo-title-icon">📋</div>
       <div class="repo-title-text">
-        <div class="repo-name">Ingresos &amp; Facturación</div>
+        <div class="repo-name">Información &amp; análisis</div>
       </div>
     </div>
 
     <div class="grid">
-      <a href="https://javiap20.github.io/hearst/5-Ingresos/objetivos.html" target="_blank" class="btn-card c-cyan">
+      <a href="https://javiap20.github.io/hearst/9-Publicidad/resumen-ejecutivo.html" target="_blank" class="btn-card c-purple">
         <div class="stripe"></div>
         <div class="btn-body">
-          <div class="btn-icon">💶</div>
-          <div class="btn-title">Objetivos</div>
-          <div class="btn-desc">Evolución de los ingresos (Publicaciones y Sectores) por <strong>CANAL</strong> y <strong>ZONA</strong> en función del objetivo del año. Con y Sin programática</div>
+          <div class="btn-icon">📋</div>
+          <div class="btn-title">Resumen Ejecutivo</div>
+          <div class="btn-desc">Ingresos por Publicación, Familia, Canal y Productos seleccionados en los diferentes canales...</div>
         </div>
         <div class="btn-arrow">→</div>
       </a>
-      <a href="https://javiap20.github.io/hearst/9-Publicidad/patrones-ingresos.html" target="_blank" class="btn-card c-blue">
+      <a href="https://javiap20.github.io/hearst/3-Reunion-Comercial/mix-venta.html" target="_blank" class="btn-card c-purple">
         <div class="stripe"></div>
         <div class="btn-body">
-          <div class="btn-icon">🔄</div>
-          <div class="btn-title">Patrones de Ingresos</div>
-          <div class="btn-desc">Cómo crecen los ingresos según pasan los días en los diferentes canales con tres ejes temporales: días hábiles, días naturales y Solo primer día del mes (con el ingreso desde la fecha que sea hasta el 1 de cada mes)</div>
-        </div>
-        <div class="btn-arrow">→</div>
-      </a>
-      <a href="https://javiap20.github.io/hearst/9-Publicidad/calculadora.html" target="_blank" class="btn-card c-cyan">
-        <div class="stripe"></div>
-        <div class="btn-body">
-          <div class="btn-icon">🧮</div>
-          <div class="btn-title">Previsiones (solo Calculadora)</div>
-          <div class="btn-desc">Previsiones manuales del mes en curso y futuros... para conocer cómo acabaremos el año vs el año anterior y vs el objetivo (en cada canal)</div>
+          <div class="btn-icon">🧩</div>
+          <div class="btn-title">Mix de Venta</div>
+          <div class="btn-desc">Ingresos de los últimos 4 años, por productos digitales seleccionados y familias digitales</div>
         </div>
         <div class="btn-arrow">→</div>
       </a>
@@ -407,13 +401,12 @@ body::after {
   </div>
   <div class="repo-divider"></div>
 
-
   <!-- ══════════════════════════════════════════════
        2. EQUIPO COMERCIAL
   ══════════════════════════════════════════════ -->
   <div class="repo-block repo-1" id="s-equipo">
     <div class="repo-title">
-      <div class="repo-title-icon">🧑‍🤝‍🧑</div>
+      <div class="repo-title-icon">👥</div>
       <div class="repo-title-text">
         <div class="repo-name">Equipo Comercial</div>
       </div>
@@ -423,7 +416,7 @@ body::after {
       <a href="https://javiap20.github.io/hearst/9-Publicidad/comerciales-ingresos.html" target="_blank" class="btn-card c-green">
         <div class="stripe"></div>
         <div class="btn-body">
-          <div class="btn-icon">💶</div>
+          <div class="btn-icon">📊</div>
           <div class="btn-title">Comerciales (Ingresos anualizados)</div>
           <div class="btn-desc">Ingresos anualizados y Nuevos anunciantes (en el año) del equipo comercial en los últimos 4 años, con % de crecimiento y decrecimiento, divido por ZONAS</div>
         </div>
@@ -442,39 +435,73 @@ body::after {
   </div>
   <div class="repo-divider"></div>
 
-
   <!-- ══════════════════════════════════════════════
-       3. MARCAS HEARST (INFORMACIÓN & ANÁLISIS)
+       3. ANUNCIANTES
   ══════════════════════════════════════════════ -->
-  <div class="repo-block repo-2" id="s-marcas">
+  <div class="repo-block repo-2" id="s-anunciantes">
     <div class="repo-title">
-      <div class="repo-title-icon">🏛️</div>
+      <div class="repo-title-icon">🏢</div>
       <div class="repo-title-text">
-        <div class="repo-name">Marcas Hearst (información &amp; análisis)</div>
+        <div class="repo-name">Anunciantes</div>
       </div>
     </div>
 
     <div class="grid">
-      <a href="https://javiap20.github.io/hearst/9-Publicidad/resumen-ejecutivo.html" target="_blank" class="btn-card c-purple">
+      <a href="https://javiap20.github.io/hearst/6-Anunciantes/anunciantes-desglosados-por-canales.html" target="_blank" class="btn-card c-orange">
         <div class="stripe"></div>
         <div class="btn-body">
-          <div class="btn-icon">🧾</div>
-          <div class="btn-title">Resumen Ejecutivo</div>
-          <div class="btn-desc">Ingresos por Publicación, Familia, Canal y Productos seleccionados en los diferentes canales...</div>
-        </div>
-        <div class="btn-arrow">→</div>
-      </a>
-      <a href="https://javiap20.github.io/hearst/3-Reunion-Comercial/estrategia-comercial.html" target="_blank" class="btn-card c-purple">
-        <div class="stripe"></div>
-        <div class="btn-body">
-          <div class="btn-icon">🧾</div>
-          <div class="btn-title">Mix de Venta</div>
-          <div class="btn-desc">Ingresos de los últimos 4 años, por productos digitales seleccionados y familias digitales</div>
+          <div class="btn-icon">🏢</div>
+          <div class="btn-title">Anunciantes (Biblia)</div>
+          <div class="btn-desc">Ingreso de los anunciantes de cada año, dividios por canales. Se puede filtrar por Publicación, Oficina de venta, Sector y Familia</div>
         </div>
         <div class="btn-arrow">→</div>
       </a>
     </div>
   </div>
+  <div class="repo-divider"></div>
+
+  <!-- ══════════════════════════════════════════════
+       4. INGRESOS & FACTURACIÓN
+  ══════════════════════════════════════════════ -->
+  <div class="repo-block repo-3" id="s-ingresos">
+    <div class="repo-title">
+      <div class="repo-title-icon">💰</div>
+      <div class="repo-title-text">
+        <div class="repo-name">Ingresos &amp; Facturación</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <a href="https://javiap20.github.io/hearst/5-Ingresos/objetivos.html" target="_blank" class="btn-card c-cyan">
+        <div class="stripe"></div>
+        <div class="btn-body">
+          <div class="btn-icon">🎯</div>
+          <div class="btn-title">Objetivos</div>
+          <div class="btn-desc">Evolución de los ingresos (Publicaciones y Sectores) por <strong>CANAL</strong> y <strong>ZONA</strong> en función del objetivo del año. Con y Sin programática</div>
+        </div>
+        <div class="btn-arrow">→</div>
+      </a>
+      <a href="https://javiap20.github.io/hearst/9-Publicidad/patrones-ingresos.html" target="_blank" class="btn-card c-blue">
+        <div class="stripe"></div>
+        <div class="btn-body">
+          <div class="btn-icon">📈</div>
+          <div class="btn-title">Patrones de Ingresos</div>
+          <div class="btn-desc">Cómo crecen los ingresos según pasan los días en los diferentes canales con tres ejes temporales: días hábiles, días naturales y Solo primer día del mes (con el ingreso desde la fecha que sea hasta el 1 de cada mes)</div>
+        </div>
+        <div class="btn-arrow">→</div>
+      </a>
+      <a href="https://javiap20.github.io/hearst/9-Publicidad/calculadora.html" target="_blank" class="btn-card c-cyan">
+        <div class="stripe"></div>
+        <div class="btn-body">
+          <div class="btn-icon">🧮</div>
+          <div class="btn-title">Previsiones (solo Calculadora)</div>
+          <div class="btn-desc">Previsiones manuales del mes en curso y futuros... para conocer cómo acabaremos el año vs el año anterior y vs el objetivo (en cada canal)</div>
+        </div>
+        <div class="btn-arrow">→</div>
+      </a>
+    </div>
+  </div>
+  <div class="repo-divider"></div>
 
   <footer class="footer">HEARST ESPAÑA · PANEL INTERNO · 2026</footer>
 
