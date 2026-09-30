@@ -94,6 +94,48 @@ select {
 .totalValues { display: flex; justify-content: space-around; align-items: center; text-align: center; }
 .totalValues .value { font-size: 26px; font-weight: 900; display: block; margin-top: 5px; }
 .totalLabels { font-weight: 700; text-transform: uppercase; font-size: 11px; opacity: 0.7; }
+.totalDigitalPct { display:block; margin-top:4px; font-size:10px; font-weight:800; color:#7c5a18; opacity:.9; }
+
+.channel-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: -6px 0 20px;
+}
+.channel-summary-card {
+  background: linear-gradient(180deg, #f4c95d 0%, #fff4c7 55%, #fffdf2 100%);
+  color: #422006;
+  border: 1px solid #f3d46a;
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-align: center;
+  box-shadow: 0 6px 14px rgba(120, 80, 10, .10);
+}
+.channel-summary-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  opacity: .72;
+}
+.channel-summary-value {
+  font-size: 21px;
+  line-height: 1.1;
+  font-weight: 900;
+  margin-top: 6px;
+}
+.channel-summary-sub {
+  font-size: 10px;
+  margin-top: 5px;
+  color: #7c5a18;
+  font-weight: 700;
+}
+.channel-pct-positive { color:#15803d; font-weight:900; }
+.channel-pct-negative { color:#dc2626; font-weight:900; }
+.channel-pct-neutral { color:#7c5a18; font-weight:900; }
+@media(max-width:900px){
+  .channel-summary-grid{grid-template-columns:1fr 1fr;}
+}
 
 .tabsRow {
   display:flex;
@@ -125,6 +167,9 @@ select {
     font-size: 11px; text-align: center; border-radius: 10px 10px 0 0; border: 1px solid #334155; margin-bottom: 4px;
 }
 .header-row div { padding: 15px; display: flex; align-items: center; justify-content: center; }
+.metric-toggle { display:flex; justify-content:center; gap:6px; margin:0 0 10px; }
+.metric-toggle button { background:#0f172a; color:#94a3b8; border:1px solid #334155; padding:7px 14px; border-radius:999px; cursor:pointer; font-size:11px; font-weight:800; }
+.metric-toggle button.active { background:#22d3ee; color:#001018; border-color:#22d3ee; }
 
 .adv-row { border-bottom: 1px solid rgba(255,255,255,0.05); }
 .adv-row:last-child { border-bottom: none; }
@@ -367,10 +412,10 @@ h1{margin-top:20px!important}
     <div id="mainUI" style="display:none">
         <div class="tabsRow">
             <button class="tab-btn active" id="tabRanking">
-              Anunciantes con mayor ingreso <span id="yearBtn1"></span>
+              Anunciantes: Información general <span id="yearBtn1"></span>
             </button>
             <button class="tab-btn" id="tabLost">
-              Anunciantes perdidos con respecto al año anterior <span id="yearBtn2"></span>
+              Anunciantes: Perdidos y menor ingreso <span id="yearBtn2"></span>
             </button>
         </div>
 
@@ -402,27 +447,35 @@ h1{margin-top:20px!important}
 
         <div id="resultsContent" style="display:none">
 
-            <!-- KPIs ejecutivo — bloque 1: anunciantes -->
-            <div class="kpi-grid" id="kpiGrid" style="margin-bottom:12px;"></div>
-            <!-- KPIs ejecutivo — bloque 2: área, sectores, publicaciones -->
-            <div class="kpi-grid" id="kpiGrid2" style="margin-bottom:20px;"></div>
-
             <div class="totalBlock">
                 <div class="totalValues">
                     <div>
                         <span class="totalLabels">Total</span> <span id="y1Lab"></span>
                         <span id="totalV1" class="value">0€</span>
+                        <span id="totalDigitalPct1" class="totalDigitalPct"></span>
                     </div>
                     <div id="totalVar" style="text-align:center;"></div>
                     <div>
                         <span class="totalLabels">Total</span> <span id="y2Lab"></span>
                         <span id="totalV2" class="value">0€</span>
+                        <span id="totalDigitalPct2" class="totalDigitalPct"></span>
                     </div>
                 </div>
             </div>
 
+            <div class="channel-summary-grid" id="channelSummaryGrid"></div>
+
+            <!-- KPIs ejecutivo — bloque 1: anunciantes -->
+            <div class="kpi-grid" id="kpiGrid" style="margin-bottom:12px;"></div>
+            <!-- KPIs ejecutivo — bloque 2: área, sectores, publicaciones -->
+            <div class="kpi-grid" id="kpiGrid2" style="margin-bottom:20px;"></div>
+
             <div id="rankingView">
-                <div class="header-row grid-layout">
+                <div class="metric-toggle" id="metricToggle">
+                    <button id="metricFacturacion" class="active">€ FACTURACIÓN</button>
+                    <button id="metricActivaciones"># ACTIVACIONES</button>
+                </div>
+                <div class="header-row grid-layout" id="rankingHeader">
                     <div>Anunciantes (por orden de fact.)</div>
                     <div class="col-main">Facturación Total</div>
                     <div>Eventos</div>
@@ -464,7 +517,20 @@ h1{margin-top:20px!important}
 <script>
 let rawData = [];
 let baseRawData = [];
-const PROGRAMATICA_URL = 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBRiKDRGWyhSLPu93vPFOLmAWX_tVsvzvinkrrg8Iym2qE';
+const SOURCE_URLS = {
+    DIGITAL: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y',
+    PRINT: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU',
+    EVENTOS: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU',
+    PROGRAMATICA: 'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBRiKDRGWyhSLPu93vPFOLmAWX_tVsvzvinkrrg8Iym2qE'
+};
+const SOURCE_FILES = {
+    DIGITAL: 'PRODUCCION DIGITAL.xlsx',
+    PRINT: 'PRODUCCION PRINT.xlsx',
+    EVENTOS: 'PRODUCCION EVENTOS.xlsx',
+    PROGRAMATICA: 'ANUNCIANTES PROGRAMATICA.xlsx'
+};
+const PROGRAMATICA_URL = SOURCE_URLS.PROGRAMATICA;
+let loadedProductionSources = [];
 const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 let selM1 = new Set(), selM2 = new Set();
 let selAreas = new Set();
@@ -472,6 +538,7 @@ let selFamilias = new Set();
 let selChannels = new Set();
 let selVista = null; // null | 'GANADOS' | 'PERDIDOS'
 let currentView = 'ranking';
+let rankingMetric = 'facturacion'; // facturacion | activaciones
 
 const PUB_MAP = {
     "CAR & DRIVER": "Car & Driver", "WWW.CARANDDRIVER.COM/ES/": "Car & Driver",
@@ -491,7 +558,7 @@ const PUB_MAP = {
 };
 const CHANNELS = ['EVENTOS','PRINT','DIGITAL','PROGRAMÁTICA'];
 const FAM_PROG = new Set(["PROGRAMATICA DISPLAY DIRECTO","PROGRAMATICA DISPLAY INDIRECTO","VIDEO PROGRAMATICO DIRECTO","VIDEO PROGRAMATICO INDIRECTO"]);
-const FAM_DIGITAL = new Set(["CURATED","DISPLAY","SOCIAL NETWORKS","VIDEO"]);
+const FAM_DIGITAL = new Set(["CURATED","DISPLAY","NATIVE","SOCIAL NETWORKS","VIDEO"]);
 const FAM_PRINT = new Set(["CERTIFICACIÓN","CONVENCIONAL","ELEMENTOS ESPECIALES","OTRAS FACTURACIONES","PATROCINIO"]);
 const SPONSORSHIP_DIGITAL = new Set(["ARTICLE TRANSLATED","BRANDED CONTENT","BRANDED CONTENT SINDICATED","BRANDED CONTENT VIDEO","EDITORIAL NATIVE","PHOTO GALLERY INTEGRATED","SPONSORED NEWSLETTER"].map(x => x.toUpperCase()));
 const SPONSORSHIP_PRINT = new Set(["DOBLE PAGINA BRANDED","PAGINA BRANDED"].map(x => x.toUpperCase()));
@@ -549,34 +616,94 @@ function buildChips(gridId, values, set, extraClass='') {
 function getFamily(d) { return d.Familia || 'SIN FAMILIA'; }
 function getChannel(d) { return d._channel || 'SIN CANAL'; }
 
-function processWorkbook(arrayBuffer) {
+function normZoneText(v) {
+    return String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+}
+function getExactField(row, names) {
+    for (const n of names) {
+        if (Object.prototype.hasOwnProperty.call(row, n)) return row[n];
+    }
+    return '';
+}
+function mapProductionZone(areaRaw, classOrderRaw) {
+    const area = normZoneText(areaRaw);
+    const clase = normZoneText(classOrderRaw);
+    if (area === 'CLIENT EXPERIENCE BARCELONA') return 'Barcelona';
+    if (area === 'INTERNACIONAL') return 'Internacional';
+    if (area === 'PROGRAMATICA' || area === 'PROGRAMATICA') return 'Programática';
+    if (['BRAND EXPERIENCE','CLIENT EXPERIENCE LIFESTYLE','CLIENT EXPERIENCE LUJO'].includes(area)) {
+        return clase.startsWith('J') ? 'Internacional' : 'Madrid';
+    }
+    if (!area) return 'Madrid';
+    return 'NO ASIGNADA';
+}
+function mapProgrammaticZone(areaRaw) {
+    const area = normZoneText(areaRaw);
+    if (area === 'MADRID 1: LUJO') return 'Madrid';
+    if (area === 'MADRID 2: ESTILO DE VIDA') return 'Madrid';
+    if (area === 'BARCELONA') return 'Barcelona';
+    if (area === 'INTERNACIONAL DIRECTA' || area === 'INTERNACIONAL INDIRECTA') return 'Internacional';
+    if (area === 'MADRID PROGRAMATICA') return 'Programática';
+    return null;
+}
+
+function getElleVisiblePublication(pubRaw, detalleRaw, sourceName){
+    const canonical = PUB_MAP[String(pubRaw || '').trim().toUpperCase()] || String(pubRaw || '').trim();
+    // La separación virtual Elle / Gourmet / Travel solo se aplica a DIGITAL.
+    if(String(sourceName || '').toUpperCase() !== 'DIGITAL') return canonical;
+    const p = String(pubRaw || '').trim().toUpperCase();
+    const isElle = p === 'ELLE' || p === 'WWW.ELLE.COM/ES/';
+    if(!isElle) return canonical;
+    const d = String(detalleRaw || '').toLowerCase();
+    if(d.includes('gourmet')) return 'Elle Gourmet';
+    if(d.includes('viajes') || d.includes('travel')) return 'Elle Travel';
+    return 'Elle';
+}
+
+function processWorkbook(arrayBuffer, sourceName = 'MANUAL', doRefresh = true) {
     const wb = XLSX.read(new Uint8Array(arrayBuffer), {type:'array'});
     const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-    baseRawData = json.map(d => {
+    const parsedRows = json.map(d => {
         const famRaw = String(d['Familia'] || d['FAMILIA'] || '');
         const pub = String(d['Publicación'] || d['PUBLICACION'] || '').trim().toUpperCase();
+        const detalleRaw = String(d['Detalle'] || d['DETALLE'] || d['detalle'] || '').trim();
         const mesStr = String(d['Mes inserción'] || d['MES_INSERCION'] || '').toUpperCase();
         const mesEncontrado = MESES.find(m => mesStr.includes(m)) || 'OTROS';
         const producto = String(d['Producto'] || d['PRODUCTO'] || '').trim();
         const tipos = clasificar(famRaw, producto);
         const marcaRaw = String(d['Marca'] || d['MARCA'] || d['marca'] || '').trim().toUpperCase();
+        const areaRaw = getExactField(d, ['ÁREAS','AREAS','Áreas','areas']);
+        const classOrderRaw = getExactField(d, ['Clase de orden','CLASE DE ORDEN','Clase De Orden']);
+        const zone = mapProductionZone(areaRaw, classOrderRaw);
+        const pubVisible = getElleVisiblePublication(pub, detalleRaw, sourceName);
         return {
             ingreso: Number(String(d['Imp.Neto a Comisionar'] || 0).replace(/[^0-9.-]+/g,'')) || 0,
             Año: String(d['Año inserción'] || d['ANNO_INSERCION'] || '').trim(),
             Mes: mesEncontrado,
             Anunciante: String(d['Anunciante'] || d['ANUNCIANTE'] || 'SIN NOMBRE').trim().toUpperCase(),
             Marca: marcaRaw || null,
+            Comercial: String(d['Comercial'] || d['COMERCIAL'] || '').trim().toUpperCase(),
             Producto: producto || 'SIN PRODUCTO',
-            Publi: PUB_MAP[pub] || pub,
-            Area: String(d['Oficina de venta / Centro de coste'] || d['OFICINA DE VENTA / CENTRO DE COSTE'] || d['Oficina de Venta / Centro de Coste'] || 'SIN OFICINA').trim().toUpperCase(),
+            Publi: pubVisible,
+            _pubOriginal: pub,
+            detalle: detalleRaw,
+            Area: zone,
+            zone,
+            areaRaw: String(areaRaw ?? '').trim(),
+            classOrderRaw: String(classOrderRaw ?? '').trim(),
+            areaWasBlank: normZoneText(areaRaw) === '',
+            areaUnknown: zone === 'NO ASIGNADA',
             Sector: String(d['Sector'] || d['SECTOR'] || d['sector'] || 'SIN SECTOR').trim().toUpperCase().replace(/^\d+\s*\*\s*/, ''),
             Familia: tipos.family || (famRaw.trim().toUpperCase() || 'SIN FAMILIA'),
             _channel: tipos.isEvent ? 'EVENTOS' : tipos.isProg ? 'PROGRAMÁTICA' : tipos.isPrint ? 'PRINT' : 'DIGITAL',
             ...tipos
         };
-    }).filter(d => d.Año !== '' && d.Publi !== 'BOOK');
-    rawData = baseRawData.slice();
-    refreshFiltersAfterLoad();
+    }).filter(d => d.Año !== '' && d.Publi !== 'BOOK').map(d => ({...d, _source: sourceName}));
+    baseRawData = baseRawData.concat(parsedRows);
+    if (doRefresh) {
+        rawData = baseRawData.slice();
+        refreshFiltersAfterLoad();
+    }
 }
 
 function refreshFiltersAfterLoad() {
@@ -586,7 +713,16 @@ function refreshFiltersAfterLoad() {
     // Preseleccionar los dos años más recientes para que el dashboard pinte datos al cargar.
     if (years.length) fYear1.value = years[0];
     if (years.length > 1) fYear2.value = years[1];
-    const pubs = [...new Set(rawData.map(d => d.Publi))].sort();
+    const pubsSet = new Set(rawData.map(d => d.Publi));
+    // Las publicaciones virtuales de Elle deben aparecer siempre, aunque no tengan datos.
+    ['Elle','Elle Gourmet','Elle Travel'].forEach(p => pubsSet.add(p));
+    const pubs = [...pubsSet].sort((a,b) => {
+        const rank = {'Elle':0,'Elle Gourmet':1,'Elle Travel':2};
+        const ar = Object.prototype.hasOwnProperty.call(rank,a) ? rank[a] : 99;
+        const br = Object.prototype.hasOwnProperty.call(rank,b) ? rank[b] : 99;
+        if(ar !== 99 || br !== 99) return ar-br;
+        return a.localeCompare(b,'es');
+    });
     fPub.innerHTML = `<option value="TODOS">Todas las Marcas</option>` + pubs.map(p => `<option>${p}</option>`).join('');
     const sectors = [...new Set(rawData.map(d => d.Sector))].sort();
     fSector.innerHTML = `<option value="TODOS">Todos los Sectores</option>` + sectors.map(s => `<option>${s}</option>`).join('');
@@ -632,30 +768,67 @@ function applyProgrammaticWorkbook(arrayBuffer) {
         if (year !== currentYear && year !== priorYear) return;
         const amount = year === currentYear ? parseProgAmount(r['Imp.Neto a Comisionar']) : parseProgAmount(r['Imp.Neto Ant.']);
         if (!amount) return;
-        const adv = String(r['PROGR'] || r['Progr'] || r['progr'] || r['Anunciante'] || '').trim().toUpperCase();
-        if (!adv || adv === 'GOOGLE') return;
-        const mesStr = String(r['Mes inserción'] || '').toUpperCase();
+
+        const advRaw = String(r['PROGR'] || r['Progr'] || r['progr'] || '').trim().toUpperCase();
+        const advReal = advRaw || 'GOOGLE';
+        const sectorRaw = String(r['Sector'] || r['SECTOR'] || '').trim().toUpperCase().replace(/^\d+\s*\*\s*/, '');
+        const sectorReal = sectorRaw && sectorRaw !== 'VENDORS' ? sectorRaw : 'VENDORS';
+        const mesStr = String(r['Mes inserción'] || r['MES_INSERCION'] || '').toUpperCase();
         const mes = MESES.find(m => mesStr.includes(m)) || 'OTROS';
         const pubRaw = String(r['Publicación'] || r['PUBLICACION'] || '').trim().toUpperCase();
         const publi = PUB_MAP[pubRaw] || pubRaw || 'PROGRAMÁTICA';
-        const sector = String(r['Sector'] || 'SIN SECTOR').trim().toUpperCase().replace(/^\d+\s*\*\s*/, '');
-        const area = String(r['Oficina de venta / Centro de coste'] || r['OFICINA DE VENTA / CENTRO DE COSTE'] || r['Oficina de Venta / Centro de Coste'] || r['AREA'] || r['ÁREAS'] || r['Area'] || 'SIN OFICINA').trim().toUpperCase();
-        const marca = String(r['Marca'] || '').trim().toUpperCase() || null;
-        const common = {Año:String(year), Mes:mes, Marca:marca, Producto:'PROGRAMÁTICA', Publi:publi, Area:area, Sector:sector, Familia:'PROGRAMÁTICA', _channel:'PROGRAMÁTICA', isEvent:false, isProg:true, isPrint:false, isDigital:false, family:'PROGRAMÁTICA'};
-        synthetic.push({...common, ingreso:amount, Anunciante:adv, _progReassigned:true});
-        synthetic.push({...common, ingreso:-amount, Anunciante:'GOOGLE', _progReassigned:true, _progAnti:true});
+        const areaRaw = getExactField(r, ['ÁREAS','AREAS','Áreas','areas']);
+        const zone = mapProgrammaticZone(areaRaw);
+        const marca = String(r['Marca'] || r['MARCA'] || '').trim().toUpperCase() || null;
+        const comercial = String(r['Comercial'] || r['COMERCIAL'] || '').trim().toUpperCase();
+        const common = {
+            Año:String(year), Mes:mes, Marca:marca, Comercial:comercial, Producto:'PROGRAMÁTICA', Publi:publi,
+            _pubOriginal: pubRaw,
+            Area: zone || 'NO ASIGNADA', zone: zone || null, areaRaw:String(areaRaw ?? '').trim(),
+            areaUnknown: !zone, Sector:sectorReal, Familia:'PROGRAMÁTICA', _channel:'PROGRAMÁTICA',
+            isEvent:false, isProg:true, isPrint:false, isDigital:false, family:'PROGRAMÁTICA',
+            _source:'PROGRAMATICA', _progReassigned:true
+        };
+
+        // Solo redistribuimos filas que cambian al menos una dimensión frente al cajón genérico.
+        if (advReal !== 'GOOGLE' || sectorReal !== 'VENDORS') {
+            synthetic.push({...common, ingreso:amount, Anunciante:advReal, _progPositive:true});
+            synthetic.push({
+                ...common,
+                ingreso:-amount,
+                Anunciante:'GOOGLE',
+                Sector:'VENDORS',
+                _progAnti:true
+            });
+        }
     });
     rawData = baseRawData.concat(synthetic);
     refreshFiltersAfterLoad();
 }
-
+const productionSources = ['DIGITAL','PRINT','EVENTOS'];
 Promise.all([
-  fetch(MAIN_DATA_URL).then(r => { if (!r.ok) throw new Error('No se pudo cargar el archivo principal'); return r.arrayBuffer(); }),
-  fetch(PROGRAMATICA_URL).then(r => { if (!r.ok) throw new Error('No se pudo cargar Programática'); return r.arrayBuffer(); })
-]).then(([mainBuffer, progBuffer]) => {
-    processWorkbook(mainBuffer);
-    applyProgrammaticWorkbook(progBuffer);
-    document.getElementById('loadCard').querySelector('label').innerText = '✓ Datos + Programática cargados automáticamente desde SharePoint';
+  ...productionSources.map(source =>
+    fetch(SOURCE_URLS[source]).then(r => {
+      if (!r.ok) throw new Error('No se pudo cargar ' + SOURCE_FILES[source]);
+      return r.arrayBuffer();
+    }).then(buffer => ({source, buffer}))
+  ),
+  fetch(SOURCE_URLS.PROGRAMATICA).then(r => {
+    if (!r.ok) throw new Error('No se pudo cargar ' + SOURCE_FILES.PROGRAMATICA);
+    return r.arrayBuffer();
+  }).then(buffer => ({source:'PROGRAMATICA', buffer}))
+]).then(entries => {
+    baseRawData = [];
+    rawData = [];
+    loadedProductionSources = [];
+    entries.filter(x => x.source !== 'PROGRAMATICA').forEach(({source, buffer}) => {
+        processWorkbook(buffer, source, false);
+        loadedProductionSources.push(source);
+    });
+    rawData = baseRawData.slice();
+    const progEntry = entries.find(x => x.source === 'PROGRAMATICA');
+    applyProgrammaticWorkbook(progEntry.buffer);
+    document.getElementById('loadCard').querySelector('label').innerText = '✓ Digital + Print + Eventos + Programática cargados automáticamente desde SharePoint';
     document.getElementById('fileInput').style.display = 'none';
 }).catch(err => {
     console.error(err);
@@ -666,7 +839,11 @@ fileInput.onchange = e => {
     const f = e.target.files[0];
     if (!f) return;
     const r = new FileReader();
-    r.onload = ev => processWorkbook(ev.target.result);
+    r.onload = ev => {
+        baseRawData = [];
+        rawData = [];
+        processWorkbook(ev.target.result, 'MANUAL', true);
+    };
     r.readAsArrayBuffer(f);
 };
 
@@ -679,17 +856,286 @@ function passFilters(d) {
     return true;
 }
 
+function normalizeRepairPart(v){
+    return String(v ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
+function amountCents(v){ return Math.round((Number(v)||0) * 100); }
+function repairBusinessKey(d){
+    return [
+        normalizeRepairPart(d.Anunciante),
+        normalizeRepairPart(d.Marca || ''),
+        normalizeRepairPart(d._pubOriginal || d.Publi || ''),
+        normalizeRepairPart(d.Comercial || ''),
+        normalizeRepairPart(d.Producto || ''),
+        normalizeRepairPart(d.Familia || ''),
+        normalizeRepairPart(d._channel || ''),
+        normalizeRepairPart(d.zone || d.Area || '')
+    ].join('|||');
+}
+function applyExactAndPartialRepairs(sourceRows){
+    const groups = new Map();
+    sourceRows.forEach((d, idx) => {
+        const row = {...d, _sourceOrder: idx, _usedRepair:false};
+        const key = repairBusinessKey(row);
+        if(!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(row);
+    });
+    const result = [];
+    groups.forEach(rows => {
+        const positives = rows.filter(r => r.ingreso > 0);
+        const negatives = rows.filter(r => r.ingreso < 0);
+        const zeros = rows.filter(r => r.ingreso === 0);
+
+        // PASADA 1: reparos exactos
+        negatives.forEach(neg => {
+            if(neg._usedRepair) return;
+            const target = amountCents(Math.abs(neg.ingreso));
+            const exact = positives.find(pos => !pos._usedRepair && amountCents(pos.ingreso) === target);
+            if(exact){
+                exact._usedRepair = true;
+                neg._usedRepair = true;
+            }
+        });
+
+        // PASADA 2: reparos parciales sobre la positiva compatible de mayor importe
+        negatives.forEach(neg => {
+            if(neg._usedRepair) return;
+            const target = amountCents(Math.abs(neg.ingreso));
+            const candidates = positives
+                .filter(pos => !pos._usedRepair && amountCents(pos.ingreso) > target)
+                .sort((a,b) => (b.ingreso - a.ingreso) || (a._sourceOrder - b._sourceOrder));
+            const partial = candidates[0];
+            if(partial){
+                partial.ingreso = Math.round((partial.ingreso - Math.abs(neg.ingreso)) * 100) / 100;
+                neg._usedRepair = true;
+            }
+        });
+
+        // MODO NEGOCIO REAL: solo positivas supervivientes > 0.
+        positives.forEach(pos => {
+            if(!pos._usedRepair && pos.ingreso > 0) result.push(pos);
+        });
+        // Los ceros originales y las negativas huerfanas se conservan fuera del flujo
+        // de negocio real; los añadiremos cuando implementemos el bloque de auditoria.
+    });
+    return result;
+}
+const auditScopes = new Map();
+
+function buildScopeRows(year, monthSet){
+    const filtered = rawData.filter(d => {
+        if(d.Año !== year) return false;
+        if(!passFilters(d)) return false;
+        if(monthSet && monthSet.size > 0 && !monthSet.has(d.Mes)) return false;
+        return true;
+    });
+
+    // Conservamos las filas originales a 0 EUR aparte: no son activaciones reales
+    // y nunca deben confundirse con un reparo exacto que cancela una positiva.
+    const originalZeroRows = filtered.filter(d => Number(d.ingreso) === 0).map(d => ({...d}));
+
+    // Los reparos se resuelven sobre las filas no-0. Las negativas huerfanas
+    // quedan disponibles para auditoria, pero no entran en negocio real.
+    const nonZero = filtered.filter(d => Number(d.ingreso) !== 0);
+    const processed = applyExactAndPartialRepairs(nonZero);
+    const realRows = processed.filter(d => Number(d.ingreso) > 0);
+
+    // Identificar negativas huerfanas usando una copia aislada del algoritmo,
+    // sin alterar las filas que alimentan negocio real.
+    const orphanRows = [];
+    const groups = new Map();
+    nonZero.forEach((d, idx) => {
+        const row = {...d, _sourceOrder: idx, _usedRepair:false};
+        const key = repairBusinessKey(row);
+        if(!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(row);
+    });
+    groups.forEach(rows => {
+        const positives = rows.filter(r => r.ingreso > 0);
+        const negatives = rows.filter(r => r.ingreso < 0);
+        negatives.forEach(neg => {
+            if(neg._usedRepair) return;
+            const target = amountCents(Math.abs(neg.ingreso));
+            const exact = positives.find(pos => !pos._usedRepair && amountCents(pos.ingreso) === target);
+            if(exact){ exact._usedRepair = true; neg._usedRepair = true; }
+        });
+        negatives.forEach(neg => {
+            if(neg._usedRepair) return;
+            const target = amountCents(Math.abs(neg.ingreso));
+            const partial = positives
+                .filter(pos => !pos._usedRepair && amountCents(pos.ingreso) > target)
+                .sort((a,b) => (b.ingreso - a.ingreso) || (a._sourceOrder - b._sourceOrder))[0];
+            if(partial){
+                partial.ingreso = Math.round((partial.ingreso - Math.abs(neg.ingreso)) * 100) / 100;
+                neg._usedRepair = true;
+            }
+        });
+        negatives.filter(n => !n._usedRepair).forEach(n => orphanRows.push(n));
+    });
+
+    return {
+        filtered,
+        realRows: markSharedSales(realRows),
+        originalZeroRows,
+        orphanRows
+    };
+}
+
+function getBusinessRows(year, monthSet){
+    const scope = buildScopeRows(year, monthSet);
+    auditScopes.set(String(year), scope);
+    return scope.realRows;
+}
+
+// Filas para FACTURACION: igual que negocio real, pero incorporando los ajustes
+// contables de Programatica (-GOOGLE/-VENDORS) sin tratarlos como reparos.
+// Estos ajustes no deben aparecer en el conteo de activaciones.
+function getFinancialRows(year, monthSet){
+    // FACTURACION: para el desglose economico del ranking usamos directamente
+    // las filas de los Excel de produccion, sin aplicar reparos ni fusionar ventas.
+    // Los reparos son solo para el modo ACTIVACIONES.
+    // Programatica se incorpora aqui unicamente mediante sus ajustes de reparto
+    // (+ anunciante real / - GOOGLE), que ya estan en rawData.
+    return rawData.filter(d => {
+        if(d.Año !== year) return false;
+        if(!passFilters(d)) return false;
+        if(monthSet && monthSet.size > 0 && !monthSet.has(d.Mes)) return false;
+        return true;
+    }).map(d => ({...d}));
+}
+
+// Venta conjunta Madrid + Barcelona: en este dashboard trabajamos sobre INGRESO,
+// no sobre conteo de activaciones. Por eso NO fusionamos las dos líneas en una sola
+// (las dos mitades deben seguir conservando su ingreso de origen); únicamente
+// identificamos la pareja para que futuros bloques de activaciones puedan fusionarla
+// sin duplicar ni alterar el ingreso individual de cada zona/comercial.
+function sharedSaleKey(d){
+    return [
+        normalizeRepairPart(d.Anunciante),
+        normalizeRepairPart(d.Marca || ''),
+        amountCents(d.ingreso),
+        normalizeRepairPart(d.Producto || ''),
+        normalizeRepairPart(d.Familia || ''),
+        normalizeRepairPart(d._channel || ''),
+        normalizeRepairPart(d._pubOriginal || d.Publi || '')
+    ].join('|||');
+}
+function markSharedSales(rows){
+    const groups = new Map();
+    rows.forEach((d, idx) => {
+        const zone = d.zone || d.Area || '';
+        if(zone !== 'Madrid' && zone !== 'Barcelona') return;
+        const key = sharedSaleKey(d);
+        if(!groups.has(key)) groups.set(key, []);
+        groups.get(key).push({...d, _rowIndex:idx});
+    });
+
+    const byIndex = new Map();
+    groups.forEach(items => {
+        const madrid = items.filter(x => (x.zone || x.Area) === 'Madrid');
+        const barcelona = items.filter(x => (x.zone || x.Area) === 'Barcelona');
+        const usedB = new Set();
+        madrid.forEach(m => {
+            const b = barcelona.find(x => !usedB.has(x._rowIndex) &&
+                normalizeRepairPart(x.Comercial || '') !== normalizeRepairPart(m.Comercial || ''));
+            if(!b) return;
+            usedB.add(b._rowIndex);
+            byIndex.set(m._rowIndex, {shared:true, sharedWith:b.Comercial || ''});
+            byIndex.set(b._rowIndex, {shared:true, sharedWith:m.Comercial || ''});
+        });
+    });
+
+    return rows.map((d, i) => ({...d, ...(byIndex.get(i) || {shared:false, sharedWith:''})}));
+}
+
+function activationKey(d){
+    if(d.shared){
+        return ['SHARED', normalizeRepairPart(d.Anunciante), normalizeRepairPart(d.Marca || ''), amountCents(d.ingreso), normalizeRepairPart(d.Producto || ''), normalizeRepairPart(d.Familia || ''), normalizeRepairPart(d._channel || ''), normalizeRepairPart(d._pubOriginal || d.Publi || '')].join('|||');
+    }
+    return ['ROW', d._id || '', normalizeRepairPart(d.Anunciante), normalizeRepairPart(d.Marca || ''), amountCents(d.ingreso), normalizeRepairPart(d.Producto || ''), normalizeRepairPart(d._pubOriginal || d.Publi || '')].join('|||');
+}
+
+function aggregateActivations(){
+    const y1 = fYear1.value, y2 = fYear2.value;
+    const ads = {};
+    const rowsY1 = getBusinessRows(y1, selM1);
+    const rowsY2 = getBusinessRows(y2, selM2);
+    const addRows = (rows, target) => {
+        const seen = new Set();
+        rows.forEach((d, idx) => {
+            const k = activationKey({...d, _id: d._id || `${target}|${idx}`});
+            if(seen.has(k)) return;
+            seen.add(k);
+            if(!ads[d.Anunciante]) ads[d.Anunciante] = {y1:0,y2:0,ev1:0,ev2:0,pr1:0,pr2:0,di1:0,di2:0,pg1:0,pg2:0,marcas:{}};
+            const a=ads[d.Anunciante];
+            const suf=target==='y1'?'1':'2';
+            a[target] += 1;
+            if(d.isEvent) a['ev'+suf] += 1;
+            if(d.isPrint) a['pr'+suf] += 1;
+            if(d.isDigital) a['di'+suf] += 1;
+            if(d.isProg) a['pg'+suf] += 1;
+
+            const marcaKey=d.Marca || '__SIN_MARCA__';
+            if(!a.marcas[marcaKey]) a.marcas[marcaKey]={y1:0,y2:0,ev1:0,ev2:0,pr1:0,pr2:0,di1:0,di2:0,pg1:0,pg2:0,productos:{}};
+            const m=a.marcas[marcaKey];
+            m[target] += 1;
+            if(d.isEvent) m['ev'+suf] += 1;
+            if(d.isPrint) m['pr'+suf] += 1;
+            if(d.isDigital) m['di'+suf] += 1;
+            if(d.isProg) m['pg'+suf] += 1;
+
+            const prodKey=(d.Producto||'SIN PRODUCTO')+'||'+(d.Publi||'');
+            if(!m.productos[prodKey]) m.productos[prodKey]={y1:0,y2:0,ev1:0,ev2:0,pr1:0,pr2:0,di1:0,di2:0,pg1:0,pg2:0,nombre:d.Producto||'SIN PRODUCTO',publi:d.Publi||''};
+            const pr=m.productos[prodKey];
+            pr[target] += 1;
+            if(d.isEvent) pr['ev'+suf] += 1;
+            if(d.isPrint) pr['pr'+suf] += 1;
+            if(d.isDigital) pr['di'+suf] += 1;
+            if(d.isProg) pr['pg'+suf] += 1;
+        });
+    };
+    addRows(rowsY1,'y1');
+    addRows(rowsY2,'y2');
+    return ads;
+}
+
+function metricValue(v){
+    return rankingMetric === 'activaciones' ? `${Math.round(v||0).toLocaleString('de-DE')}` : fmt(v);
+}
+
+function metricDeltaHTML(v1,v2){
+    if(rankingMetric === 'activaciones'){
+        const d=Math.round((v1||0)-(v2||0));
+        const cl=d>=0?'pos':'neg';
+        return `<div class="trend-line"><span class="${cl}">${d>=0?'+':''}${d}</span></div>`;
+    }
+    return getTrendHTML(v1,v2);
+}
+
+function updateRankingMetricUI(){
+    const f=document.getElementById('metricFacturacion');
+    const a=document.getElementById('metricActivaciones');
+    if(f) f.classList.toggle('active', rankingMetric==='facturacion');
+    if(a) a.classList.toggle('active', rankingMetric==='activaciones');
+    const header=document.getElementById('rankingHeader');
+    if(header){
+        header.innerHTML = rankingMetric==='activaciones' ? `
+          <div>Anunciantes (por activaciones)</div>
+          <div class="col-main">Activaciones</div>
+          <div>Eventos</div><div>Print</div><div>Digital</div><div>Prog.</div>` : `
+          <div>Anunciantes (por orden de fact.)</div>
+          <div class="col-main">Facturación Total</div>
+          <div>Eventos</div><div>Print</div><div>Digital</div><div>Prog.</div>`;
+    }
+}
+
 function aggregate(mode='ranking') {
     const y1 = fYear1.value, y2 = fYear2.value;
     const ads = {};
-    rawData.forEach(d => {
-        if (!passFilters(d)) return;
-        const passM1 = selM1.size === 0 || selM1.has(d.Mes);
-        const passM2 = selM2.size === 0 || selM2.has(d.Mes);
-        let target = null;
-        if (d.Año === y1 && passM1) target = 'y1';
-        else if (d.Año === y2 && passM2) target = 'y2';
-        if (!target) return;
+    const rowsY1 = getFinancialRows(y1, selM1);
+    const rowsY2 = getFinancialRows(y2, selM2);
+    const scoped = rowsY1.map(d => ({d,target:'y1'})).concat(rowsY2.map(d => ({d,target:'y2'})));
+    scoped.forEach(({d,target}) => {
         if (!ads[d.Anunciante]) ads[d.Anunciante] = { y1:0,y2:0,ev1:0,ev2:0,pr1:0,pr2:0,di1:0,di2:0,pg1:0,pg2:0, marcas:{} };
         const a = ads[d.Anunciante];
         const marcaKey = d.Marca || '__SIN_MARCA__';
@@ -717,19 +1163,68 @@ function toggleVista(vista) {
     render();
 }
 
+function renderChannelSummary(ads) {
+    const grid = document.getElementById('channelSummaryGrid');
+    if (!grid) return;
+
+    const channels = [
+        ['EVENTOS', 'Eventos', 'ev1', 'ev2'],
+        ['PRINT', 'Print', 'pr1', 'pr2'],
+        ['DIGITAL', 'Digital', 'di1', 'di2'],
+        ['PROGRAMÁTICA', 'Programática', 'pg1', 'pg2']
+    ];
+
+    const totals = channels.map(([id, label, k1, k2]) => {
+        let y1 = 0, y2 = 0;
+        Object.values(ads).forEach(a => { y1 += a[k1] || 0; y2 += a[k2] || 0; });
+        return { label, y1, y2 };
+    });
+
+    const totalY1 = totals.reduce((sum, x) => sum + x.y1, 0);
+    const totalY2 = totals.reduce((sum, x) => sum + x.y2, 0);
+    const digital = totals.find(x => x.label === 'Digital') || {y1:0, y2:0};
+
+    const fmtPct = (value) => value.toLocaleString('es-ES', {minimumFractionDigits:1, maximumFractionDigits:1}) + '%';
+    const pctShare = (value, total) => total ? fmtPct((value / total) * 100) : '0,0%';
+    const pctClass = (y1, y2) => y1 > y2 ? 'channel-pct-positive' : y1 < y2 ? 'channel-pct-negative' : 'channel-pct-neutral';
+    const pctDelta = (y1, y2) => {
+        if (!y2) return y1 ? '+100,0%' : '0,0%';
+        const d = ((y1 - y2) / y2) * 100;
+        return (d > 0 ? '+' : '') + fmtPct(d);
+    };
+
+    const share1 = document.getElementById('totalDigitalPct1');
+    const share2 = document.getElementById('totalDigitalPct2');
+    if (share1) share1.textContent = 'Digital: ' + pctShare(digital.y1, totalY1) + ' del total';
+    if (share2) share2.textContent = 'Digital: ' + pctShare(digital.y2, totalY2) + ' del total';
+
+    grid.innerHTML = totals.map(({label, y1, y2}) => `
+        <div class="channel-summary-card">
+            <div class="channel-summary-label">${label} · ${fYear1.value}</div>
+            <div class="channel-summary-value">${fmt(y1)}</div>
+            <div class="channel-summary-sub">${fYear2.value}: ${fmt(y2)} <span class="${pctClass(y1,y2)}">(${pctDelta(y1,y2)})</span></div>
+        </div>`).join('');
+}
+
 function renderRanking(ads) {
     let sorted = Object.keys(ads).map(k => ({name:k, ...ads[k]})).sort((a,b) => b.y1 - a.y1);
 
-    // Filtro Vista: GANADOS (y2===0 y y1>0) / PERDIDOS (y1===0 y y2>0)
     if (selVista === 'GANADOS') {
         sorted = sorted.filter(a => a.y1 > 0 && a.y2 === 0);
     } else if (selVista === 'PERDIDOS') {
         sorted = sorted.filter(a => a.y1 === 0 && a.y2 > 0).sort((a,b) => b.y2 - a.y2);
     }
+
     let s1 = 0, s2 = 0; sorted.forEach(x => { s1 += x.y1; s2 += x.y2; });
-    totalV1.innerText = fmt(s1); totalV2.innerText = fmt(s2);
+    totalV1.innerText = metricValue(s1); totalV2.innerText = metricValue(s2);
+    renderChannelSummary(ads);
+    document.getElementById('y1Lab').innerText = fYear1.value;
+    document.getElementById('y2Lab').innerText = fYear2.value;
     const diff = s1 - s2, perc = s2 ? (diff/s2)*100 : 0;
-    totalVar.innerHTML = `<span style="font-size:32px; font-weight:900;" class="${diff>=0?'pos':'neg'}">${diff>=0?'+':''}${perc.toFixed(0)}%</span><br><span style="font-weight:700" class="${diff>=0?'pos':'neg'}">(${diff>=0?'+':''}${fmt(diff)})</span>`;
+    totalVar.innerHTML = rankingMetric==='activaciones'
+        ? `<span style="font-size:32px; font-weight:900;" class="${diff>=0?'pos':'neg'}">${diff>=0?'+':''}${Math.round(diff)}</span>`
+        : `<span style="font-size:32px; font-weight:900;" class="${diff>=0?'pos':'neg'}">${diff>=0?'+':''}${perc.toFixed(1).replace('.',',')}%</span><br><span style="font-weight:700" class="${diff>=0?'pos':'neg'}">(${diff>=0?'+':''}${fmt(diff)})</span>`;
+
     renderContainer.innerHTML = sorted.map(a => {
         const marcasEntries = Object.entries(a.marcas);
         const marcasReales = marcasEntries.filter(([k,v]) => k !== '__SIN_MARCA__' && v.y1 > 0).sort((x,y) => y[1].y1 - x[1].y1);
@@ -741,11 +1236,11 @@ function renderRanking(ads) {
             const prodsHTML = hasProds ? prodsConIngreso.map(([, p]) => `
                 <div class="prod-row">
                     <div class="prod-name">↳ ${p.nombre} <span style="color:#0ea5e9; margin-left:6px; font-size:9px; font-weight:700; background:rgba(14,165,233,0.15); padding:1px 5px; border-radius:4px;">${p.publi}</span></div>
-                    <div class="prod-data-cell col-main-prod"><span class="v-val-prod">${fmt(p.y1)}</span>${getTrendHTML(p.y1, p.y2)}</div>
-                    <div class="prod-data-cell"><span class="v-val-prod">${fmt(p.ev1)}</span>${getTrendHTML(p.ev1, p.ev2)}</div>
-                    <div class="prod-data-cell"><span class="v-val-prod">${fmt(p.pr1)}</span>${getTrendHTML(p.pr1, p.pr2)}</div>
-                    <div class="prod-data-cell"><span class="v-val-prod">${fmt(p.di1)}</span>${getTrendHTML(p.di1, p.di2)}</div>
-                    <div class="prod-data-cell"><span class="v-val-prod">${fmt(p.pg1)}</span>${getTrendHTML(p.pg1, p.pg2)}</div>
+                    <div class="prod-data-cell col-main-prod"><span class="v-val-prod">${metricValue(p.y1)}</span>${metricDeltaHTML(p.y1,p.y2)}</div>
+                    <div class="prod-data-cell"><span class="v-val-prod">${metricValue(p.ev1)}</span>${metricDeltaHTML(p.ev1,p.ev2)}</div>
+                    <div class="prod-data-cell"><span class="v-val-prod">${metricValue(p.pr1)}</span>${metricDeltaHTML(p.pr1,p.pr2)}</div>
+                    <div class="prod-data-cell"><span class="v-val-prod">${metricValue(p.di1)}</span>${metricDeltaHTML(p.di1,p.di2)}</div>
+                    <div class="prod-data-cell"><span class="v-val-prod">${metricValue(p.pg1)}</span>${metricDeltaHTML(p.pg1,p.pg2)}</div>
                 </div>`).join('') : '';
             return `
             <div class="brand-block">
@@ -754,11 +1249,11 @@ function renderRanking(ads) {
                         ${hasProds ? `<span class="toggle-icon" id="icon-${brandId}">▶</span>` : `<span style="width:14px;display:inline-block"></span>`}
                         ${nombre}
                     </div>
-                    <div class="brand-data-cell col-main"><span class="v-val">${fmt(m.y1)}</span>${getTrendHTML(m.y1, m.y2)}</div>
-                    <div class="brand-data-cell"><span class="v-val">${fmt(m.ev1)}</span>${getTrendHTML(m.ev1, m.ev2)}</div>
-                    <div class="brand-data-cell"><span class="v-val">${fmt(m.pr1)}</span>${getTrendHTML(m.pr1, m.pr2)}</div>
-                    <div class="brand-data-cell"><span class="v-val">${fmt(m.di1)}</span>${getTrendHTML(m.di1, m.di2)}</div>
-                    <div class="brand-data-cell"><span class="v-val">${fmt(m.pg1)}</span>${getTrendHTML(m.pg1, m.pg2)}</div>
+                    <div class="brand-data-cell col-main"><span class="v-val">${metricValue(m.y1)}</span>${metricDeltaHTML(m.y1,m.y2)}</div>
+                    <div class="brand-data-cell"><span class="v-val">${metricValue(m.ev1)}</span>${metricDeltaHTML(m.ev1,m.ev2)}</div>
+                    <div class="brand-data-cell"><span class="v-val">${metricValue(m.pr1)}</span>${metricDeltaHTML(m.pr1,m.pr2)}</div>
+                    <div class="brand-data-cell"><span class="v-val">${metricValue(m.di1)}</span>${metricDeltaHTML(m.di1,m.di2)}</div>
+                    <div class="brand-data-cell"><span class="v-val">${metricValue(m.pg1)}</span>${metricDeltaHTML(m.pg1,m.pg2)}</div>
                 </div>
                 ${hasProds ? `<div class="prods-container" id="${brandId}">${prodsHTML}</div>` : ''}
             </div>`;
@@ -771,11 +1266,11 @@ function renderRanking(ads) {
                     ${hasMarcas ? `<span class="toggle-icon" id="icon-${advId}">▶</span>` : `<span style="width:14px;display:inline-block"></span>`}
                     ${a.name}
                 </div>
-                <div class="data-cell col-main"><span class="v-val-main">${fmt(a.y1)}</span>${getTrendHTML(a.y1, a.y2)}</div>
-                <div class="data-cell"><span class="v-val">${fmt(a.ev1)}</span>${getTrendHTML(a.ev1, a.ev2)}</div>
-                <div class="data-cell"><span class="v-val">${fmt(a.pr1)}</span>${getTrendHTML(a.pr1, a.pr2)}</div>
-                <div class="data-cell"><span class="v-val">${fmt(a.di1)}</span>${getTrendHTML(a.di1, a.di2)}</div>
-                <div class="data-cell"><span class="v-val">${fmt(a.pg1)}</span>${getTrendHTML(a.pg1, a.pg2)}</div>
+                <div class="data-cell col-main"><span class="v-val-main">${metricValue(a.y1)}</span>${metricDeltaHTML(a.y1,a.y2)}</div>
+                <div class="data-cell"><span class="v-val">${metricValue(a.ev1)}</span>${metricDeltaHTML(a.ev1,a.ev2)}</div>
+                <div class="data-cell"><span class="v-val">${metricValue(a.pr1)}</span>${metricDeltaHTML(a.pr1,a.pr2)}</div>
+                <div class="data-cell"><span class="v-val">${metricValue(a.di1)}</span>${metricDeltaHTML(a.di1,a.di2)}</div>
+                <div class="data-cell"><span class="v-val">${metricValue(a.pg1)}</span>${metricDeltaHTML(a.pg1,a.pg2)}</div>
             </div>
             ${hasMarcas ? `<div class="brands-container" id="${advId}">${marcasHTML}</div>` : ''}
         </div>`;
@@ -799,7 +1294,23 @@ function renderLost(ads) {
     totalV1.innerText = fmt(s1); 
     totalV2.innerText = fmt(s2);
     const diff = s2 - s1, perc = s2 ? ((s2-s1)/s2)*100 : 0;
-    totalVar.innerHTML = `<span style="font-size:32px; font-weight:900;" class="neg">-${perc.toFixed(0)}%</span><br><span style="font-weight:700" class="neg">(-${fmt(diff)})</span>`;
+    totalVar.innerHTML = `<span style="font-size:32px; font-weight:900;" class="neg">-${perc.toFixed(1).replace('.',',')}%</span><br><span style="font-weight:700" class="neg">(-${fmt(diff)})</span>`;
+
+    // En la pestaña de Anunciantes perdidos, las tarjetas de canal deben mostrar
+    // exclusivamente el subconjunto de anunciantes que han perdido ingreso.
+    // No usar aquí el total global de Hearst.
+    const lostAds = {};
+    rows.forEach(a => {
+        lostAds[a.name] = {
+            y1: a.y1, y2: a.y2,
+            ev1: a.ev1, ev2: a.ev2,
+            pr1: a.pr1, pr2: a.pr2,
+            di1: a.di1, di2: a.di2,
+            pg1: a.pg1, pg2: a.pg2,
+            marcas: a.marcas || {}
+        };
+    });
+    renderChannelSummary(lostAds);
     
     lostContainer.innerHTML = rows.map(a => {
         const marcasEntries = Object.entries(a.marcas);
@@ -888,7 +1399,7 @@ function render() {
     yearBtn1.innerText = fYear1.value ? fYear1.value : '';
     yearBtn2.innerText = fYear2.value ? `(${fYear2.value})` : '';
 
-    const ads = aggregate(currentView);
+    const ads = rankingMetric === 'activaciones' && currentView === 'ranking' ? aggregateActivations() : aggregate(currentView);
     renderKPIs(ads);
     renderNuevos(ads);
     renderCrecimiento(ads);
@@ -1134,22 +1645,33 @@ function renderCrecimiento(ads) {
             <td style="font-weight:800; color:#fff">${fmt(a.y1)}</td>
             <td style="color:#94a3b8">${fmt(a.y2)}</td>
             <td class="pos" style="font-weight:800">+${fmt(diff)}</td>
-            <td><span class="badge-crece">+${perc.toFixed(0)}%</span></td>
+            <td><span class="badge-crece">+${perc.toFixed(1).replace('.',',')}%</span></td>
             <td>${fmt(a.ev1)}</td><td>${fmt(a.pr1)}</td>
         </tr>`).join('')}
         </tbody>`;
 }
 
-function setView(view) { 
-    currentView = view; 
-    tabRanking.classList.toggle('active', view === 'ranking'); 
-    tabLost.classList.toggle('active', view === 'lost'); 
-    render(); 
+function setView(view) {
+    currentView = view;
+    tabRanking.classList.toggle('active', view === 'ranking');
+    tabLost.classList.toggle('active', view === 'lost');
+
+    // En la pestaña de Anunciantes perdidos ocultamos los dos bloques de KPIs
+    // que son de contexto global y no representan el subconjunto perdido.
+    const kpi1 = document.getElementById('kpiGrid');
+    const kpi2 = document.getElementById('kpiGrid2');
+    if (kpi1) kpi1.style.display = view === 'lost' ? 'none' : '';
+    if (kpi2) kpi2.style.display = view === 'lost' ? 'none' : '';
+
+    render();
 }
 
-tabRanking.onclick = () => setView('ranking');
-tabLost.onclick = () => setView('lost');
+tabRanking.onclick = () => { setView('ranking'); updateRankingMetricUI(); };
+tabLost.onclick = () => { rankingMetric='facturacion'; updateRankingMetricUI(); setView('lost'); };
+document.getElementById('metricFacturacion').onclick = () => { rankingMetric='facturacion'; updateRankingMetricUI(); render(); };
+document.getElementById('metricActivaciones').onclick = () => { rankingMetric='activaciones'; updateRankingMetricUI(); render(); };
 fYear1.onchange = fYear2.onchange = fPub.onchange = fSector.onchange = render;
+updateRankingMetricUI();
 
 (function(){
   const nav = document.querySelector('.hn-bar');
