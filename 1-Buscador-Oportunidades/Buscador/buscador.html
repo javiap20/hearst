@@ -80,6 +80,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 11px; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.15s; }
 .chip:hover { background: #eef4ff; border-color: var(--accent); color: var(--accent); }
+.chip.chip-on { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* RESULTS */
 .results { padding: 0 24px 32px; }
@@ -249,6 +250,171 @@ function fmtK(n) {
 
 function normNoSpace(s) { return norm(s).replace(/\s+/g,''); }
 
+// ── DETECCIÓN DE PUBLICACIÓN POR PALABRAS COMPLETAS ─────────────────────────
+// Evita falsos positivos de subcadena: "elle" dentro de "belleza", "mens" dentro de "mensual",
+// "book" dentro de "facebook"...
+function _tokensAlnum(str) {
+  return String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/).filter(Boolean);
+}
+function _fragTarget(frag) {
+  return String(frag).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+}
+// ¿La búsqueda contiene el fragmento como palabra(s) completa(s)? (admite "harper's bazaar", "harpersbazaar"…)
+function queryHasWholeFragment(raw, frag) {
+  const toks = _tokensAlnum(raw), target = _fragTarget(frag);
+  for (let i = 0; i < toks.length; i++) {
+    let cat = '';
+    for (let j = i; j < toks.length; j++) {
+      cat += toks[j];
+      if (cat === target) return true;
+      if (!target.startsWith(cat)) break;
+    }
+  }
+  return false;
+}
+// Quita de un texto normalizado las palabras que forman el fragmento (solo palabras completas)
+function removeWholeFragment(text, frag) {
+  const toks = text.split(/\s+/), target = _fragTarget(frag);
+  for (let i = 0; i < toks.length; i++) {
+    let cat = '';
+    for (let j = i; j < toks.length; j++) {
+      cat += toks[j].replace(/[^a-z0-9]/g, '');
+      if (cat === target) { for (let k = i; k <= j; k++) toks[k] = ' '; return toks.join(' '); }
+      if (!target.startsWith(cat)) break;
+    }
+  }
+  return text;
+}
+
+// ── LECTURA ROBUSTA DE IMPORTES Y MESES ─────────────────────────────────────
+let DATA_WARN = { importes: 0, meses: {}, sinOficina: [] };
+function resetDataWarn() { DATA_WARN = { importes: 0, meses: {}, sinOficina: [] }; }
+// La cabecera real puede ser "Oficina de venta / Centro de coste de la orden" (o una versión más corta)
+function findOficinaKey(sampleRow) {
+  return sampleRow ? Object.keys(sampleRow).find(k => /^oficina\s+de\s+venta/i.test(k.trim())) || null : null;
+}
+
+// Admite números y textos: "1.234,56", "1,234.56", "1234,56", "-1.234,56", "(1.234,56)", "1.234 €"
+function parseImporte(v) {
+  if (typeof v === 'number') return isFinite(v) ? v : NaN;
+  let s = String(v == null ? '' : v).trim();
+  if (!s) return 0;
+  let neg = false;
+  if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
+  s = s.replace(/[€\s\u00a0]/g, '').replace(/eur$/i, '');
+  if (s.endsWith('-')) { neg = true; s = s.slice(0, -1); }
+  if (s.startsWith('-')) { neg = true; s = s.slice(1); }
+  if (s.startsWith('+')) s = s.slice(1);
+  if (!s) return 0;
+  if (!/^[\d.,]+$/.test(s)) return NaN;
+  const lastDot = s.lastIndexOf('.'), lastComma = s.lastIndexOf(',');
+  let dec = null;
+  if (lastDot >= 0 && lastComma >= 0) dec = lastDot > lastComma ? '.' : ',';
+  else if (lastComma >= 0) dec = (s.split(',').length > 2) ? null : ',';
+  else if (lastDot >= 0) dec = /^\d{1,3}(\.\d{3})+$/.test(s) ? null : '.';
+  let t = dec === '.' ? s.replace(/,/g, '')
+        : dec === ','  ? s.replace(/\./g, '').replace(',', '.')
+        : s.replace(/[.,]/g, '');
+  const n = parseFloat(t);
+  if (isNaN(n)) return NaN;
+  return neg ? -n : n;
+}
+function readImporte(v) {
+  const n = parseImporte(v);
+  if (isNaN(n)) { DATA_WARN.importes++; return 0; }
+  return n;
+}
+
+// Devuelve el mes en formato canónico ("01 Enero"), '' si está vacío, o null si no se reconoce.
+// Admite: "01 Enero", "Enero", "ENE", "ene-26", "1", "01", 3 (número de Excel), "Jan"...
+function parseMes(v) {
+  if (typeof v === 'number') return (Number.isInteger(v) && v >= 1 && v <= 12) ? MESES[v - 1] : null;
+  const n = norm(v);
+  if (!n) return '';
+  const MAP = {ene:0,jan:0,feb:1,mar:2,abr:3,apr:3,may:4,jun:5,jul:6,ago:7,aug:7,sep:8,set:8,oct:9,nov:10,dic:11,dec:11};
+  const mName = n.match(/[a-z]{3,}/);
+  if (mName && MAP[mName[0].slice(0, 3)] !== undefined) return MESES[MAP[mName[0].slice(0, 3)]];
+  const mNum = n.match(/^(\d{1,2})(?!\d)/);
+  if (mNum) { const i = parseInt(mNum[1], 10); if (i >= 1 && i <= 12) return MESES[i - 1]; }
+  return null;
+}
+function readMes(v) {
+  const m = parseMes(v);
+  if (m === null) {
+    const orig = String(v).trim();
+    DATA_WARN.meses[orig] = (DATA_WARN.meses[orig] || 0) + 1;
+    return orig;
+  }
+  return m;
+}
+function dataWarnMsg() {
+  const out = [];
+  if (DATA_WARN.importes) out.push(fmtN(DATA_WARN.importes) + ' importes no legibles (contados como 0)');
+  const ms = Object.keys(DATA_WARN.meses);
+  if (DATA_WARN.sinOficina.length) out.push('no se encontró la columna «Oficina de venta» en ' + DATA_WARN.sinOficina.join(', '));
+  if (ms.length) out.push('meses no reconocidos: ' + ms.slice(0, 5).map(m => '«' + m + '»').join(', ') + (ms.length > 5 ? '…' : ''));
+  if (out.length) console.warn('Avisos de carga:', DATA_WARN);
+  return out.length ? ' · ⚠️ ' + out.join(' · ') : '';
+}
+
+// ── BÚSQUEDA LIBRE TOLERANTE (plurales + errores de una letra) ─────────────
+const _VOCAB_FIELDS = ['anunciante','marca','detalle','oficina'];
+let _VOCAB = null, _VOCAB_N = -1;
+function getVocab() {
+  if (_VOCAB && _VOCAB_N === DATA.length) return _VOCAB;
+  const m = new Map();
+  DATA.forEach(r => _VOCAB_FIELDS.forEach(f => {
+    norm(r[f] || '').split(/[^a-z0-9]+/).forEach(w => { if (w.length >= 4) m.set(w, (m.get(w) || 0) + 1); });
+  }));
+  _VOCAB = m; _VOCAB_N = DATA.length;
+  return m;
+}
+// Variantes de singular/plural de una palabra (coches→coche, mujeres→mujer)
+function stemVariants(t) {
+  const v = [t];
+  if (t.length >= 4 && t.endsWith('s')) {
+    v.push(t.slice(0, -1));
+    if (t.length >= 6 && t.endsWith('es') && 'rlnzdj'.includes(t[t.length - 3])) v.push(t.slice(0, -2));
+  }
+  return v;
+}
+// ¿Difieren a lo sumo en 1 letra (sustitución, inserción, borrado o letras intercambiadas)?
+function edit1(a, b) {
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > 1) return false;
+  let i = 0;
+  while (i < la && i < lb && a[i] === b[i]) i++;
+  if (i === la && i === lb) return true;
+  if (la === lb) {
+    if (a.slice(i + 1) === b.slice(i + 1)) return true;
+    return a[i] === b[i + 1] && a[i + 1] === b[i] && a.slice(i + 2) === b.slice(i + 2);
+  }
+  return la > lb ? a.slice(i + 1) === b.slice(i) : b.slice(i + 1) === a.slice(i);
+}
+// Devuelve { test(contenido), avisos[] }: cada palabra libre acepta sus variantes de plural
+// y, si no existe en los datos (palabras de 5+ letras), hasta 3 palabras reales a 1 letra de distancia.
+function buildFreeMatcher(tokens) {
+  const vocab = getVocab();
+  const avisos = [];
+  const groups = tokens.map(t => {
+    const variants = stemVariants(t);
+    if (t.length >= 5 && /^[a-z]+$/.test(t)) {
+      let found = false;
+      for (const w of vocab.keys()) { if (variants.some(v => w.includes(v))) { found = true; break; } }
+      if (!found) {
+        const cands = [];
+        for (const [w, c] of vocab) { if (edit1(t, w)) cands.push([w, c]); }
+        cands.sort((x, y) => y[1] - x[1]);
+        const top = cands.slice(0, 3).map(x => x[0]);
+        if (top.length) { avisos.push({ orig: t, corr: top }); return variants.concat(top); }
+      }
+    }
+    return variants;
+  });
+  return { test: content => groups.every(g => g.some(v => content.includes(v))), avisos };
+}
+
 function cleanSector(s) { return s ? s.replace(/^\d+\s*[\*\+]\s*/,'').trim() : ''; }
 
 function getZona(area) {
@@ -280,6 +446,7 @@ function leerFechaMeta(wb) {
 async function loadFromSharePoint() {
   const statusEl = document.getElementById('status');
   let allRows = [], errors = [], fileDates = [];
+  resetDataWarn();
 
   for (const src of EXCEL_SOURCES) {
     statusEl.textContent = '⏳ Cargando ' + src.name + '...';
@@ -297,12 +464,14 @@ async function loadFromSharePoint() {
       const sheetName = wb.SheetNames.includes(SHEET_NAME) ? SHEET_NAME : wb.SheetNames[0];
       const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:''});
       const detalleKey = raw.length ? Object.keys(raw[0]).find(k => k.toLowerCase().trim() === 'detalle') : null;
+      const oficinaKey = raw.length ? findOficinaKey(raw[0]) : null;
+      if (raw.length && !oficinaKey) DATA_WARN.sinOficina.push(src.name);
 
       const rowsRaw = raw.map(row => ({
         pub: (row['Publicación'] || '').trim(),
-        mes: (row['Mes inserción'] || '').trim(),
+        mes: readMes(row['Mes inserción']),
         year: String(row['Año inserción'] || '').trim(),
-        ingreso: parseFloat(row['Imp.Neto a Comisionar']) || 0,
+        ingreso: readImporte(row['Imp.Neto a Comisionar']),
         familia: (row['Familia'] || '').trim(),
         area: (row['ÁREAS'] || '').trim(),
         sector: cleanSector((row['Sector'] || '').trim()),
@@ -311,7 +480,7 @@ async function loadFromSharePoint() {
         marca: (row['Marca'] || '').trim(),
         comercial: (row['Comercial'] || '').trim(),
         detalle: (detalleKey ? row[detalleKey] : (row['Detalle'] || '')).toString().trim(),
-        oficina: (row['Oficina de venta / Centro de'] || '').trim(),
+        oficina: String((oficinaKey ? row[oficinaKey] : '') || '').trim(),
         _canal: src.canal
       })).filter(r => r.pub);
 
@@ -351,7 +520,7 @@ async function loadFromSharePoint() {
   }
 
   const errMsg = errors.length ? ' · ⚠️ No cargó: ' + errors.join(', ') : '';
-  statusEl.textContent = '✅ ' + fmtN(DATA.length) + ' filas cargadas (Digital + Print + Eventos)' + fechaTxt + errMsg;
+  statusEl.textContent = '✅ ' + fmtN(DATA.length) + ' filas cargadas (Digital + Print + Eventos)' + fechaTxt + errMsg + dataWarnMsg();
   statusEl.className = 'status-ok';
 
   buildFilters();
@@ -364,20 +533,23 @@ function loadManualFile(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
+    resetDataWarn();
     const wb = XLSX.read(e.target.result, {type:'array'});
     const ws = wb.Sheets[wb.SheetNames[0]];
     const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+    const oficinaKey = raw.length ? findOficinaKey(raw[0]) : null;
+    if (raw.length && !oficinaKey) DATA_WARN.sinOficina.push(file.name);
     DATA = raw.map(row => ({
-      pub:(row['Publicación']||'').trim(), mes:(row['Mes inserción']||'').trim(),
-      year:String(row['Año inserción']||''), ingreso:parseFloat(row['Imp.Neto a Comisionar'])||0,
+      pub:(row['Publicación']||'').trim(), mes:readMes(row['Mes inserción']),
+      year:String(row['Año inserción']||''), ingreso:readImporte(row['Imp.Neto a Comisionar']),
       familia:(row['Familia']||'').trim(), area:(row['ÁREAS']||'').trim(),
       sector:cleanSector((row['Sector']||'').trim()), producto:(row['Producto']||'').trim(),
       anunciante:(row['Anunciante']||'').trim(), marca:(row['Marca']||'').trim(),
       comercial:(row['Comercial']||'').trim(), detalle:(row['Detalle']||'').toString().trim(),
-      oficina:(row['Oficina de venta / Centro de']||'').trim(), _canal:'DIGITAL'
+      oficina:String((oficinaKey ? row[oficinaKey] : '')||'').trim(), _canal:'DIGITAL'
     })).filter(r=>r.pub);
     FILTERED = DATA;
-    document.getElementById('status').textContent = '✅ ' + fmtN(DATA.length) + ' filas cargadas desde ' + file.name;
+    document.getElementById('status').textContent = '✅ ' + fmtN(DATA.length) + ' filas cargadas desde ' + file.name + dataWarnMsg();
     document.getElementById('status').className = 'status-ok';
     buildFilters(); buildChips();
     document.getElementById('mainContent').classList.remove('hidden');
@@ -438,7 +610,7 @@ function buildChips() {
   const chips = [
     'Ingresos','Ranking sectores','Ingresos por mes','Evolución','Top marcas','Top anunciantes',
     'Ingresos por publicación','Ranking comerciales','Ingresos por área / zona',
-    'Top productos','Ingresos por familia','Mix de canal','Presupuesto medio'
+    'Top productos','Ingresos por familia','Mix de canal','Presupuesto medio','Anunciantes perdidos','Anunciantes contactar ' + MESES[new Date().getMonth()].slice(3).toLowerCase()
   ];
   document.getElementById('chips').innerHTML = chips.map(c=>
     `<span class="chip" onclick="document.getElementById('queryInput').value='${c}';runQuery()">${c}</span>`
@@ -512,8 +684,8 @@ PUB_FRAGMENTS.sort((a,b)=>b.length-a.length); // más largos primero para match 
 const PUB_MATCH_GROUPS = {
   'elle decoration': ['elledecoration','elledecor'],
   'elle decor':       ['elledecoration','elledecor'],
-  'elle gourmet':     ['ellegourmet'],
-  'elle travel':      ['elletravel'],
+  'elle gourmet':     ['ellegourmet','ellecomesgourmet'],
+  'elle travel':      ['elletravel','ellecomestravel'],
   'elle':             ['elle'],
   'cosmopolitan':     ['cosmopolitan'],
   'cosmo':            ['cosmopolitan'],
@@ -562,9 +734,11 @@ const CONOCIDOS_COMERCIALES = new Set([
   'maria elena ruvireta','maria jose chica','maria moruno','marta conget',
   'marta martinez castillo','montserrat asin martinez','nora recio lopez triviño',
   'pilar gonzalez elosua','rosa fontcuberta altayo','sara anton','silvia baro bielsa',
-  'sofia julia triay','vanesa ruiz tapiador casanova',
-  'barcelona','internacional','madrid'
+  'sofia julia triay','vanesa ruiz tapiador casanova'
 ].map(norm));
+
+// Madrid / Barcelona / Internacional se buscan en la columna "Oficina de venta / Centro de coste de la orden"
+const OFICINAS_KNOWN = ['madrid','barcelona','internacional'];
 
 const CONOCIDOS_SECTORES = new Set([
   'aapp','belleza','higiene','belleza e higiene','decoracion','deportes','tiempo libre',
@@ -835,13 +1009,13 @@ const INTENT_WORDS = new Set([
   'ranking','top','resumen','total','overview','analisis','análisis',
   'sector','sectores','mes','mensual','evolucion','evolución',
   'publicacion','publicación','publicaciones','revista','revistas','site','web',
-  'marca','marcas','anunciante','anunciantes',
+  'marca','marcas','anunciante','anunciantes','perdido','perdidos','perdida','perdidas','contactar',
   'comercial','comerciales','area','áreas','zona','zonas',
   'familia','familias','producto','productos','mix','canal','canales',
   'oficina','centro','por','en','de','medio','presupuesto','ticket','coste','precio',
   'enero','febrero','marzo','abril','mayo','junio',
   'julio','agosto','septiembre','octubre','noviembre','diciembre',
-  'ene','feb','mar','abr','jun','jul','ago','sep','oct','nov','dic'
+  'ene','feb','mar','abr','may','jun','jul','ago','sep','sept','oct','nov','dic'
 ]);
 
 // Mapa abreviación → nombre completo normalizado (para detección de mes en queries)
@@ -969,19 +1143,73 @@ function insertionsBlock(hits, detectadosArr) {
 function pubRowMatches(rowPub, pubTerm) {
   const pubMatchFrags = PUB_MATCH_GROUPS[pubTerm] || [normNoSpace(pubTerm)];
   const rp = normNoSpace(rowPub);
+  const rpA = rp.replace(/[^a-z0-9]/g, '');   // solo letras y números (www.elle.com/es/gourmet/ → wwwellecomesgourmet)
   return pubMatchFrags.some(f => {
     if (f === 'menshealth') return rp.includes('menshealth') && !rp.includes('womenshealth');
-    return rp.includes(f);
+    return rp.includes(f) || rpA.includes(f);
   });
 }
 
+// Convierte direcciones web escritas en la búsqueda en el nombre de la publicación:
+// "www.elle.com/es" → "elle", "elle.com/es/gourmet" → "elle gourmet", "harpersbazaar.com/es" → "harpersbazaar"
+function rewriteUrls(text) {
+  return text.replace(/(?:https?:\/\/)?(?:www\.)?([a-z0-9][a-z0-9-]*)\.(?:com|es|net|org|eu)(?![a-z0-9-])(\/[^\s]*)?/gi, (m, label, path) => {
+    let out = label.toLowerCase().replace(/-/g, '');
+    const p = (path || '').toLowerCase();
+    if (/\/gourmet/.test(p)) out += ' gourmet';
+    else if (/\/(travel|viajes)/.test(p)) out += ' travel';
+    return ' ' + out + ' ';
+  }).replace(/\s+/g, ' ').trim();
+}
+
+// Filtro por sectores en «anunciantes contactar»: ninguno marcado = todos; marcados = solo esos.
+function toggleSectorContactar(el) {
+  const wrap = el.closest('.contactar-wrap');
+  if (el.dataset.sec === 'todos') wrap.querySelectorAll('.chip.chip-on').forEach(x => x.classList.remove('chip-on'));
+  else el.classList.toggle('chip-on');
+  const on = [...wrap.querySelectorAll('.chip.chip-on')].map(x => x.dataset.sec);
+  wrap.querySelectorAll('.sec-block').forEach(b => { b.style.display = (!on.length || on.includes(b.dataset.sec)) ? '' : 'none'; });
+}
+
 function runQuery() {
-  const raw = document.getElementById('queryInput').value.trim();
+  const raw = rewriteUrls(document.getElementById('queryInput').value.trim());
   const q = norm(raw);
   if (!q) return;
 
-  const baseData = FILTERED.length ? FILTERED : DATA;
+  // Año escrito en la búsqueda (p. ej. "elle 2025"): tiene prioridad sobre el selector.
+  // Solo se acepta si existe en los datos, para no confundirlo con otros números.
+  const _aniosData = new Set(DATA.map(r => r.year));
+  const _mAnio = q.match(/(?:^|\s)(20\d{2})(?=\s|$)/);
+  const queryAnio = (_mAnio && _aniosData.has(_mAnio[1])) ? _mAnio[1] : null;
+
+  let baseData;
+  if (queryAnio) {
+    const _mesSel = document.getElementById('filterMes').value;
+    const _pubSel = document.getElementById('filterPub').value;
+    baseData = DATA.filter(r =>
+      r.year === queryAnio &&
+      (!_mesSel || norm(r.mes) === norm(_mesSel)) &&
+      (!_pubSel || r.pub === _pubSel));
+  } else {
+    baseData = FILTERED;
+  }
   const data = currentCanal === 'TODOS' ? baseData : baseData.filter(r => r._canal === currentCanal);
+
+  // Si los filtros no dejan ninguna fila, avisar en lugar de buscar en todos los datos.
+  if (DATA.length && !data.length) {
+    const _f = [
+      queryAnio ? 'Año ' + queryAnio : (document.getElementById('filterAnio').value ? 'Año ' + document.getElementById('filterAnio').value : null),
+      document.getElementById('filterMes').value ? 'Mes ' + document.getElementById('filterMes').value.slice(3) : null,
+      document.getElementById('filterPub').value ? 'Pub. ' + document.getElementById('filterPub').value : null,
+      currentCanal !== 'TODOS' ? 'Canal ' + currentCanal : null
+    ].filter(Boolean).join(' · ') || 'los filtros actuales';
+    document.getElementById('results').innerHTML =
+      '<div class="result-card"><h3><span class="ico">⚠️</span>Sin datos para estos filtros</h3>' +
+      '<p style="color:var(--text3)">No hay filas para <strong>' + _f + '</strong>. ' +
+      'Prueba a cambiar los filtros o pulsa «Limpiar filtros».</p></div>';
+    document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
   if (!data.length) return;
 
   const has = (...t) => t.some(x => q.includes(norm(x)));
@@ -995,7 +1223,7 @@ function runQuery() {
   const queryMes = detectMes(q);
 
   // 1b. Publicación (flexible: elle / www.elle.com/es)
-  const queryPubTerm = PUB_FRAGMENTS.find(p => normNoSpace(q).includes(normNoSpace(p)));
+  const queryPubTerm = PUB_FRAGMENTS.find(p => queryHasWholeFragment(raw, p));
 
   // 1c. Producto EXACTO — primero compuestos (más largos), luego simples
   //     Solo si la query contiene el término normalizado completo como palabra
@@ -1025,21 +1253,35 @@ function runQuery() {
   const queryFamiliaLabel = _famDetect?.label || null;
 
   // 1e. Sector (token exacto de la lista)
-  const querySector = SECTORES_KNOWN.find(s => {
-    const sn = norm(s);
-    return q.split(' ').some(t => t === sn) || q === sn;
-  });
+  // Primero sectores de varias palabras tal y como vienen en los datos
+  // ("belleza e higiene", "deportes y tiempo libre"…): gana el nombre más largo que aparezca
+  // completo en la búsqueda. Si no hay, se usa la lista de sectores de una palabra.
+  const _sectoresMulti = [...new Set(DATA.map(r => norm(r.sector)))]
+    .filter(sn => /[\s\/]/.test(sn) && sn.length > 3)
+    .sort((a, b) => b.length - a.length);
+  const querySector = _sectoresMulti.find(sn => {
+      const esc = sn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp('(^|\\s)' + esc + '(\\s|$)').test(q);
+    })
+    || SECTORES_KNOWN.find(s => {
+      const sn = norm(s);
+      return q.split(' ').some(t => t === sn) || q === sn;
+    });
 
   // 1f. Comercial (parcial)
   const queryComercial = [...CONOCIDOS_COMERCIALES].find(c => q.includes(norm(c)));
+
+  // 1f-bis. Oficina de venta (Madrid / Barcelona / Internacional) — palabra completa
+  const _tokQ = _tokensAlnum(raw);
+  const queryOficinas = OFICINAS_KNOWN.filter(o => _tokQ.includes(o));
 
   // 1g. Términos libres — lo que queda tras quitar todo lo anterior
   const stopWords = new Set(['en','de','el','la','los','las','un','una','y','o','del','al','con','por','para','a','su','se']);
   let qLibre = q;
   if (queryMes)         qLibre = qLibre.replace(norm(queryMes), ' ');
+  if (queryAnio)        qLibre = qLibre.replace(queryAnio, ' ');
   if (queryPubTerm) {
-    const pubPattern = norm(queryPubTerm).split(/\s+/).map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*');
-    qLibre = qLibre.replace(new RegExp(pubPattern), ' ');
+    qLibre = removeWholeFragment(qLibre, queryPubTerm);
   }
   if (queryProductoNorm) qLibre = qLibre.replace(queryProductoNorm, ' ');
   if (queryProductoGrupo) qLibre = qLibre.replace(norm(queryProductoGrupo.alias), ' ');
@@ -1054,6 +1296,7 @@ function runQuery() {
   }
   if (querySector)      qLibre = qLibre.replace(norm(querySector), ' ');
   if (queryComercial)   qLibre = qLibre.replace(norm(queryComercial), ' ');
+  queryOficinas.forEach(o => { qLibre = qLibre.replace(new RegExp('(^|\\s)' + o + '(?=\\s|$)'), ' '); });
   const tokensLibres = qLibre.split(/\s+/).filter(t => t.length > 1 && !stopWords.has(t) && !INTENT_WORDS.has(t));
 
   // ══════════════════════════════════════════════════════════════════════
@@ -1061,8 +1304,9 @@ function runQuery() {
   // ══════════════════════════════════════════════════════════════════════
 
   // Lógica Elle vs Elle Decor
-  const buscoElleSolo  = norm(raw).includes('elle') && !norm(raw).includes('decor') && !norm(raw).includes('decoration') && !norm(raw).includes('decoracion');
-  const buscoElleDecor = norm(raw).includes('elle') && (norm(raw).includes('decor') || norm(raw).includes('decoration') || norm(raw).includes('decoracion'));
+  const _mencionaElle = _tokensAlnum(raw).some(t => /^elle(decor|decoration|gourmet|travel)?$/.test(t));
+  const buscoElleSolo  = _mencionaElle && !norm(raw).includes('decor') && !norm(raw).includes('decoration') && !norm(raw).includes('decoracion');
+  const buscoElleDecor = _mencionaElle && (norm(raw).includes('decor') || norm(raw).includes('decoration') || norm(raw).includes('decoracion'));
 
   function filtrarElleDecor(r) {
     const pubNorm = norm(r.pub);
@@ -1072,48 +1316,33 @@ function runQuery() {
     return true;
   }
 
-  let base = data;
-
-  // Filtro Elle/Decor siempre
-  base = base.filter(r => filtrarElleDecor(r));
-
-  // Filtro pub
-  if (queryPubTerm) {
-    base = base.filter(r => pubRowMatches(r.pub, queryPubTerm));
-  }
-
-  // Filtro mes
-  if (queryMes) base = base.filter(r => norm(r.mes) === norm(queryMes));
-
-  // Filtro sector
-  if (querySector) base = base.filter(r => norm(r.sector).includes(norm(querySector)));
-
-  // Filtro familia — soporta grupos (_FAM_GRUPO) y exactos (_FAM_EXACTO)
-  if (queryFamiliaGrupo) {
-    // Grupo: filtra por cualquiera de las familias del grupo
-    base = base.filter(r => queryFamiliaGrupo.familias.some(f => norm(r.familia) === norm(f)));
-  } else if (queryFamiliaNorm) {
-    // Exacto: filtra por una sola familia
-    base = base.filter(r => norm(r.familia) === norm(queryFamiliaNorm));
-  }
-
-  // Filtro producto (EXACTO)
-  if (queryProductoNorm) base = base.filter(r => norm(r.producto) === queryProductoNorm);
-
-  // Filtro grupo de producto (Social Paid / Social Organic / Social Ignition, etc.)
-  if (queryProductoGrupo) base = base.filter(r => queryProductoGrupo.productos.some(p => norm(r.producto) === norm(p)));
-
-  // Filtro comercial
-  if (queryComercial) base = base.filter(r => norm(r.comercial).includes(norm(queryComercial)));
-
-  // Filtro libre (anunciante, marca, detalle)
+  // Filtros de la query encapsulados para poder reutilizarlos (p. ej. «perdidos» compara dos años).
+  // conMes=false ignora el mes de la query (el bloque «perdidos» lo gestiona por su cuenta).
   const freeFields = ['anunciante','marca','detalle','oficina'];
-  if (tokensLibres.length > 0) {
-    base = base.filter(r => {
-      const allContent = freeFields.map(f => norm(r[f]||'')).join(' ');
-      return tokensLibres.every(t => allContent.includes(t));
-    });
+  const _free = tokensLibres.length > 0 ? buildFreeMatcher(tokensLibres) : null;
+
+  function aplicarFiltros(arr, conMes, conOficina = true, campos = freeFields) {
+    let b = arr.filter(r => filtrarElleDecor(r));
+    if (queryPubTerm) b = b.filter(r => pubRowMatches(r.pub, queryPubTerm));
+    if (conMes && queryMes) b = b.filter(r => norm(r.mes) === norm(queryMes));
+    if (querySector) b = b.filter(r => norm(r.sector).includes(norm(querySector)));
+    if (queryFamiliaGrupo) {
+      b = b.filter(r => queryFamiliaGrupo.familias.some(f => norm(r.familia) === norm(f)));
+    } else if (queryFamiliaNorm) {
+      b = b.filter(r => norm(r.familia) === norm(queryFamiliaNorm));
+    }
+    if (queryProductoNorm) b = b.filter(r => norm(r.producto) === queryProductoNorm);
+    if (queryProductoGrupo) b = b.filter(r => queryProductoGrupo.productos.some(p => norm(r.producto) === norm(p)));
+    if (queryComercial) b = b.filter(r => norm(r.comercial).includes(norm(queryComercial)));
+    // Oficina de venta (Madrid / Barcelona / Internacional) sobre «Oficina de venta / Centro de coste»
+    if (conOficina && queryOficinas.length) b = b.filter(r => queryOficinas.some(o => norm(r.oficina).includes(o)));
+    if (_free) {
+      b = b.filter(r => _free.test(campos.map(f => norm(r[f]||'')).join(' ')));
+    }
+    return b;
   }
+
+  let base = aplicarFiltros(data, true);
 
   // ══════════════════════════════════════════════════════════════════════
   // PASO 3: DECIDIR QUÉ MOSTRAR según intención de la query
@@ -1121,7 +1350,7 @@ function runQuery() {
 
   const hayDatos   = base.length > 0;
   const hayLibres  = tokensLibres.length > 0;
-  const hayFiltros = !!(queryPubTerm || queryMes || querySector || queryFamiliaGrupo || queryFamiliaNorm || queryProductoNorm || queryProductoGrupo || queryComercial || tokensLibres.length > 0);
+  const hayFiltros = !!(queryPubTerm || queryAnio || queryMes || querySector || queryFamiliaGrupo || queryFamiliaNorm || queryProductoNorm || queryProductoGrupo || queryComercial || queryOficinas.length || tokensLibres.length > 0);
   const esQueryPura = !hayFiltros;
 
   const pidePresupuesto = has('presupuesto','ticket medio','insercion media','coste medio','precio medio');
@@ -1137,16 +1366,20 @@ function runQuery() {
   const pideMix         = has('mix','canal','canales');
   const pideIngresos    = has('ingreso','ingresos','facturacion','facturación','revenue','total','resumen','overview');
   const pideRanking     = has('ranking','top');
+  const pideContactar   = /(^|\s)contactar(\s|$)/.test(q);
+  const pidePerdidos    = /(^|\s)perdid[oa]s?(\s|$)/.test(q);
 
   // Etiqueta de filtros aplicados para mostrar en cabecera
   const filtroDesc = [
     queryPubTerm || null,
     queryMes ? queryMes.slice(3) : null,
+    queryAnio || null,
     querySector || null,
     queryFamiliaLabel || null,
     queryProductoLabel || null,
     queryProductoGrupo ? queryProductoGrupo.label : null,
     queryComercial || null,
+    queryOficinas.length ? 'oficina ' + queryOficinas.join(' + ') : null,
     tokensLibres.length > 0 ? tokensLibres.join(' ') : null
   ].filter(Boolean).join(' · ') || 'todos los datos';
 
@@ -1159,11 +1392,182 @@ function runQuery() {
   if (queryPubTerm)       _det.push(`<strong>Publicación:</strong> ${queryPubTerm}`);
   if (queryMes)           _det.push(`<strong>Mes:</strong> ${queryMes.slice(3)}`);
   if (queryComercial)     _det.push(`<strong>Comercial:</strong> ${queryComercial}`);
+  if (queryOficinas.length) _det.push(`<strong>Oficina:</strong> ${queryOficinas.join(' + ')}`);
   if (tokensLibres.length > 0) _det.push(`<strong>Búsqueda libre:</strong> ${tokensLibres.join(', ')}`);
-  _det.push(`<strong>Año:</strong> ${document.getElementById('filterAnio').value || 'todos'}`);
+  _det.push(`<strong>Año:</strong> ${queryAnio || document.getElementById('filterAnio').value || 'todos'}`);
+
+  // ── ANUNCIANTES A CONTACTAR ─────────────────────────────────────────
+  // Con ingreso en el mes M del año anterior y sin ingreso en el mes M de este año (en cualquier oficina).
+  // Sin mes en la query: mes actual. Agrupado por sector (el de mayor importe del anunciante).
+  if (pideContactar) {
+    const _esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const _anios = DATA.map(r => parseInt(r.year, 10)).filter(Boolean);
+    const anioAct = queryAnio || document.getElementById('filterAnio').value || String(Math.max(..._anios));
+    const anioAnt = String(parseInt(anioAct, 10) - 1);
+    const mesC = queryMes || document.getElementById('filterMes').value || MESES[new Date().getMonth()];
+    const mC = MESES.findIndex(m => norm(m) === norm(mesC)) + 1;
+    const nomMes = MESES[mC - 1].slice(3);
+
+    const _baseC = DATA.filter(r =>
+      (currentCanal === 'TODOS' || r._canal === currentCanal) &&
+      (!document.getElementById('filterPub').value || r.pub === document.getElementById('filterPub').value));
+    const dataC = aplicarFiltros(_baseC, false, true, ['anunciante']);
+    const dataCAct = queryOficinas.length ? aplicarFiltros(_baseC, false, false, ['anunciante']) : dataC;
+    const mesDe = r => MESES.indexOf(r.mes) + 1;
+
+    const map = new Map();
+    const get = r => {
+      const k = norm(r.anunciante);
+      if (!map.has(k)) map.set(k, {k, nombre: r.anunciante, ant: 0, act: 0, prods: new Map(), marcas: new Map(), sectores: new Map()});
+      return map.get(k);
+    };
+    dataC.forEach(r => {
+      if (!r.anunciante || r.year !== anioAnt || mesDe(r) !== mC) return;
+      const a = get(r), pr = r.producto || '(Sin producto)', pk = pr + '|||' + (r.pub || '');
+      a.ant += r.ingreso;
+      if (!a.prods.has(pk)) a.prods.set(pk, {prod: pr, pub: r.pub || '', v: 0});
+      a.prods.get(pk).v += r.ingreso;
+      if (r.marca) a.marcas.set(r.marca, (a.marcas.get(r.marca) || 0) + r.ingreso);
+      const sc = r.sector || '(Sin sector)';
+      a.sectores.set(sc, (a.sectores.get(sc) || 0) + r.ingreso);
+    });
+    dataCAct.forEach(r => {
+      if (!r.anunciante || r.year !== anioAct || mesDe(r) !== mC) return;
+      get(r).act += r.ingreso;
+    });
+    const lista = [...map.values()].filter(a => a.ant > 0.01 && a.act <= 0.01);
+    lista.forEach(a => { a.sector = [...a.sectores.entries()].sort((x, y) => y[1] - x[1])[0][0]; });
+
+    const porSector = new Map();
+    lista.forEach(a => { if (!porSector.has(a.sector)) porSector.set(a.sector, []); porSector.get(a.sector).push(a); });
+    const sectores = [...porSector.entries()]
+      .map(([nombre, arr]) => ({nombre, arr: arr.sort((x, y) => y.ant - x.ant), total: arr.reduce((t, a) => t + a.ant, 0)}))
+      .sort((x, y) => y.total - x.total);
+    const totalC = lista.reduce((t, a) => t + a.ant, 0);
+
+    function tablaContactar(arr, id) {
+      const filas = arr.map((a, i) => {
+        const prods = [...a.prods.values()].filter(p => p.v > 0.01).sort((x, y) => y.v - x.v);
+        const celdaProd = prods.map(p => `<div style="display:flex;justify-content:space-between;gap:16px"><span>${_esc(p.prod)}${p.pub ? ' <span style="color:var(--text3)">· ' + _esc(p.pub) + '</span>' : ''}</span><span class="num" style="white-space:nowrap">${fmt(p.v)}</span></div>`).join('');
+        const ms = [...a.marcas.entries()].filter(([, v]) => v > 0.01).sort((x, y) => y[1] - x[1]).map(([n]) => n);
+        const txtMarcas = ms.length ? ' <span style="font-weight:400;color:var(--text3)">(' + _esc(ms.slice(0, 4).join(', ')) + (ms.length > 4 ? ' +' + (ms.length - 4) : '') + ')</span>' : '';
+        return `<tr class="${id}-row" style="${i >= 30 ? 'display:none' : ''}"><td style="text-align:left;vertical-align:top;font-weight:500">${_esc(a.nombre)}${txtMarcas}</td><td style="text-align:left">${celdaProd}</td><td class="num" style="vertical-align:top;font-weight:600">${fmt(a.ant)}</td></tr>`;
+      }).join('');
+      const mas = arr.length > 30 ? `<div style="text-align:center;margin-top:10px"><button class="chip" onclick="document.querySelectorAll('.${id}-row').forEach(x=>x.style.display='');this.remove()">Ver los ${fmtN(arr.length)} anunciantes</button></div>` : '';
+      return `<table><thead><tr><th style="text-align:left">Anunciante (marcas)</th><th style="text-align:left">Producto · publicación · importe ${anioAnt}</th><th>${nomMes} ${anioAnt}</th></tr></thead><tbody>${filas}</tbody></table>${mas}`;
+    }
+
+    html += `<div class="contactar-wrap"><div class="result-card">
+      <h3><span class="ico">📞</span>Anunciantes a contactar · <span style="font-weight:400;color:var(--text3)">${_esc(filtroDesc)}${queryMes ? '' : ' · ' + nomMes}</span></h3>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Con ingreso en ${nomMes} ${anioAnt} y sin ingreso en ${nomMes} ${anioAct}</div>
+      <div class="sum-stats">
+        <div class="sum-stat"><div class="v">${fmt(totalC)}</div><div class="l">a recuperar</div></div>
+        <div class="sum-stat"><div class="v">${fmtN(lista.length)}</div><div class="l">anunciantes</div></div>
+        <div class="sum-stat"><div class="v">${fmtN(sectores.length)}</div><div class="l">sectores</div></div>
+      </div>
+      ${sectores.length > 1 ? `<div class="chips" style="margin-top:12px"><span class="chip" data-sec="todos" onclick="toggleSectorContactar(this)">Todos</span>${sectores.map((x, i) => `<span class="chip" data-sec="${i}" onclick="toggleSectorContactar(this)">${_esc(x.nombre)} · ${fmtN(x.arr.length)}</span>`).join('')}</div>` : ''}
+    </div>`;
+    if (!sectores.length) html += `<div class="result-card"><p style="color:var(--text3)">No hay anunciantes que contactar para este filtro y mes.</p></div>`;
+    sectores.forEach((x, i) => {
+      html += `<div class="result-card sec-block" data-sec="${i}"><h3><span class="ico">🏭</span>${_esc(x.nombre)} <span style="font-weight:400;color:var(--text3)">· ${fmtN(x.arr.length)} anunciantes · ${fmt(x.total)}</span></h3>${tablaContactar(x.arr, 'ct' + i)}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // ── ANUNCIANTES PERDIDOS ────────────────────────────────────────────
+  // Perdido = ingreso neto > 0 el año anterior y sin ingreso neto este año (reparos ya netos),
+  // en el mismo conjunto de meses. Sin mes: meses cerrados (hasta el actual) + aviso de los 2 siguientes.
+  else if (pidePerdidos) {
+    const _esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const _anios = DATA.map(r => parseInt(r.year, 10)).filter(Boolean);
+    const anioAct = queryAnio || document.getElementById('filterAnio').value || String(Math.max(..._anios));
+    const anioAnt = String(parseInt(anioAct, 10) - 1);
+    const mesSel = queryMes || document.getElementById('filterMes').value || '';
+    const mNum = r => MESES.indexOf(r.mes) + 1;
+    const hoy = new Date();
+    // Referencia: enero hasta el mes pedido (o hasta el mes actual, o los 12 si es un año ya cerrado) del año anterior.
+    // Se comprueba si el anunciante aparece en CUALQUIER mes del año actual.
+    let hastaMes;
+    if (mesSel) hastaMes = MESES.findIndex(m => norm(m) === norm(mesSel)) + 1;
+    else if (parseInt(anioAct, 10) === hoy.getFullYear()) hastaMes = hoy.getMonth() + 1;
+    else hastaMes = 12;
+    const mesesA = Array.from({length: hastaMes}, (_, i) => i + 1);
+    const lblMeses = ms => !ms.length ? '' : ms.length === 1 ? MESES[ms[0]-1].slice(3)
+      : MESES[ms[0]-1].slice(3,6) + '–' + MESES[ms[ms.length-1]-1].slice(3,6);
+
+    const _baseCanalPub = DATA.filter(r =>
+      (currentCanal === 'TODOS' || r._canal === currentCanal) &&
+      (!document.getElementById('filterPub').value || r.pub === document.getElementById('filterPub').value));
+    // Año anterior: con todos los filtros (incluida la oficina). Año actual: sin filtrar por oficina,
+    // para que quien haya facturado este año en cualquier oficina no cuente como perdido.
+    const dataPerd = aplicarFiltros(_baseCanalPub, false, true, ['anunciante']);
+    const dataPerdAct = queryOficinas.length ? aplicarFiltros(_baseCanalPub, false, false, ['anunciante']) : dataPerd;
+
+    // Oficina de la fila (Madrid / Barcelona / Internacional; el resto va a «otras»)
+    const ofiDe = r => { const o = norm(r.oficina); return o.includes('madrid') ? 'madrid' : o.includes('barcelona') ? 'barcelona' : o.includes('internacional') ? 'internacional' : 'otras'; };
+    const ETQ = {madrid:'MADRID', barcelona:'BARCELONA', internacional:'INTERNACIONAL', otras:'OTRAS / SIN OFICINA'};
+    const todosMeses = Array.from({length: 12}, (_, i) => i + 1);
+
+    // Perdido en una oficina = ingreso en mesesAnt del año anterior en ESA oficina y ningún ingreso
+    // en ningún mes de este año (en cualquier oficina).
+    function calcPerdidos(mesesAnt, mesesAct, ofi) {
+      const setAnt = new Set(mesesAnt), setAct = new Set(mesesAct), map = new Map();
+      const get = r => {
+        const k = norm(r.anunciante);
+        if (!map.has(k)) map.set(k, {k, nombre: r.anunciante, ant: 0, act: 0, prods: new Map(), marcas: new Map()});
+        return map.get(k);
+      };
+      dataPerd.forEach(r => {
+        if (!r.anunciante || r.year !== anioAnt || !setAnt.has(mNum(r)) || ofiDe(r) !== ofi) return;
+        const a = get(r), pn = r.producto || '(Sin producto)';
+        a.ant += r.ingreso;
+        a.prods.set(pn, (a.prods.get(pn) || 0) + r.ingreso);
+        if (r.marca) a.marcas.set(r.marca, (a.marcas.get(r.marca) || 0) + r.ingreso);
+      });
+      dataPerdAct.forEach(r => {
+        if (!r.anunciante || r.year !== anioAct || !setAct.has(mNum(r))) return;
+        get(r).act += r.ingreso;
+      });
+      return [...map.values()].filter(a => a.ant > 0.01 && a.act <= 0.01).sort((x, y) => y.ant - x.ant);
+    }
+
+    function tablaPerdidos(lista, id) {
+      const filas = lista.map((a, i) => {
+        const prods = [...a.prods.entries()].filter(([, v]) => v > 0.01).sort((x, y) => y[1] - x[1]);
+        const celdaProd = prods.map(([n, v]) => `<div style="display:flex;justify-content:space-between;gap:16px"><span>${_esc(n)}</span><span class="num" style="white-space:nowrap">${fmt(v)}</span></div>`).join('');
+        const ms = [...a.marcas.entries()].filter(([, v]) => v > 0.01).sort((x, y) => y[1] - x[1]).map(([n]) => n);
+        const txtMarcas = ms.length ? ' <span style="font-weight:400;color:var(--text3)">(' + _esc(ms.slice(0, 4).join(', ')) + (ms.length > 4 ? ' +' + (ms.length - 4) : '') + ')</span>' : '';
+        return `<tr class="${id}-row" style="${i >= 50 ? 'display:none' : ''}"><td style="text-align:left;vertical-align:top;font-weight:500">${_esc(a.nombre)}${txtMarcas}</td><td style="text-align:left">${celdaProd}</td><td class="num" style="vertical-align:top;font-weight:600">${fmt(a.ant)}</td></tr>`;
+      }).join('');
+      const mas = lista.length > 50 ? `<div style="text-align:center;margin-top:10px"><button class="chip" onclick="document.querySelectorAll('.${id}-row').forEach(x=>x.style.display='');this.remove()">Ver los ${fmtN(lista.length)} anunciantes</button></div>` : '';
+      return `<table><thead><tr><th style="text-align:left">Anunciante (marcas)</th><th style="text-align:left">Producto · importe ${anioAnt}</th><th>Total perdido</th></tr></thead><tbody>${filas}</tbody></table>${mas}`;
+    }
+
+    // Sin oficina en la query: una tarjeta por oficina. Con oficina: solo las pedidas.
+    const grupos = queryOficinas.length ? [...queryOficinas] : ['madrid', 'barcelona', 'internacional'];
+    if (!queryOficinas.length && dataPerd.some(r => r.year === anioAnt && ofiDe(r) === 'otras')) grupos.push('otras');
+    const res = grupos.map(g => ({g, lista: calcPerdidos(mesesA, todosMeses, g)}));
+    const totalPerd = res.reduce((t, x) => t + x.lista.reduce((s, a) => s + a.ant, 0), 0);
+    const unicos = new Set(res.flatMap(x => x.lista.map(a => a.k))).size;
+
+    html += `<div class="result-card">
+      <h3><span class="ico">📉</span>Anunciantes perdidos · <span style="font-weight:400;color:var(--text3)">${_esc(filtroDesc)}</span></h3>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Con ingreso en ${lblMeses(mesesA)} ${anioAnt} y sin ningún ingreso en todo ${anioAct}</div>
+      <div class="sum-stats">
+        <div class="sum-stat"><div class="v dn">${fmt(totalPerd)}</div><div class="l">total perdido</div></div>
+        <div class="sum-stat"><div class="v">${fmtN(unicos)}</div><div class="l">anunciantes perdidos</div></div>
+        ${res.length > 1 ? res.filter(x => x.g !== 'otras' || x.lista.length).map(x => `<div class="sum-stat"><div class="v">${fmt(x.lista.reduce((s, a) => s + a.ant, 0))}</div><div class="l">${ETQ[x.g]} · ${fmtN(x.lista.length)}</div></div>`).join('') : ''}
+      </div></div>`;
+    res.forEach(x => {
+      if (x.g === 'otras' && !x.lista.length) return;
+      const tot = x.lista.reduce((s, a) => s + a.ant, 0);
+      html += `<div class="result-card"><h3><span class="ico">📍</span>${ETQ[x.g]} <span style="font-weight:400;color:var(--text3)">· ${fmtN(x.lista.length)} anunciantes · ${fmt(tot)}</span></h3>` +
+        (x.lista.length ? tablaPerdidos(x.lista, 'perd-' + x.g) : `<p style="color:var(--text3)">Ningún anunciante perdido en esta oficina.</p>`) + `</div>`;
+    });
+  }
 
   // ── PRESUPUESTO MEDIO ───────────────────────────────────────────────
-  if (pidePresupuesto) {
+  else if (pidePresupuesto) {
     if (!hayDatos) {
       html += '<div class="result-card"><h3><span class="ico">💶</span>Presupuesto medio</h3><p style="color:var(--text3)">No se encontraron inserciones para ese filtro.</p></div>';
     } else {
@@ -1239,23 +1643,32 @@ function runQuery() {
 
   // ── EVOLUCIÓN MENSUAL ───────────────────────────────────────────────
   // Solo si pide evolución explícitamente, O si hay solo un mes sin producto/familia/sector/libre
-  else if (pideEvolucion || (queryMes && !queryProductoNorm && !queryProductoGrupo && !queryFamiliaNorm && !querySector && !queryComercial && tokensLibres.length===0)) {
-    const anioActual = document.getElementById('filterAnio').value || String(new Date().getFullYear());
+  else if (pideEvolucion || (queryMes && !queryProductoNorm && !queryProductoGrupo && !queryFamiliaNorm && !querySector && !queryComercial && !queryOficinas.length && tokensLibres.length===0)) {
+    const anioActual = queryAnio || document.getElementById('filterAnio').value || String(new Date().getFullYear());
     const anioAnt = String(parseInt(anioActual)-1);
-    const aniosDisp = [...new Set(data.map(r=>r.year))].filter(Boolean).sort();
+    // Para comparar con el año anterior se usan los datos SIN el filtro de año
+    // (se respetan canal, Mes y Publicación del selector).
+    const _evMes = document.getElementById('filterMes').value;
+    const _evPub = document.getElementById('filterPub').value;
+    const dataEvo = DATA.filter(r =>
+      (currentCanal === 'TODOS' || r._canal === currentCanal) &&
+      (!_evMes || norm(r.mes) === norm(_evMes)) &&
+      (!_evPub || r.pub === _evPub));
+    const aniosDisp = [...new Set(dataEvo.map(r=>r.year))].filter(Boolean).sort();
     const hayAnioAnt = aniosDisp.includes(anioAnt);
 
     function basePub(anio) {
-      let b = data.filter(r=>r.year===anio).filter(r=>filtrarElleDecor(r));
+      let b = dataEvo.filter(r=>r.year===anio).filter(r=>filtrarElleDecor(r));
       if (queryPubTerm)      b = b.filter(r=>pubRowMatches(r.pub, queryPubTerm));
       if (querySector)       b = b.filter(r=>norm(r.sector).includes(norm(querySector)));
       if (queryFamiliaNorm)  b = b.filter(r=>norm(r.familia).includes(queryFamiliaNorm));
       if (queryProductoNorm) b = b.filter(r=>norm(r.producto) === queryProductoNorm);
       if (queryProductoGrupo) b = b.filter(r=>queryProductoGrupo.productos.some(p => norm(r.producto) === norm(p)));
       if (queryComercial)    b = b.filter(r=>norm(r.comercial).includes(norm(queryComercial)));
+      if (queryOficinas.length) b = b.filter(r=>queryOficinas.some(o=>norm(r.oficina).includes(o)));
       if (tokensLibres.length > 0) {
         const ff = ['anunciante','marca','detalle','oficina'];
-        b = b.filter(r=>{ const ac=ff.map(f=>norm(r[f]||'')).join(' '); return tokensLibres.every(t=>ac.includes(t)); });
+        b = b.filter(r=>{ const ac=ff.map(f=>norm(r[f]||'')).join(' '); return _free.test(ac); });
       }
       return b;
     }
@@ -1646,6 +2059,19 @@ function runQuery() {
   // ── SIN RESULTADOS ──────────────────────────────────────────────────
   if (!html) {
     html = '<div style="color:#dc2626;font-weight:600;font-size:14px;padding:20px 0;">⚠️ No se han encontrado resultados para tu búsqueda. Prueba con otros términos.</div>';
+  }
+
+  // Qué sector(es) se han incluido realmente (ayuda a comprobar que la cifra es la esperada)
+  if (querySector && base.length) {
+    const _nomSec = [...new Set(base.map(r => r.sector).filter(Boolean))];
+    html = '<div style="background:#f5f3ff;border:1px solid #ddd6fe;color:#5b21b6;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:12px">🏭 Sector incluido: <strong>' +
+      _nomSec.slice(0, 5).join(', ') + (_nomSec.length > 5 ? '…' : '') + '</strong></div>' + html;
+  }
+
+  // Aviso de palabras corregidas por tolerancia a errores tipográficos
+  if (_free && _free.avisos.length) {
+    html = '<div style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:12px">🔎 Buscando también: ' +
+      _free.avisos.map(a => '<strong>' + a.corr.join(', ') + '</strong> (por «' + a.orig + '»)').join(' · ') + '</div>' + html;
   }
 
   document.getElementById('results').innerHTML = html;
