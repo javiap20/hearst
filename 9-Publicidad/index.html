@@ -165,6 +165,7 @@ body::after {
 .repo-title {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 14px;
   margin-bottom: 24px;
   padding-bottom: 16px;
@@ -183,7 +184,7 @@ body::after {
 }
 
 .repo-title-text {
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .repo-name {
@@ -197,8 +198,9 @@ body::after {
 /* ── GRID ── */
 .grid {
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -208,6 +210,8 @@ body::after {
   position: relative;
   display: flex;
   align-items: stretch;
+  flex: 0 0 calc((100% - 24px) / 3);
+  min-width: 0;
   text-decoration: none;
   color: var(--text);
   background: var(--surface);
@@ -336,11 +340,11 @@ body::after {
 }
 
 @media (max-width: 900px) {
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .btn-card { flex-basis: calc((100% - 12px) / 2); }
 }
 
 @media (max-width: 640px) {
-  .grid { grid-template-columns: 1fr; }
+  .btn-card { flex-basis: 100%; }
   .header h1 { font-size: 2rem; }
   .page { padding: 40px 16px 60px; }
   .header { margin-bottom: 40px; }
