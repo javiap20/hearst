@@ -1031,6 +1031,38 @@ th.th-yoy {
 .family-table tbody tr.strategy-row.tone-social:hover td{background:#d8c9f0!important;}
 .family-table tbody tr.sub-row.tone-social:hover td{background:#eee7f9!important;}
 
+
+
+/* Resumen de ingresos · 4 cards */
+.income-summary-block{padding-bottom:28px;}
+.income-summary-block .section-separator{margin-bottom:26px;}
+.income-summary-section{background:#fff;border:1px solid var(--border2);border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(16,42,86,.05);}
+.income-summary-head{padding:18px 24px 14px;}
+.income-cards-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:18px 20px 20px;background:#fff;}
+.income-card{position:relative;overflow:hidden;background:#fff;border:1px solid var(--border);border-radius:15px;padding:20px 17px 17px;box-shadow:0 1px 4px rgba(16,42,86,.06);min-height:142px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.income-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent);}
+.income-card.digital::before{background:var(--blue);}
+.income-card.print::before{background:var(--purple);}
+.income-card.eventos::before{background:var(--teal);}
+.income-card-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:700;margin-bottom:8px;text-align:center;width:100%;}
+.income-card-value{font-family:Arial,Helvetica,sans-serif;font-size:27px;font-weight:800;letter-spacing:-.7px;color:var(--text);line-height:1.05;white-space:nowrap;text-align:center;width:100%;}
+.income-card-prev{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:var(--text2);margin-top:9px;line-height:1.35;text-align:center;width:100%;}
+.income-yoy{font-weight:800;white-space:nowrap;}
+.income-yoy.pos{color:var(--green);}
+.income-yoy.neg{color:var(--red);}
+.income-yoy.neutral{color:var(--text3);}
+.income-card-note{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:var(--text3);margin-top:6px;text-align:center;width:100%;}
+.income-card.total{background:linear-gradient(180deg,rgba(245,200,66,.20) 0%,rgba(245,200,66,.06) 52%,#fff 100%);}
+.income-card.digital{background:linear-gradient(180deg,rgba(37,99,235,.16) 0%,rgba(37,99,235,.05) 52%,#fff 100%);}
+.income-card.print{background:linear-gradient(180deg,rgba(124,58,237,.16) 0%,rgba(124,58,237,.05) 52%,#fff 100%);}
+.income-card.eventos{background:linear-gradient(180deg,rgba(13,148,136,.16) 0%,rgba(13,148,136,.05) 52%,#fff 100%);}
+.income-card.total .income-card-value{color:var(--accent2);}
+.income-card.digital .income-card-value{color:var(--blue);}
+.income-card.print .income-card-value{color:var(--purple);}
+.income-card.eventos .income-card-value{color:var(--teal);}
+@media(max-width:1000px){.income-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:560px){.income-cards-grid{grid-template-columns:1fr;}.income-card-value{font-size:24px;}}
+
 /* Estrategia Comercial · Mix digital */
 .family-block{padding:0 24px 42px}.section-separator{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 36px;padding:0 2px;min-height:22px}.section-separator::before,.section-separator::after{content:'';height:1px;background:#cfd6e2;flex:0 0 25%;max-width:25%}.section-separator-mark{width:22px;height:14px;position:relative;display:block;flex:0 0 22px}.section-separator-mark::before,.section-separator-mark::after{content:'';position:absolute;top:5px;width:12px;height:2px;background:#102a56;border-radius:2px}.section-separator-mark::before{left:1px;transform:rotate(40deg);transform-origin:left center}.section-separator-mark::after{right:1px;transform:rotate(-40deg);transform-origin:right center}.strategy-section-card{background:#fff;border:1px solid var(--border2);border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(16,42,86,.05)}.family-block-title-wrap{text-align:center;margin:0;padding:20px 24px 16px;background:#f7f9fc;border-bottom:1px solid var(--border2)}.family-block-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;letter-spacing:.15px;text-transform:uppercase;color:var(--text)}
 .mix-period-toggle{display:inline-flex;align-items:center;justify-content:center;margin:10px auto 0;border:1px solid #d5deea;border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(16,42,86,.05)}
@@ -1169,8 +1201,8 @@ th.th-yoy {
       <div class="main-filters-row main-filters-row-mes">
         <div class="chip-filter chip-filter-full"><label>Mes</label><div class="chip-box" id="m-chips-mes"></div></div>
         <div class="main-filters-row-extra">
-          <div class="main-filter-group"><label>Situación</label><select id="m-f-sit" onchange="refreshFilters();renderFamilies()"><option value="all">Todas</option></select></div>
-          <div class="main-filter-group"><label>Estado anunciante</label><select id="m-f-estado-anun" onchange="renderFamilies()"><option value="all">Todos</option><option value="ganados">✅ Ganados (nuevos)</option><option value="perdidos">❌ Perdidos</option></select></div>
+          <div class="main-filter-group"><label>Situación</label><select id="m-f-sit" onchange="refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()"><option value="all">Todas</option></select></div>
+          <div class="main-filter-group"><label>Estado anunciante</label><select id="m-f-estado-anun" onchange="renderFamilies();renderIncomeSummary();updateTabCounts()"><option value="all">Todos</option><option value="ganados">✅ Ganados (nuevos)</option><option value="perdidos">❌ Perdidos</option></select></div>
           <button class="btn-clear-main" onclick="resetFilters()">✕ Limpiar filtros</button>
         </div>
       </div>
@@ -1188,6 +1220,43 @@ th.th-yoy {
       <button class="dashboard-tab active" role="tab" aria-selected="true" type="button" onclick="setDashboardTab(this)">Mix de Venta</button>
     </div>
   </div>
+
+  <div class="family-block income-summary-block" id="income-summary-block">
+    <div class="section-separator" aria-hidden="true"><span class="section-separator-mark"></span></div>
+    <section class="income-summary-section">
+      <div class="family-block-title-wrap income-summary-head">
+        <div class="family-block-title">Resumen de ingresos</div>
+        <div class="family-block-subtitle" id="income-summary-subtitle">Ingresos de los meses seleccionados</div>
+      </div>
+      <div class="income-cards-grid">
+        <div class="income-card total">
+          <div class="income-card-label">Total ingresos</div>
+          <div class="income-card-value" id="income-card-total">—</div>
+          <div class="income-card-prev" id="income-card-total-prev">Año anterior: —</div>
+          <div class="income-card-note" id="income-card-total-note">Digital + Print + Eventos</div>
+        </div>
+        <div class="income-card digital">
+          <div class="income-card-label">Digital</div>
+          <div class="income-card-value" id="income-card-digital">—</div>
+          <div class="income-card-prev" id="income-card-digital-prev">Año anterior: —</div>
+          <div class="income-card-note" id="income-card-digital-note">—</div>
+        </div>
+        <div class="income-card print">
+          <div class="income-card-label">Print</div>
+          <div class="income-card-value" id="income-card-print">—</div>
+          <div class="income-card-prev" id="income-card-print-prev">Año anterior: —</div>
+          <div class="income-card-note" id="income-card-print-note">—</div>
+        </div>
+        <div class="income-card eventos">
+          <div class="income-card-label">Eventos</div>
+          <div class="income-card-value" id="income-card-eventos">—</div>
+          <div class="income-card-prev" id="income-card-eventos-prev">Año anterior: —</div>
+          <div class="income-card-note" id="income-card-eventos-note">—</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div class="family-block">
     <div class="section-separator" aria-hidden="true"><span class="section-separator-mark"></span></div>
     <section class="strategy-section-card">
@@ -1324,16 +1393,20 @@ function setDashboardTab(el){
   el.setAttribute('aria-selected','true');
 }
 
-function setChannel(el){document.querySelectorAll('.channel-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');mActiveChannel=el.dataset.ch;populateYear();refreshFilters();renderFamilies();updateTabCounts();}
+function setChannel(el){document.querySelectorAll('.channel-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');mActiveChannel=el.dataset.ch;populateYear();refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts();}
 function buildChips(key,vals,labelFn){
   const el=document.getElementById('m-chips-'+key);if(!el)return;const s=chipState[key];const valid=new Set(vals);
+  const currentMonth=MONTHS[new Date().getMonth()];
+  if(key==='mes')valid.add(currentMonth);
   [...s].forEach(v=>{if(v!=='__NONE__'&&!valid.has(v))s.delete(v)});
   const none=s.has('__NONE__'),all=!none&&s.size===0;let h='';
   if(key==='mes'){
     const closed=closedMonths().filter(m=>valid.has(m));
+    const currentActive=!none&&s.size===1&&s.has(currentMonth);
     const closedActive=!none&&closed.length>0&&closed.length===s.size&&closed.every(m=>s.has(m));
     h+=`<span class="chip-main chip-all${all?' active':''}" onclick="toggleChip('mes','all')">Todos</span>`;
     if(closed.length)h+=`<span class="chip-main${closedActive?' active':''}" onclick="toggleChip('mes','closed')">Cerrados</span>`;
+    h+=`<span class="chip-main${currentActive?' active':''}" onclick="toggleChip('mes','current')">Mes actual</span>`;
     h+=`<span class="chip-main${none?' active':''}" onclick="toggleChip('mes','none')">Ninguno</span>`;
   } else {
     h+=`<span class="chip-main chip-all${all?' active':''}" onclick="toggleChip('${key}','all')">Todos</span>`;
@@ -1394,14 +1467,120 @@ function refreshFilters(){
   buildChips('com',[...new Set(rowsForYear.map(r=>r._comercial).filter(Boolean))]);
 }
 function toggleChip(key,val){
-  const s=chipState[key];if(val==='all')s.clear();else if(val==='none'){s.clear();s.add('__NONE__')}else if(val==='closed'){s.clear();closedMonths().forEach(m=>s.add(m))}else{s.delete('__NONE__');s.has(val)?s.delete(val):s.add(val)}
-  refreshFilters();renderFamilies();updateTabCounts();
+  const s=chipState[key];if(val==='all')s.clear();else if(val==='none'){s.clear();s.add('__NONE__')}else if(val==='closed'){s.clear();closedMonths().forEach(m=>s.add(m))}else if(val==='current'){s.clear();s.add(MONTHS[new Date().getMonth()])}else{s.delete('__NONE__');s.has(val)?s.delete(val):s.add(val)}
+  refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts();
 }
 function toggleCompactFilter(e,key){e.stopPropagation();const w=document.querySelector('.compact-filter[data-filter-key="'+key+'"]');const was=w&&w.classList.contains('open');document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'));if(w&&!was){w.classList.add('open');positionPanel(w)}}
 function positionPanel(w){const p=w.querySelector('.compact-filter-panel'),row=document.getElementById('compact-main-filters'),b=w.querySelector('.compact-filter-btn');if(!p||!row||!b)return;const rr=row.getBoundingClientRect(),br=b.getBoundingClientRect();p.style.left=Math.max(8,rr.left)+'px';p.style.top=(br.bottom+5)+'px';p.style.width=Math.max(280,rr.width)+'px';p.style.maxWidth='calc(100vw - 16px)'}
 document.addEventListener('click',e=>{if(!e.target.closest('.compact-filter'))document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'))});
 window.addEventListener('resize',()=>{const w=document.querySelector('.compact-filter.open');if(w)positionPanel(w)});
 window.addEventListener('scroll',()=>{const w=document.querySelector('.compact-filter.open');if(w)positionPanel(w)},true);
+
+function advertiserName(r){return String((r&&r[COL_ANUN])||r?._anun||'').trim();}
+function selectedMonthsText(){
+  const meses=selected('mes');
+  if(!meses.length) return 'Ningún mes';
+  if(meses.includes('all')) return 'Todos los meses';
+  return meses.map(m=>SHORT[m]||m).join(', ');
+}
+function summaryRowsForCards(yearOverride, stateReferenceYear){
+  const selectedYear=document.getElementById('m-f-year')?.value||'all';
+  const effectiveYear=yearOverride===undefined?selectedYear:String(yearOverride);
+  const referenceYear=stateReferenceYear===undefined?selectedYear:String(stateReferenceYear);
+  const meses=selected('mes'),ga=selected('globalarea'),a=selected('area'),sec=selected('sector'),fam=selected('familia'),pub=selected('pub'),com=selected('com');
+  const sit=document.getElementById('m-f-sit')?.value||'all';
+  const estado=document.getElementById('m-f-estado-anun')?.value||'all';
+  const validChannels=new Set(['DIGITAL','PRINT','EVENTOS']);
+  const match=(r,includeYear=true)=>{
+    if(!validChannels.has(r._canal)) return false;
+    if(includeYear&&effectiveYear!=='all'&&r._year!==effectiveYear) return false;
+    if(!meses.includes('all')&&!meses.includes(r._mes)) return false;
+    if(!ga.includes('all')&&!ga.includes(r._areaGlobal)) return false;
+    if(!a.includes('all')&&!a.includes(r._area)) return false;
+    if(!sec.includes('all')&&!sec.includes(r._sectorClean)) return false;
+    if(!fam.includes('all')&&!fam.includes(r._fam)) return false;
+    if(!pub.includes('all')&&!pub.includes(r._pubNorm)) return false;
+    if(!com.includes('all')&&!com.includes(r._comercial)) return false;
+    if(sit!=='all'&&sit!==r._sit) return false;
+    return true;
+  };
+  let out=DATA.filter(r=>match(r,true));
+  if(estado!=='all'&&referenceYear!=='all'){
+    const prevYear=String((parseInt(referenceYear,10)||0)-1);
+    const base=DATA.filter(r=>match(r,false));
+    const curSet=new Set(base.filter(r=>r._year===referenceYear).map(advertiserName).filter(Boolean));
+    const prevSet=new Set(base.filter(r=>r._year===prevYear).map(advertiserName).filter(Boolean));
+    out=out.filter(r=>{
+      const an=advertiserName(r);
+      if(!an) return false;
+      if(estado==='ganados') return curSet.has(an)&&!prevSet.has(an);
+      if(estado==='perdidos') return prevSet.has(an)&&!curSet.has(an);
+      return true;
+    });
+  }
+  return out;
+}
+function formatSignedMoney(n){
+  const v=Number(n)||0;
+  if(v>0) return '+'+money(v);
+  if(v<0) return money(v);
+  return '0 €';
+}
+function formatPct(n){
+  return ((n>=0?'+':'')+n.toFixed(1)+'%').replace('.',',');
+}
+function yoyCardHtml(currentValue,prevValue){
+  const cur=Number(currentValue)||0;
+  const prev=Number(prevValue)||0;
+  const delta=cur-prev;
+  if(prev!==0){
+    const pct=(delta/Math.abs(prev))*100;
+    const cls=pct>0?'pos':(pct<0?'neg':'neutral');
+    return `<span class="income-yoy ${cls}">${formatPct(pct)} (${formatSignedMoney(delta)})</span>`;
+  }
+  if(cur!==0){
+    return `<span class="income-yoy pos">Nuevo (${formatSignedMoney(delta)})</span>`;
+  }
+  return `<span class="income-yoy neutral">0,0% (0 €)</span>`;
+}
+function setIncomeCard(id,value,rows,prevValue,prevYear,hasPrevYear){
+  const val=document.getElementById('income-card-'+id);
+  const note=document.getElementById('income-card-'+id+'-note');
+  const prev=document.getElementById('income-card-'+id+'-prev');
+  if(val) val.textContent=money(value);
+  if(prev){
+    if(hasPrevYear) prev.innerHTML=`Año anterior ${esc(prevYear)}: ${money(prevValue)} · ${yoyCardHtml(value,prevValue)}`;
+    else prev.innerHTML='Año anterior: —';
+  }
+  if(note) note.textContent=numberThousands(rows.length)+' registros';
+}
+function renderIncomeSummary(){
+  const wrap=document.getElementById('income-summary-block');
+  if(!wrap) return;
+  const selectedYear=document.getElementById('m-f-year')?.value||'all';
+  const hasPrevYear=selectedYear!=='all'&&!Number.isNaN(parseInt(selectedYear,10));
+  const prevYear=hasPrevYear?String(parseInt(selectedYear,10)-1):'';
+  const rows=summaryRowsForCards(selectedYear,selectedYear);
+  const prevRows=hasPrevYear?summaryRowsForCards(prevYear,selectedYear):[];
+  const rowsDigital=rows.filter(r=>r._canal==='DIGITAL');
+  const rowsPrint=rows.filter(r=>r._canal==='PRINT');
+  const rowsEventos=rows.filter(r=>r._canal==='EVENTOS');
+  const prevDigital=prevRows.filter(r=>r._canal==='DIGITAL');
+  const prevPrint=prevRows.filter(r=>r._canal==='PRINT');
+  const prevEventos=prevRows.filter(r=>r._canal==='EVENTOS');
+  const sumRows=rs=>rs.reduce((s,r)=>s+(Number(r._ingreso)||0),0);
+  const d=sumRows(rowsDigital),p=sumRows(rowsPrint),e=sumRows(rowsEventos),total=d+p+e;
+  const pd=sumRows(prevDigital),pp=sumRows(prevPrint),pe=sumRows(prevEventos),ptotal=pd+pp+pe;
+  const subtitle=document.getElementById('income-summary-subtitle');
+  if(subtitle) subtitle.textContent=(selectedYear==='all'?'Todos los años':selectedYear)+' · '+selectedMonthsText()+' · Digital + Print + Eventos';
+  setIncomeCard('total',total,rows,ptotal,prevYear,hasPrevYear);
+  setIncomeCard('digital',d,rowsDigital,pd,prevYear,hasPrevYear);
+  setIncomeCard('print',p,rowsPrint,pp,prevYear,hasPrevYear);
+  setIncomeCard('eventos',e,rowsEventos,pe,prevYear,hasPrevYear);
+  const totalNote=document.getElementById('income-card-total-note');
+  if(totalNote) totalNote.textContent='Digital + Print + Eventos · '+numberThousands(rows.length)+' registros';
+}
+
 function strategyItems(r){
   const fam=String(r._fam||'').trim();
   const prod=String(r._prod||'').trim();
@@ -1419,7 +1598,6 @@ function strategyItems(r){
   else if(fam==='Curated') items.push({parent:'Branded Content / Curated',child:'Curated'});
   else if(fam=='Sponsorship' && prod=='Podcast para anunciantes') items.push({parent:'Otros Contenidos',child:'Podcast'});
   else if(fam==='Sponsorship' && prod==='Sponsored Newsletter') items.push({parent:'Otros Contenidos',child:'Newsletter'});
-  else if(fam==='Sponsorship' && ['E-Article Sponsored','E-Photo Gallery integred'].includes(prod)) items.push({parent:'Otros Contenidos',child:'Afiliación'});
   else if(fam==='Social Networks'){
     if(p==='content ignition') items.push({parent:'Social Media',child:'Internacional'});
     else if(p.includes('(sponsored post)')) items.push({parent:'Social Media',child:'Paid'});
@@ -1552,17 +1730,13 @@ function tooltipContent(parent, child){
     ],
     'Otros Contenidos|': [
       ['Podcast','familia Sponsorship · producto: Podcast para anunciantes'],
-      ['Newsletter','familia Sponsorship · producto: Sponsored Newsletter'],
-      ['Afiliación','familia Sponsorship · productos: E-Article Sponsored + E-Photo Gallery integred']
+      ['Newsletter','familia Sponsorship · producto: Sponsored Newsletter']
     ],
     'Otros Contenidos|Podcast': [
       ['Podcast','familia Sponsorship · producto: Podcast para anunciantes']
     ],
     'Otros Contenidos|Newsletter': [
       ['Newsletter','familia Sponsorship · producto: Sponsored Newsletter']
-    ],
-    'Otros Contenidos|Afiliación': [
-      ['Afiliación','familia Sponsorship · productos: E-Article Sponsored + E-Photo Gallery integred']
     ],
     'Social Media|': [
       ['Internacional','familia Social Networks · producto: Content Ignition'],
@@ -1595,15 +1769,23 @@ function showStrategyTooltip(el, parent, child){
 }
 function hideStrategyTooltip(){const tt=document.getElementById('strategy-tooltip');if(tt)tt.style.display='none';}
 function detailGroupRows(){
-  return [
+  const groups=[
     {label:'Curated', fams:['Curated','Native']},
-    {label:'Display Directo', fams:['Display','Programatica Display Directo']},
-    {label:'Display Indirecto', fams:['Programatica Display Indirecto']},
+    {label:'Display Directo', fams:['Display','Programatica Display Directo','Programática Display Directo']},
+    {label:'Display Indirecto', fams:['Programatica Display Indirecto','Programática Display Indirecto']},
     {label:'Social Networks', fams:['Social Networks']},
     {label:'Sponsorship', fams:['Sponsorship']},
-    {label:'Video Directo', fams:['Video','Video Programatico Directo']},
-    {label:'Video Indirecto', fams:['Video Programatico Indirecto']}
+    {label:'Video Directo', fams:['Video','Vídeo','Video Programatico Directo','Video Programático Directo','Vídeo Programatico Directo','Vídeo Programático Directo']},
+    {label:'Video Indirecto', fams:['Video Programatico Indirecto','Video Programático Indirecto','Vídeo Programatico Indirecto','Vídeo Programático Indirecto']}
   ];
+  // Si el Excel Digital trae alguna familia no contemplada arriba,
+  // la mostramos en una fila propia para que el TOTAL del bloque cuadre con el Excel.
+  const known=new Set(groups.flatMap(g=>g.fams));
+  const extra=[...new Set(DATA.filter(r=>r._canal==='DIGITAL').map(r=>String(r._fam||'').trim()).filter(Boolean))]
+    .filter(f=>!known.has(f))
+    .sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+  if(extra.length) groups.push({label:'Otras familias', fams:extra});
+  return groups;
 }
 function detailProductsForGroup(group, allRows){
   const set=new Set();
@@ -1650,7 +1832,7 @@ function renderFamilyDetail(){
     h+='</tr>';
   }
   const detailTotals={};
-  allYears.forEach(y=>{ detailTotals[y]=groups.reduce((sum,group)=>sum+detailValue(yearRows[y],group,null,y),0); });
+  allYears.forEach(y=>{ detailTotals[y]=digitalTotals[y]||0; });
   groups.forEach((group,gi)=>{
     renderMetricRow(group.label,group,null,true,gi);
     detailProductsForGroup(group,allDigital).forEach(prod=>renderMetricRow(prod,group,prod,false,gi));
@@ -1660,7 +1842,7 @@ function renderFamilyDetail(){
   allYears.forEach((year,idx)=>{
     const cur=detailTotals[year]||0;
     let prev=null;
-    if(idx>0){ const py=allYears[idx-1]; const prevRows=(detailPeriodMode==='selected')?yearRows[py]:((String(year)===currentYear)?strategyBaseFilter(DATA,true).filter(r=>r._year===String(py)):yearRows[py]); prev=groups.reduce((sum,group)=>sum+detailValue(prevRows,group,null,py),0); }
+    if(idx>0){ const py=allYears[idx-1]; const prevRows=(detailPeriodMode==='selected')?yearRows[py]:((String(year)===currentYear)?strategyBaseFilter(DATA,true).filter(r=>r._year===String(py)):yearRows[py]); prev=prevRows.reduce((sum,r)=>sum+r._ingreso,0); }
     const g=(prev!==null&&prev!==0)?((cur-prev)/Math.abs(prev)*100):null;
     const cls=g===null?'neutral':(g>=0?'pos':'neg');
     const growth=g===null?'—':((g>=0?'+':'')+g.toFixed(1)+'%');
@@ -1686,7 +1868,7 @@ function renderFamilies(){
     {parent:'Display',children:['Directo','Indirecto']},
     {parent:'Vídeo',children:['Directo','Indirecto']},
     {parent:'Branded Content / Curated',children:['Branded Content','Curated']},
-    {parent:'Otros Contenidos',children:['Podcast','Newsletter','Afiliación']},
+    {parent:'Otros Contenidos',children:['Podcast','Newsletter']},
     {parent:'Social Media',children:['Internacional','Organic','Paid']}
   ];
   if(!allYears.length){el.innerHTML='<div class="empty-family">Sin años en el Excel Digital</div>';return;}
@@ -1754,8 +1936,8 @@ function renderFamilies(){
   h+='</tbody></table>'; el.innerHTML=h; renderFamilyDetail();
   if(!document.getElementById('strategy-tooltip')){const tt=document.createElement('div');tt.id='strategy-tooltip';tt.className='strategy-tooltip';document.body.appendChild(tt);}
 }
-function onYearChange(){document.getElementById('m-year-display').textContent=document.getElementById('m-f-year').value==='all'?'todos los años':document.getElementById('m-f-year').value;refreshFilters();renderFamilies();updateTabCounts()}
-function resetFilters(){document.getElementById('m-f-year').value='all';document.getElementById('m-f-sit').value='all';document.getElementById('m-f-estado-anun').value='all';Object.keys(chipState).forEach(k=>chipState[k].clear());refreshFilters();renderFamilies();updateTabCounts()}
+function onYearChange(){document.getElementById('m-year-display').textContent=document.getElementById('m-f-year').value==='all'?'todos los años':document.getElementById('m-f-year').value;refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}
+function resetFilters(){document.getElementById('m-f-year').value='all';document.getElementById('m-f-sit').value='all';document.getElementById('m-f-estado-anun').value='all';Object.keys(chipState).forEach(k=>chipState[k].clear());refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}
 async function autoLoad(){
   const required=['DIGITAL','PRINT','EVENTOS'];
   await Promise.all(required.map(async canal=>{try{const res=await fetch(EXCEL_URLS[canal],{cache:'no-cache'});if(!res.ok)throw new Error(canal+' '+res.status);WORKBOOKS[canal]=XLSX.read(await res.arrayBuffer(),{type:'array'});FILENAMES[canal]='PRODUCCION '+canal+'.xlsx';markLoaded(canal)}catch(e){markPending(canal)}}));
@@ -1767,7 +1949,7 @@ async function autoLoad(){
 function markLoaded(c){const card=document.getElementById('up-card-'+c),st=document.getElementById('up-status-'+c);if(card)card.classList.add('loaded');if(st)st.textContent='✓ '+FILENAMES[c]}
 function markPending(c){const st=document.getElementById('up-status-'+c);if(st)st.textContent='No disponible · pulsa para subirlo'}
 function onFileInput(inp,canal){if(!inp.files[0])return;const f=inp.files[0],reader=new FileReader(),st=document.getElementById('up-status-'+canal);if(st)st.textContent='Leyendo '+f.name+'…';reader.onload=e=>{try{WORKBOOKS[canal]=XLSX.read(e.target.result,{type:'array'});FILENAMES[canal]=f.name;markLoaded(canal);if(['DIGITAL','PRINT','EVENTOS'].every(c=>WORKBOOKS[c]))processAll()}catch(err){if(st)st.textContent='Error: '+err.message}};reader.readAsArrayBuffer(f)}
-function processAll(){try{DATA=[];['DIGITAL','PRINT','EVENTOS'].forEach(c=>{if(WORKBOOKS[c])DATA.push(...parseRows(WORKBOOKS[c],c))});document.getElementById('top-badge').style.display='';document.getElementById('top-badge').textContent=numberThousands(DATA.length)+' registros · '+['DIGITAL','PRINT','EVENTOS'].map(c=>FILENAMES[c]).join(' · ');document.getElementById('upload-screen').style.display='none';document.getElementById('app-shell').style.display='block';populateYear();initClosedMonths();document.getElementById('m-year-display').textContent=document.getElementById('m-f-year').value==='all'?'todos los años':document.getElementById('m-f-year').value;refreshFilters();renderFamilies();updateTabCounts()}catch(e){document.getElementById('up-msg').textContent='Error al procesar los archivos: '+e.message;console.error(e)}}
+function processAll(){try{DATA=[];['DIGITAL','PRINT','EVENTOS'].forEach(c=>{if(WORKBOOKS[c])DATA.push(...parseRows(WORKBOOKS[c],c))});document.getElementById('top-badge').style.display='';document.getElementById('top-badge').textContent=numberThousands(DATA.length)+' registros · '+['DIGITAL','PRINT','EVENTOS'].map(c=>FILENAMES[c]).join(' · ');document.getElementById('upload-screen').style.display='none';document.getElementById('app-shell').style.display='block';populateYear();initClosedMonths();document.getElementById('m-year-display').textContent=document.getElementById('m-f-year').value==='all'?'todos los años':document.getElementById('m-f-year').value;refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}catch(e){document.getElementById('up-msg').textContent='Error al procesar los archivos: '+e.message;console.error(e)}}
 document.addEventListener('DOMContentLoaded',autoLoad);
 </script>
 <script>
@@ -1780,6 +1962,7 @@ document.addEventListener('DOMContentLoaded',autoLoad);
       var fam=document.getElementById("family-only-app"); if(fam) fam.style.display="block";
       if(typeof updateFilters==='function') updateFilters();
       if(typeof renderFamilies==='function') renderFamilies();
+      if(typeof renderIncomeSummary==='function') renderIncomeSummary();
     } catch(e) { console.error(e); }
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(bootEstrat, 50); });
