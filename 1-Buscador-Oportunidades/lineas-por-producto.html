@@ -52,14 +52,15 @@
   .pub-row .mf-chip{font-size:9px;padding:3px 8px;}
   .empty-state{background:#fff;border:1px dashed var(--border);border-radius:10px;padding:60px 20px;text-align:center;color:var(--muted);}
   .empty-state b{color:var(--text);}
-  .area-commercial-row{display:none;grid-template-columns:minmax(0,1fr) minmax(360px,.55fr);gap:14px;margin-bottom:14px;}
-  .tab-bar{display:flex;gap:8px;margin-bottom:0;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .area-commercial-row{display:none;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:10px;}
+  #sectorCommercialRow{grid-template-columns:minmax(0,65fr) minmax(0,35fr);}
+  .tab-bar{display:flex;gap:5px;margin-bottom:0;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px;}
   .area-label{width:100%;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 2px;}
-  .commercial-card{display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .commercial-card{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px;}
   .commercial-card .comercial-filter{min-width:0;}
   .commercial-card .comercial-filter input{max-width:none;}
-  @media(max-width:900px){.area-commercial-row{grid-template-columns:1fr;}}
-  .tab-btn{padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--navy);cursor:pointer;border:1px solid var(--border);border-radius:16px;background:#f4f6f9;transition:.15s;user-select:none;white-space:nowrap;}
+  @media(max-width:900px){.area-commercial-row,#sectorCommercialRow{grid-template-columns:1fr;}}
+  .tab-btn{padding:5px 9px;font-size:10.5px;font-weight:600;color:var(--navy);cursor:pointer;border:1px solid var(--border);border-radius:14px;background:#f4f6f9;transition:.15s;user-select:none;white-space:nowrap;}
   .tab-btn:hover{border-color:var(--accent);}
   .tab-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600;}
 
@@ -70,10 +71,13 @@
   #comercialClearBtn{display:none;}
 
   /* ── Filtro de Sector ── */
-  #sectorFilterWrap{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:14px;margin-bottom:16px;}
-  .sector-filters-label{font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 8px;}
-  .sector-btns{display:flex;flex-wrap:wrap;gap:8px;margin:0;}
-  .sector-btn{padding:7px 14px;border-radius:16px;border:1px solid var(--border);background:#f4f6f9;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--navy);user-select:none;transition:.15s;}
+  #sectorFilterWrap{background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px;margin:0;}
+  .sector-filters-label{font-size:11px;font-weight:600;color:var(--muted);margin:0 0 6px;}
+  .sector-btns{display:flex;flex-wrap:wrap;gap:4px;margin:0;}
+  .sector-btn{padding:4px 7px;border-radius:13px;border:1px solid var(--border);background:#f4f6f9;font-size:10px;font-weight:600;cursor:pointer;color:var(--navy);user-select:none;transition:.15s;}
+  .zone-btns{display:flex;flex-wrap:wrap;gap:5px;}
+  .zone-btn{padding:5px 9px;border-radius:14px;border:1px solid var(--border);background:#f4f6f9;font-size:10.5px;font-weight:600;cursor:pointer;color:var(--navy);}
+  .zone-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
   .sector-btn:hover{border-color:var(--accent);}
   .sector-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
 
@@ -98,14 +102,17 @@
   table.mini-canal-table tbody tr:hover{background:#f8fafc;}
   table.mini-canal-table tfoot td{padding:9px 8px;text-align:center;font-weight:700;color:var(--navy);background:#eef2f7;}
   table.mini-canal-table tfoot td:first-child{text-align:left;}
-  table.mini-canal-table th:nth-child(1),table.mini-canal-table td:nth-child(1){width:46%;}
-  table.mini-canal-table th:nth-child(2),table.mini-canal-table td:nth-child(2){width:18%;}
-  table.mini-canal-table th:nth-child(3),table.mini-canal-table td:nth-child(3){width:18%;}
-  table.mini-canal-table th:nth-child(4),table.mini-canal-table td:nth-child(4){width:18%;}
-  table.mini-canal-table.no-franja th:nth-child(1),table.mini-canal-table.no-franja td:nth-child(1){width:52%;}
-  table.mini-canal-table.no-franja th:nth-child(3),table.mini-canal-table.no-franja td:nth-child(3){width:24%;}
-  table.mini-canal-table.no-franja th:nth-child(4),table.mini-canal-table.no-franja td:nth-child(4){width:24%;}
+  table.mini-canal-table th:nth-child(1),table.mini-canal-table td:nth-child(1){width:34%;}
+  table.mini-canal-table th:nth-child(2),table.mini-canal-table td:nth-child(2){width:16%;}
+  table.mini-canal-table th:nth-child(3),table.mini-canal-table td:nth-child(3){width:16%;}
+  table.mini-canal-table th:nth-child(4),table.mini-canal-table td:nth-child(4){width:16%;}
+  table.mini-canal-table th:nth-child(5),table.mini-canal-table td:nth-child(5){width:18%;}
+  table.mini-canal-table.no-franja th:nth-child(1),table.mini-canal-table.no-franja td:nth-child(1){width:40%;}
+  table.mini-canal-table.no-franja th:nth-child(3),table.mini-canal-table.no-franja td:nth-child(3){width:18%;}
+  table.mini-canal-table.no-franja th:nth-child(4),table.mini-canal-table.no-franja td:nth-child(4){width:18%;}
+  table.mini-canal-table.no-franja th:nth-child(5),table.mini-canal-table.no-franja td:nth-child(5){width:24%;}
   .franja-col{display:none;}
+  .line-count-warning{display:inline-block;width:8px;height:8px;margin-left:5px;border-radius:50%;background:#d64545;vertical-align:1px;}
   table.mini-canal-table tbody td.franja-col{background:#fdeef3;font-weight:700;color:#a3265a;}
   table.mini-canal-table tbody tr:hover td.franja-col{background:#fbe1ea;}
   table.mini-canal-table tfoot td.franja-col{background:#f6c8da;}
@@ -268,19 +275,22 @@
       <div class="tab-btn" data-tab="internacional" onclick="switchTab('internacional',this)">Internacional</div>
       <div class="tab-btn" data-tab="programatica" onclick="switchTab('programatica',this)">Programática</div>
     </div>
-    <div class="commercial-card">
-      <div class="area-label">COMERCIAL</div>
-      <div class="comercial-filter">
-        <input type="text" id="comercialInput" list="comercialDatalist" placeholder="Escribe o selecciona un comercial…" oninput="onComercialInput()" autocomplete="off">
-        <datalist id="comercialDatalist"></datalist>
-        <button class="mf-btn" id="comercialClearBtn" onclick="clearComercial()">✕</button>
-      </div>
+    <div class="commercial-card" id="zoneFilterCard">
+      <div class="area-label">ZONA</div><div class="zone-btns" id="zoneBtns"></div>
     </div>
   </div>
 
-  <div id="sectorFilterWrap" style="display:none">
-    <div class="sector-filters-label">Elige un sector si quieres ver el desglose solo de ese sector:</div>
-    <div class="sector-btns" id="sectorBtns"></div>
+  <div class="area-commercial-row" id="sectorCommercialRow">
+    <div id="sectorFilterWrap" style="display:none">
+      <div class="sector-filters-label">SECTORES</div><div class="sector-btns" id="sectorBtns"></div>
+    </div>
+    <div class="commercial-card" id="commercialFilterCard">
+      <div class="area-label">COMERCIAL</div>
+      <div class="comercial-filter">
+        <input type="text" id="comercialInput" list="comercialDatalist" placeholder="Escribe o selecciona un comercial…" oninput="onComercialInput()" autocomplete="off">
+        <datalist id="comercialDatalist"></datalist><button class="mf-btn" id="comercialClearBtn" onclick="clearComercial()">✕</button>
+      </div>
+    </div>
   </div>
 
   <div class="franja-filter" id="franjaFilter">
@@ -305,11 +315,12 @@ let ALL_YEARS = [];
 let selectedYear = new Date().getFullYear();
 let hasMesColumn = false;
 let selectedMonths = new Set();
-let activeTab = 'todos';
+let selectedAreaTabs = new Set();
 let selectedComercial = '';
 let selectedPubs = {}; // { Digital: Set([...]), Print: Set([...]), Eventos: Set([...]) }
 let ALL_COMERCIALES = [];
-let selectedSector = '';
+let selectedSectors = new Set();
+let selectedZones = new Set();
 let expandedProductos = new Set(); // claves "canal|||producto" con el desglose abierto
 let canalViewMode = {Digital:'anunciantes',Print:'anunciantes',Eventos:'anunciantes'};
 let expandedBudgetProduct = {Digital:null,Print:null,Eventos:null}; // un producto abierto por canal; todos empiezan plegados
@@ -334,6 +345,7 @@ const EXCEL_URLS = {
 
 const HEADER_ALIASES = {
   area:        ['áreas','areas','área','area','equipo','team'],
+  zona:        ['oficina de venta / centro de coste de la orden','oficina de venta/centro de coste de la orden','oficina de venta','centro de coste de la orden'],
   claseOrden:  ['clase de orden','clase orden','claseorden','clase_orden','order class','order type'],
   anio:        ['año inserción','ano insercion','año insercion','ano inserción','año'],
   mes:         ['mes inserción','mes insercion','mes'],
@@ -656,6 +668,7 @@ function processWorkbook(data,canal,filename){
 
   const hr=rows[0];
   const colArea=findColIndex(hr,HEADER_ALIASES.area);
+  const colZona=findColIndex(hr,HEADER_ALIASES.zona);
   const colClase=findColIndex(hr,HEADER_ALIASES.claseOrden);
   const colAnio=findColIndex(hr,HEADER_ALIASES.anio);
   const colMes=findColIndex(hr,HEADER_ALIASES.mes);
@@ -674,6 +687,7 @@ function processWorkbook(data,canal,filename){
   for(let i=1;i<rows.length;i++){
     const row=rows[i];
     const rawArea=colArea!==-1?String(row[colArea]||'').trim():'';
+    const zona=colZona!==-1?String(row[colZona]||'').trim():'';
     const rawClase=colClase!==-1?String(row[colClase]||'').trim():'';
     const anio=parseInt(row[colAnio],10);
     const mes=colMes!==-1?parseMonth(row[colMes]):null;
@@ -710,9 +724,9 @@ function processWorkbook(data,canal,filename){
       let pubLabel='Elle';
       if(isGourmet) pubLabel='Elle Gourmet';
       else if(isTravel) pubLabel='Elle Travel';
-      DATA.push({sector,team,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase,pubLabel});
+      DATA.push({sector,team,zona,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase,pubLabel});
     } else {
-      DATA.push({sector,team,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase});
+      DATA.push({sector,team,zona,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase});
     }
   }
   rebuildYears();
@@ -721,6 +735,7 @@ function processWorkbook(data,canal,filename){
   initPubFilter();
   populateComercialList();
   populateSectorButtons();
+  populateZoneButtons();
   showUI();
   render();
 }
@@ -753,6 +768,7 @@ function showUI(){
   document.getElementById('pubFilter').style.display='flex'; // .pub-filter usa flex-direction:column
   document.getElementById('tabBar').style.display='flex';
   document.getElementById('sectorFilterWrap').style.display='block';
+  document.getElementById('sectorCommercialRow').style.display='grid';
   document.getElementById('franjaFilter').style.display='flex';
   if(hasMesColumn) document.getElementById('monthFilter').style.display='flex';
 }
@@ -856,24 +872,24 @@ function setAllPubs(all){
 
 /* ────────────── ZONA (tab bar) ────────────── */
 function switchTab(tab,el){
-  activeTab=tab;
-  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
-  if(el) el.classList.add('active');
+  if(tab==='todos') selectedAreaTabs.clear();
+  else {
+    if(selectedAreaTabs.has(tab)) selectedAreaTabs.delete(tab);
+    else selectedAreaTabs.add(tab);
+  }
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.toggle('active',t.dataset.tab==='todos'?!selectedAreaTabs.size:selectedAreaTabs.has(t.dataset.tab)));
   render();
 }
-function getDataForTab(tab){
-  if(tab==='todos') return DATA;
-  if(tab==='madrid-lujo') return DATA.filter(d=>d.team==='Madrid');
-  if(tab==='madrid-lifestyle') return DATA.filter(d=>d.team==='Madrid');
-  if(tab==='barcelona') return DATA.filter(d=>d.team==='Barcelona');
-  if(tab==='internacional') return DATA.filter(d=>d.team==='Internacional');
-  if(tab==='programatica') return DATA.filter(d=>d.team==='Programática');
-  return DATA;
-}
-function getSectorFilterForTab(tab){
-  if(tab==='madrid-lujo') return new Set(SECTORES_MADRID_LUJO.map(normalize));
-  if(tab==='madrid-lifestyle') return new Set(SECTORES_MADRID_LIFESTYLE.map(normalize));
-  return null;
+function getDataForSelectedAreas(){
+  if(!selectedAreaTabs.size) return DATA;
+  return DATA.filter(d=>{
+    const sec=normalize(d.sector);
+    return (selectedAreaTabs.has('madrid-lujo')&&d.team==='Madrid'&&SECTORES_MADRID_LUJO.some(s=>normalize(s)===sec))||
+      (selectedAreaTabs.has('madrid-lifestyle')&&d.team==='Madrid'&&SECTORES_MADRID_LIFESTYLE.some(s=>normalize(s)===sec))||
+      (selectedAreaTabs.has('barcelona')&&d.team==='Barcelona')||
+      (selectedAreaTabs.has('internacional')&&d.team==='Internacional')||
+      (selectedAreaTabs.has('programatica')&&d.team==='Programática');
+  });
 }
 
 /* ────────────── COMERCIAL ────────────── */
@@ -908,24 +924,37 @@ function populateSectorButtons(){
   const set=new Set(DATA.map(d=>d.sector).filter(Boolean));
   const sectors=Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
   const wrap=document.getElementById('sectorBtns');
-  wrap.innerHTML=`<div class="sector-btn sector-all${selectedSector?'':' active'}">Todos</div>`+sectors.map(s=>`<div class="sector-btn">${s}</div>`).join('');
+  wrap.innerHTML=`<div class="sector-btn sector-all${selectedSectors.size?'':' active'}">Todos</div>`+sectors.map(s=>`<div class="sector-btn" data-sector="${escapeHtml(s)}">${escapeHtml(s)}</div>`).join('');
   const allBtn=wrap.querySelector('.sector-all');
   allBtn.addEventListener('click',()=>{
-    selectedSector='';
+    selectedSectors.clear();
     wrap.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('active'));
     allBtn.classList.add('active');
     render();
   });
   wrap.querySelectorAll('.sector-btn:not(.sector-all)').forEach((btn,i)=>{
     const s=sectors[i];
-    btn.classList.toggle('active', normalize(s)===normalize(selectedSector));
+    btn.classList.toggle('active', selectedSectors.has(normalize(s)));
     btn.addEventListener('click',()=>{
-      selectedSector=(normalize(selectedSector)===normalize(s))?'':s;
-      wrap.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('active'));
-      if(selectedSector) btn.classList.add('active'); else allBtn.classList.add('active');
+      const key=normalize(s);
+      if(selectedSectors.has(key)) selectedSectors.delete(key); else selectedSectors.add(key);
+      btn.classList.toggle('active',selectedSectors.has(key));
+      allBtn.classList.toggle('active',selectedSectors.size===0);
       render();
     });
   });
+}
+function populateZoneButtons(){
+  const zones=Array.from(new Set(DATA.map(d=>d.zona).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'es'));
+  const wrap=document.getElementById('zoneBtns');
+  wrap.innerHTML=`<button type="button" class="zone-btn${selectedZones.size?'':' active'}" data-zone="">Todas</button>`+zones.map(z=>`<button type="button" class="zone-btn${selectedZones.has(normalize(z))?' active':''}" data-zone="${escapeHtml(z)}">${escapeHtml(z)}</button>`).join('');
+  wrap.querySelectorAll('.zone-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    const key=normalize(btn.dataset.zone||'');
+    if(!key) selectedZones.clear();
+    else if(selectedZones.has(key)) selectedZones.delete(key); else selectedZones.add(key);
+    wrap.querySelectorAll('.zone-btn').forEach(b=>b.classList.toggle('active',b.dataset.zone?selectedZones.has(normalize(b.dataset.zone)):selectedZones.size===0));
+    render();
+  }));
 }
 
 /* ────────────── FRANJA DE IMPORTE ────────────── */
@@ -1160,22 +1189,21 @@ const ANUNCIANTES_EXCLUIDOS_NORM=['AJUSTE PROGRAMATICA'].map(normalize);
 // Productos que se excluyen por completo del dashboard (costes/gastos internos, no son activaciones reales).
 const PRODUCTOS_EXCLUIDOS_NORM=['Gastos Ejecución (Production Cost)','Article (Production Cost)'].map(normalize);
 function getFilteredRowsForCanal(canal,year=selectedYear){
-  let rows=getDataForTab(activeTab).filter(d=>d.canal===canal);
+  let rows=getDataForSelectedAreas().filter(d=>d.canal===canal);
   rows=rows.filter(d=>!FAMILIAS_EXCLUIDAS_NORM.includes(normalize(d.familia)));
   rows=rows.filter(d=>!ANUNCIANTES_EXCLUIDOS_NORM.includes(normalize(d.anunciante)));
   rows=rows.filter(d=>!PRODUCTOS_EXCLUIDOS_NORM.includes(normalize(d.producto)));
-  const zonaSectorFilter=getSectorFilterForTab(activeTab);
-  if(zonaSectorFilter) rows=rows.filter(d=>zonaSectorFilter.has(normalize(d.sector)));
   if(selectedComercial) rows=rows.filter(d=>normalize(d.comercial)===normalize(selectedComercial));
-  if(selectedSector) rows=rows.filter(d=>normalize(d.sector)===normalize(selectedSector));
+  if(selectedSectors.size) rows=rows.filter(d=>selectedSectors.has(normalize(d.sector)));
+  if(selectedZones.size) rows=rows.filter(d=>selectedZones.has(normalize(d.zona)));
   const pubsCanal=selectedPubs[canal];
   if(pubsCanal) rows=rows.filter(d=>pubsCanal.has(getPublicacion(d)));
   rows=rows.filter(d=>d.anio===year);
   if(hasMesColumn&&selectedMonths.size>0) rows=rows.filter(d=>d.mes!==null&&selectedMonths.has(d.mes));
   return rows;
 }
-function computeProductosParaCanal(canal,franja){
-  const rows=getFilteredRowsForCanal(canal);
+function computeProductosParaCanal(canal,franja,year=selectedYear){
+  const rows=getFilteredRowsForCanal(canal,year);
   const byProducto=new Map();
   rows.forEach(d=>{
     const key=d.producto||'(sin producto)';
@@ -1507,8 +1535,11 @@ function renderBudgetRangeBlock(canal){
 }
 function renderAnunciantesCanalBlock(canal,franja){
   const items=computeProductosParaCanal(canal,franja);
+  const previousItems=computeProductosParaCanal(canal,franja,selectedYear-1);
+  const previousCounts=new Map(previousItems.map(it=>[it.producto,it.realCount]));
   const showFranja=franja.hasta!==null;
   const totalLineas=items.reduce((s,it)=>s+it.realCount,0);
+  const totalLineasPrevious=previousItems.reduce((s,it)=>s+it.realCount,0);
   const totalIngreso=items.reduce((s,it)=>s+it.ingresoTotal,0);
   const totalFranja=showFranja?items.reduce((s,it)=>s+(it.franjaCount||0),0):null;
 
@@ -1520,7 +1551,7 @@ function renderAnunciantesCanalBlock(canal,franja){
   }
 
   const anyExpandedInCanal=items.some(it=>expandedProductos.has(canal+'|||'+it.producto));
-  const colspanDesglose=showFranja?4:3;
+  const colspanDesglose=showFranja?5:4;
 
   let rowsHtml=items.map(it=>{
     const key=canal+'|||'+it.producto;
@@ -1537,7 +1568,8 @@ function renderAnunciantesCanalBlock(canal,franja){
     <tr class="${rowClass}">
       <td>${triangle}${it.producto}</td>
       <td class="franja-col" style="display:${showFranja?'table-cell':'none'}">${it.franjaCount!==null?formatInt(it.franjaCount):'—'}</td>
-      <td>${formatInt(it.realCount)}</td>
+      <td>${formatInt(it.realCount)}${it.realCount<(previousCounts.get(it.producto)||0)?`<span class="line-count-warning" title="Menos líneas que en ${selectedYear-1}" aria-label="Menos líneas que en ${selectedYear-1}"></span>`:''}</td>
+      <td>${formatInt(previousCounts.get(it.producto)||0)}</td>
       <td>${formatEUR(it.ingresoTotal)}</td>
     </tr>`;
 
@@ -1589,14 +1621,16 @@ function renderAnunciantesCanalBlock(canal,franja){
       <thead><tr>
         <th>Producto</th>
         <th class="franja-col" style="display:${showFranja?'table-cell':'none'}">Nº líneas en franja</th>
-        <th>Nº líneas reales</th>
+        <th>Nº líneas reales (${selectedYear})</th>
+        <th>Nº líneas reales (${selectedYear-1})</th>
         <th>Ingreso total real</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
       <tfoot><tr>
         <td>Total</td>
         <td class="franja-col" style="display:${showFranja?'table-cell':'none'}">${totalFranja!==null?formatInt(totalFranja):'—'}</td>
-        <td>${formatInt(totalLineas)}</td>
+        <td>${formatInt(totalLineas)}${totalLineas<totalLineasPrevious?`<span class="line-count-warning" title="Menos líneas que en ${selectedYear-1}" aria-label="Menos líneas que en ${selectedYear-1}"></span>`:''}</td>
+        <td>${formatInt(totalLineasPrevious)}</td>
         <td>${formatEUR(totalIngreso)}</td>
       </tr></tfoot>
     </table>
