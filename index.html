@@ -161,6 +161,7 @@ body::after {
 .repo-title {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 14px;
   margin-bottom: 24px;
   padding-bottom: 16px;
@@ -179,7 +180,8 @@ body::after {
 }
 
 .repo-title-text {
-  flex: 1;
+  flex: 0 1 auto;
+  text-align: center;
 }
 
 .repo-name {
@@ -238,13 +240,19 @@ body::after {
   background: var(--border);
 }
 
-/* ── GRID ── */
+/* ── GRID (cards centradas) ── */
 .grid {
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.grid > .btn-card {
+  flex: 0 1 calc((100% - 24px) / 3);
+  min-width: 260px;
 }
 
 /* ── BTN CARD ── */
@@ -535,7 +543,7 @@ body::after {
 }
 
 @media (max-width: 640px) {
-  .grid { grid-template-columns: 1fr; }
+  .grid > .btn-card { flex-basis: 100%; min-width: 0; }
   .channel-grid { grid-template-columns: 1fr; }
   .header h1 { font-size: 2rem; }
   .page { padding: 40px 16px 60px; }
@@ -821,6 +829,27 @@ body::after {
         <div class="btn-arrow">→</div>
       </a>
     </div>
+
+    <div class="grid">
+      <a href="https://javiap20.github.io/hearst/5-Ingresos/digital-publicaciones-familias-productos.html" target="_blank" class="btn-card c-blue">
+        <div class="stripe"></div>
+        <div class="btn-body">
+          <div class="btn-icon">💻</div>
+          <div class="btn-title">Ingresos por Familias Digitales</div>
+          <div class="btn-desc">Ingresos de Digital por publicación, familias y productos</div>
+        </div>
+        <div class="btn-arrow">→</div>
+      </a>
+      <a href="https://javiap20.github.io/hearst/5-Ingresos/print-publicaciones-familias-productos.html" target="_blank" class="btn-card c-amber">
+        <div class="stripe"></div>
+        <div class="btn-body">
+          <div class="btn-icon">🗞️</div>
+          <div class="btn-title">Ingresos por Familias Print</div>
+          <div class="btn-desc">Ingresos de Print por publicación, familias y productos</div>
+        </div>
+        <div class="btn-arrow">→</div>
+      </a>
+    </div>
   </div>
   <div class="repo-divider"></div>
 
@@ -889,6 +918,7 @@ body::after {
           <div class="btn-desc">Análisis de su actividad comercial</div>
         </div>
         <div class="btn-arrow">→</div>
+      </a>
       <a href="https://javiap20.github.io/hearst/7-Equipo-Comercial/comerciales.html" target="_blank" class="btn-card c-cyan">
         <div class="stripe"></div>
         <div class="btn-body">
@@ -902,8 +932,6 @@ body::after {
 
 
     <div class="grid">
-
-      </a>
       <a href="https://javiap20.github.io/hearst/7-Equipo-Comercial/cartera-comercial.html" target="_blank" class="btn-card c-green">
         <div class="stripe"></div>
         <div class="btn-body">
@@ -912,7 +940,6 @@ body::after {
           <div class="btn-desc">Carteras por Comercial y Zona...</div>
         </div>
         <div class="btn-arrow">→</div>
-      </a>
       </a>
       <a href="https://javiap20.github.io/hearst/7-Equipo-Comercial/cartera-brand-experience.html" target="_blank" class="btn-card c-green">
         <div class="stripe"></div>
