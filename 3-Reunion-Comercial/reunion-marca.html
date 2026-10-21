@@ -2890,7 +2890,7 @@ function renderFcYearEndTable(prevMap, curMap) {
           </tbody>
         </table>
         <p id="secVendorsNote" style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:8px;margin-bottom:0">
-          * El sector <strong>Vendors</strong> no se incluye en este resumen dado que los ingresos de programática no se consolidan hasta el cierre del mes.
+          Este resumen combina Digital, Print y Eventos. El sector <strong>Vendors</strong> se excluye porque sus ingresos de programática no se consolidan por sector.
         </p>
         <p id="secProgNote" style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px;margin-bottom:0;display:none">
           * "Con Programática" suma a cada sector el ingreso del Excel <strong>ANUNCIANTES PROGRAMATICA.xlsx</strong>, filtrado por la misma Publicación/mes acumulado (Imp.Neto a Comisionar del año en curso / Imp.Neto Ant. del año anterior). El sector <strong>Vendors</strong> sigue sin mostrarse en la tabla.
@@ -3259,8 +3259,9 @@ function cleanPubName(raw,canal){
   let s=raw.trim();
   if(canal==='DIGITAL'){
     const norm=s.replace(/^https?:\/\//i,'').replace(/\/+$/,'').toLowerCase();
-    // Subrutas de elle.com que pertenecen a Elle Gourmet / Elle Travel
-    if(/^www\.elle\.com\/es\/(gourmet|living\/viajes)(\/|$)/.test(norm)) return 'Elle Gourmet / Elle Travel';
+    // Subrutas de Elle.com se atribuyen a su producto editorial concreto.
+    if(/^www\.elle\.com\/es\/gourmet(\/|$)/.test(norm)) return 'Elle Gourmet';
+    if(/^www\.elle\.com\/es\/living\/viajes(\/|$)/.test(norm)) return 'Elle Travel';
     if(DIGITAL_DISPLAY_NAMES[norm]) return DIGITAL_DISPLAY_NAMES[norm];
     const stripped=norm.replace(/^www\./,'').replace(/\/.*$/,'').split('.')[0];
     return stripped.charAt(0).toUpperCase()+stripped.slice(1);
@@ -3360,8 +3361,14 @@ function processMultipleBuffers(entries){
     let objetivosFound=false, fechaFound=false, progFound=false;
     entries.forEach(({canal,buffer,filename})=>{
       const wb=XLSX.read(buffer,{type:'array'});
-      // Leer hoja de Objetivos / fecha solo si existe en ESTE libro (evita que un libro sin la hoja pise el resultado bueno de otro)
-      if(wb.SheetNames.includes('Objetivos')){ leerHojaObjetivos(wb); objetivosFound=true; }
+      // Objetivos: el Excel de Eventos es la fuente prioritaria. El libro opcional
+      // PRINT Y DIGITAL puede incluir una copia antigua/vacía de la hoja; no debe
+      // sobrescribir los objetivos ya leídos del libro prioritario.
+      const hojaObjetivos=wb.SheetNames.find(n=>String(n).trim().toUpperCase()==='OBJETIVOS');
+      if(hojaObjetivos && !objetivosFound){
+        const nObjetivos=leerHojaObjetivos(wb,hojaObjetivos);
+        objetivosFound=nObjetivos>0;
+      }
       const hojaFecha=wb.SheetNames.find(n=>/^meta$/i.test(n)||/^fecha/i.test(n));
       if(hojaFecha){ leerFechaActualizacion(wb); fechaFound=true; }
       // El libro "OBJETIVOS" (PRINT Y DIGITAL.xlsx) solo aporta la hoja de Objetivos/fecha
@@ -3385,22 +3392,24 @@ function processMultipleBuffers(entries){
       // El canal viene directamente del archivo de origen (Digital/Print/Eventos), no se adivina por Familia/Producto
       const canal=r.__canalForzado||classifyRow(r);
       const pubRaw=String(r[COL_PUB]||'').trim();
-      const detalleRaw=String(r[COL_DETALLE]||'').trim();
+      // Los Excels pueden traer espacios al final del encabezado (p.ej. "Detalle "),
+      // así que resolver el campo ignorando espacios y mayúsculas antes de clasificar Elle Gourmet/Travel.
+      const detalleKey=Object.keys(r).find(key=>String(key).trim().toLowerCase()===COL_DETALLE.trim().toLowerCase());
+      const detalleRaw=String(r[COL_DETALLE]|| (detalleKey!==undefined?r[detalleKey]:'') || '').trim();
       const sectorClean=cleanSector(r[COL_SECTOR]);
 
       // Detectar filas digitales de elle.com que son realmente Gourmet o Travel
       // (la publicacion viene como www.elle.com/es/ pero el detalle tiene la subruta)
       const detalleNorm=detalleRaw.replace(/^https?:\/\//i,'').replace(/\/+$/,'').toLowerCase();
       const pubNormCheck=pubRaw.replace(/^https?:\/\//i,'').replace(/\/+$/,'').toLowerCase();
-      const isElleGourmetRow = canal==='DIGITAL' && (
-        /^www\.elle\.com\/es\/(gourmet|living\/viajes)(\/|$)/.test(detalleNorm) ||
-        /^www\.elle\.com\/es\/(gourmet|living\/viajes)(\/|$)/.test(pubNormCheck)
-      );
-
-      // Si es Gourmet/Travel, sobreescribir pub para que matchPubEstricto la clasifique correctamente
-      const effectivePub  = isElleGourmetRow ? 'ELLE GOURMET' : pubRaw;
-      const effectiveClean= isElleGourmetRow ? 'Elle Gourmet / Elle Travel' : cleanPubName(pubRaw,canal);
-      const effectiveNorm = isElleGourmetRow ? 'Elle Gourmet / Elle Travel' : normalizePub(pubRaw);
+      const isGourmetRoute = canal==='DIGITAL' && (/^www\.elle\.com\/es\/gourmet(\/|$)/.test(detalleNorm) || /^www\.elle\.com\/es\/gourmet(\/|$)/.test(pubNormCheck));
+      const isTravelRoute = canal==='DIGITAL' && (/^www\.elle\.com\/es\/living\/viajes(\/|$)/.test(detalleNorm) || /^www\.elle\.com\/es\/living\/viajes(\/|$)/.test(pubNormCheck));
+      const directBrand = canal==='DIGITAL' ? DIGITAL_DISPLAY_NAMES[pubNormCheck] : null;
+      const effectiveBrand = isGourmetRoute || directBrand==='Elle Gourmet' ? 'Elle Gourmet' : isTravelRoute || directBrand==='Elle Travel' ? 'Elle Travel' : null;
+      // Canoniza cada sub-marca por separado en todos los bloques.
+      const effectivePub  = effectiveBrand ? (effectiveBrand==='Elle Gourmet' ? 'ELLE GOURMET' : 'ELLE TRAVEL') : pubRaw;
+      const effectiveClean= effectiveBrand || cleanPubName(pubRaw,canal);
+      const effectiveNorm = effectiveBrand ? effectiveBrand.toLowerCase() : normalizePub(pubRaw);
 
       const famLbl=null;
       const row={...r,
@@ -3786,6 +3795,7 @@ const BC_SLOTS=[
 const BC_PUB_MAP=[
   {digital:'www.caranddriver.com/es',canon:'CAR & DRIVER'},{digital:'www.cosmopolitan.com/es',canon:'COSMOPOLITAN'},
   {digital:'www.diezminutos.es',canon:'DIEZ MINUTOS'},{digital:'www.elle.com/es',canon:'ELLE'},
+  {digital:'www.ellegourmet.com/es',canon:'ELLE GOURMET'},{digital:'www.elletravel.com/es',canon:'ELLE TRAVEL'},
   {digital:'www.elledecor.com/es',canon:'ELLE DECORATION'},{digital:'www.esquire.com/es',canon:'ESQUIRE'},
   {digital:'www.fotogramas.es',canon:'FOTOGRAMAS'},{digital:'www.harpersbazaar.com/es',canon:"HARPER'S BAZAAR"},
   {digital:'www.menshealth.com/es',canon:"MEN'S HEALTH"},{digital:'www.micasarevista.com',canon:'MI CASA REVISTA'},
@@ -3818,6 +3828,8 @@ function normDigitalPub(raw){return raw.trim().replace(/^https?:\/\//i,'').repla
 function canonPub(r){
   if(r._canal==='DIGITAL'){
     const norm=normDigitalPub(r._pub);
+    if(/^ELLE GOURMET$/i.test(r._pubClean||'')) return 'ELLE GOURMET';
+    if(/^ELLE TRAVEL$/i.test(r._pubClean||'')) return 'ELLE TRAVEL';
     const det=normDigitalPub(r._detalle||'');
     if(/^www\.elle\.com\/es\/gourmet(\/|$)/.test(det)) return 'ELLE GOURMET';
     if(/^www\.elle\.com\/es\/living\/viajes(\/|$)/.test(det)) return 'ELLE TRAVEL';
@@ -4779,12 +4791,7 @@ function mRenderMCTable(elId,labelId,filt,prevFilt,yr,mode){
       // Mapear pub a nombre de marca Hearst
       let canon=null;
       if(r._canal==='DIGITAL'){
-        const norm=normDigitalPub(r._pub||'');
-        const det=normDigitalPub(r._detalle||'');
-        if(/^www\.elle\.com\/es\/(gourmet|living\/viajes)(\/|$)/.test(det)){canon='ELLE GOURMET';}
-        else if(/^www\.elle\.com\/es\/(gourmet|living\/viajes)(\/|$)/.test(norm)){canon='ELLE GOURMET';}
-        else{const entry=BC_PUB_MAP.find(e=>norm===e.digital||norm.startsWith(e.digital));
-        if(entry) canon=entry.canon;}
+        canon=canonPub(r);
       } else if(r._canal==='PRINT'){
         const up=normApos((r._pub||'').trim().toUpperCase());
         canon=BC_PRINT_CANON[up]||null;
@@ -6117,7 +6124,8 @@ const PUBLICACIONES_FIJAS = [
   "Diez Minutos",
   "Elle",
   "Elle Decor",
-  "Elle Gourmet/Elle Travel",
+  "Elle Gourmet",
+  "Elle Travel",
   "Esquire",
   "Fotogramas",
   "Harper's Bazaar",
@@ -6135,7 +6143,8 @@ const MAPEO_PUBS_EXCEL = {
   "Diez Minutos": ["DIEZ MINUTOS", "www.diezminutos.es"],
   "Elle": ["ELLE", "www.elle.com/es/"],
   "Elle Decor": ["ELLE DECORATION", "Elle Decor", "www.elledecor.com/es", "www.elledecor.com/es/"],
-  "Elle Gourmet/Elle Travel": ["ELLE GOURMET", "ELLE TRAVEL", "Elle Gourmet / Elle Travel", "ELLE GOURMET / ELLE TRAVEL", "www.ellegourmet.com/es", "www.elletravel.com/es", "www.ellegourmet.com/es/", "www.elletravel.com/es/"],
+  "Elle Gourmet": ["ELLE GOURMET", "Elle Gourmet", "www.ellegourmet.com/es", "www.ellegourmet.com/es/", "www.elle.com/es/gourmet", "www.elle.com/es/gourmet/"],
+  "Elle Travel": ["ELLE TRAVEL", "Elle Travel", "www.elletravel.com/es", "www.elletravel.com/es/", "www.elle.com/es/living/viajes", "www.elle.com/es/living/viajes/"],
   "Esquire": ["ESQUIRE", "www.esquire.com/es/"],
   "Fotogramas": ["FOTOGRAMAS & VIDEO", "Fotogramas", "FOTOGRAMAS", "www.fotogramas.es"],
   "Harper's Bazaar": ["HARPER'S BAZAAR", "HARPER´S BAZAAR", "www.harpersbazaar.com/es"],
@@ -6378,9 +6387,9 @@ function sectorCodigoANombre(rawVal) {
   return s.replace(/^\d+\s*[-*:.]\s*/, '').trim().toUpperCase();
 }
 
-function leerHojaObjetivos(wb) {
-  const HOJA = 'Objetivos';
-  if (!wb.SheetNames.includes(HOJA)) {
+function leerHojaObjetivos(wb, nombreHoja) {
+  const HOJA = nombreHoja || wb.SheetNames.find(n=>String(n).trim().toUpperCase()==='OBJETIVOS');
+  if (!HOJA || !wb.Sheets[HOJA]) {
     console.warn('Hoja "Objetivos" no encontrada en el Excel');
     actualizarStatusObjetivos(false);
     return;
@@ -6396,144 +6405,98 @@ function leerHojaObjetivos(wb) {
     return parseNumeroES(c.v);
   }
 
-  // ── Publicaciones (filas 4 a 16, col A = nombre, B = Madrid, C = Bcn, D = Intl, E = Total) ──
-  OBJETIVOS_PUBS = {};
-  for (let fila = 4; fila <= 16; fila++) {
-    const nombreCelda = ws['A' + fila];
-    if (!nombreCelda) continue;
-    const nombreExcel = String(nombreCelda.v || '').trim();
-    if (!nombreExcel) continue;
-
-    // Buscar a qué pubFija corresponde (comparación flexible)
-    const pubFija = PUBLICACIONES_FIJAS.find(p =>
-      p.toUpperCase() === nombreExcel.toUpperCase() ||
-      (MAPEO_PUBS_EXCEL[p] || []).some(n => n.toUpperCase() === nombreExcel.toUpperCase())
-    );
-
-    const key = pubFija || nombreExcel; // si no hay match exacto guardamos el nombre tal cual
-    OBJETIVOS_PUBS[key] = {
-      madrid:        celda('B', fila),
-      barcelona:     celda('C', fila),
-      internacional: celda('D', fila),
-      total:         celda('E', fila)
-    };
+  // La hoja coloca cada bloque en una columna distinta. La publicación está en
+  // la celda del encabezado del bloque y sus 4 valores van a continuación:
+  // Madrid, Barcelona, Internacional y Total. Detectamos las columnas por
+  // el rótulo de la fila 2 para no depender de letras de columna desplazadas.
+  function letraColObjetivo(n) {
+    let out = '';
+    while (n > 0) { const rem = (n - 1) % 26; out = String.fromCharCode(65 + rem) + out; n = Math.floor((n - 1) / 26); }
+    return out;
   }
-
-  // ── Digital (filas 4 a 16, col H = nombre, I = Madrid, J = Bcn, K = Intl, L = Total) ──
-  // H2 = cabecera áreas, H3 = totales, H4..H16 = publicaciones
-  OBJETIVOS_DIG = {};
-  for (let fila = 4; fila <= 16; fila++) {
-    const nombreCelda = ws['H' + fila];
-    if (!nombreCelda) continue;
-    const nombreExcel = String(nombreCelda.v || '').trim();
-    if (!nombreExcel) continue;
+  function colBloqueObjetivo(nombre) {
+    const buscado = String(nombre).trim().toUpperCase().replace(/\s+/g, ' ');
+    for (let col = 1; col <= 60; col++) {
+      const c = ws[letraColObjetivo(col) + '2'];
+      const valor = String(c?.v || '').trim().toUpperCase().replace(/\s+/g, ' ');
+      if (valor === buscado) return col;
+    }
+    console.warn('No se encontró el bloque de objetivos:', nombre);
+    return 0;
+  }
+  function leerObjetivoPublicacion(nombreExcel, fila, colNombre) {
     const pubFija = PUBLICACIONES_FIJAS.find(p =>
       p.toUpperCase() === nombreExcel.toUpperCase() ||
       (MAPEO_PUBS_EXCEL[p] || []).some(n => n.toUpperCase() === nombreExcel.toUpperCase())
     );
     const key = pubFija || nombreExcel;
-    OBJETIVOS_DIG[key] = {
-      madrid:        celda('I', fila),
-      barcelona:     celda('J', fila),
-      internacional: celda('K', fila),
-      total:         celda('L', fila)
+    return {
+      key,
+      madrid:        celda(letraColObjetivo(colNombre + 1), fila),
+      barcelona:     celda(letraColObjetivo(colNombre + 2), fila),
+      internacional: celda(letraColObjetivo(colNombre + 3), fila),
+      total:         celda(letraColObjetivo(colNombre + 4), fila)
     };
   }
-
-  // ── Print (filas 4 a 16, col O = nombre, P = Madrid, Q = Bcn, R = Intl, S = Total) ──
-  OBJETIVOS_PRINT = {};
-  for (let fila = 4; fila <= 16; fila++) {
-    const nombreCelda = ws['O' + fila];
-    if (!nombreCelda) continue;
-    const nombreExcel = String(nombreCelda.v || '').trim();
-    if (!nombreExcel) continue;
-    const pubFija = PUBLICACIONES_FIJAS.find(p =>
-      p.toUpperCase() === nombreExcel.toUpperCase() ||
-      (MAPEO_PUBS_EXCEL[p] || []).some(n => n.toUpperCase() === nombreExcel.toUpperCase())
-    );
-    const key = pubFija || nombreExcel;
-    OBJETIVOS_PRINT[key] = {
-      madrid:        celda('P', fila),
-      barcelona:     celda('Q', fila),
-      internacional: celda('R', fila),
-      total:         celda('S', fila)
-    };
+  function leerBloqueObjetivosPublicaciones(etiqueta) {
+    const colNombre = colBloqueObjetivo(etiqueta);
+    const resultado = {};
+    if (!colNombre) return resultado;
+    // En este libro hay 14 publicaciones, desde la fila 4 hasta la 17.
+    // Se detiene también ante una fila vacía para tolerar cambios de longitud.
+    for (let fila = 4; fila <= 50; fila++) {
+      const cNombre = ws[letraColObjetivo(colNombre) + fila];
+      const nombreExcel = String(cNombre?.v || '').trim();
+      if (!nombreExcel) break;
+      const dato = leerObjetivoPublicacion(nombreExcel, fila, colNombre);
+      resultado[dato.key] = {
+        madrid: dato.madrid,
+        barcelona: dato.barcelona,
+        internacional: dato.internacional,
+        total: dato.total
+      };
+    }
+    return resultado;
   }
 
-  // ── Eventos (filas 4 a 16, col V = nombre, W = Madrid, X = Bcn, Y = Intl, Z = Total) ──
-  OBJETIVOS_EVENTOS = {};
-  for (let fila = 4; fila <= 16; fila++) {
-    const nombreCelda = ws['V' + fila];
-    if (!nombreCelda) continue;
-    const nombreExcel = String(nombreCelda.v || '').trim();
-    if (!nombreExcel) continue;
-    const pubFija = PUBLICACIONES_FIJAS.find(p =>
-      p.toUpperCase() === nombreExcel.toUpperCase() ||
-      (MAPEO_PUBS_EXCEL[p] || []).some(n => n.toUpperCase() === nombreExcel.toUpperCase())
-    );
-    const key = pubFija || nombreExcel;
-    OBJETIVOS_EVENTOS[key] = {
-      madrid:        celda('W', fila),
-      barcelona:     celda('X', fila),
-      internacional: celda('Y', fila),
-      total:         celda('Z', fila)
-    };
-  }
+  // Posiciones verificadas en la hoja Objetivos:
+  // B:F = Total Hearst · I:M = Print · P:T = Eventos · W:AA = Digital Total.
+  OBJETIVOS_PUBS    = leerBloqueObjetivosPublicaciones('TOTAL HEARST');
+  OBJETIVOS_PRINT   = leerBloqueObjetivosPublicaciones('PRINT');
+  OBJETIVOS_EVENTOS = leerBloqueObjetivosPublicaciones('EVENTOS');
+  OBJETIVOS_DIG     = leerBloqueObjetivosPublicaciones('DIGITAL TOTAL');
 
-  // ── Sectores (filas 21 a 37, col A = código o nombre, B = Madrid, C = Bcn, D = Intl, E = Total) ──
-  OBJETIVOS_SECTORES = {};
-  for (let fila = 21; fila <= 37; fila++) {
-    const nombreCelda = ws['A' + fila];
-    if (!nombreCelda) continue;
-    const rawVal = String(nombreCelda.v || '').trim();
-    if (!rawVal) continue;
-
-    const nombreExcel = sectorCodigoANombre(rawVal);
-    if (!nombreExcel) continue;
-
-    OBJETIVOS_SECTORES[nombreExcel] = {
-      madrid:        celda('B', fila),
-      barcelona:     celda('C', fila),
-      internacional: celda('D', fila),
-      total:         celda('E', fila)
-    };
-  }
-
-  // ── Sectores Digital (filas 21 a 37, col I = nombre, J = Madrid, K = Bcn, L = Intl) ──
-  // Nota: no hay columna Total en este bloque; se calcula como suma.
-  // Según el usuario: I21:L37 → I=nombre, J=Madrid, K=Bcn, L=Intl (no hay col Total explícita → sumamos)
-  function leerSectoresPorCanal(colMad, colBcn, colInt, colTot) {
+  // ── Sectores: fila 20 = encabezados, fila 21 = totales y filas 22:38 = sectores.
+  // Cada bloque tiene su propia columna para el nombre del sector.
+  function leerBloqueObjetivosSectores(colNombre, colMad, colBcn, colInt, colTot) {
     const result = {};
-    for (let fila = 21; fila <= 37; fila++) {
-      // Nombre: siempre columna A (igual que Total Sectores)
-      const nombreCelda = ws['A' + fila];
-      if (!nombreCelda) continue;
-      const rawVal = String(nombreCelda.v || '').trim();
+    for (let fila = 22; fila <= 38; fila++) {
+      const rawVal = String(ws[colNombre + fila]?.v || '').trim();
       if (!rawVal) continue;
-      let nombreExcel;
-      const codigoMatch = rawVal.match(/^(\d{5})/);
-      if (codigoMatch && SECTOR_CODIGO_NOMBRE[codigoMatch[1]]) {
-        nombreExcel = SECTOR_CODIGO_NOMBRE[codigoMatch[1]];
-      } else {
-        nombreExcel = rawVal.replace(/^\d+\s*\*\s*/, '').trim().toUpperCase();
-      }
+      const nombreExcel = sectorCodigoANombre(rawVal);
       if (!nombreExcel) continue;
-      const mad  = celda(colMad,  fila);
-      const bcn  = celda(colBcn,  fila);
-      const intl = celda(colInt,  fila);
-      const tot  = colTot ? celda(colTot, fila) : (mad + bcn + intl);
-      result[nombreExcel] = { madrid: mad, barcelona: bcn, internacional: intl, total: tot };
+      result[nombreExcel] = {
+        madrid: celda(colMad, fila),
+        barcelona: celda(colBcn, fila),
+        internacional: celda(colInt, fila),
+        total: celda(colTot, fila)
+      };
     }
     return result;
   }
 
-  OBJETIVOS_SECTORES_DIG     = leerSectoresPorCanal('I', 'J', 'K', 'L');
-  OBJETIVOS_SECTORES_PRINT   = leerSectoresPorCanal('P', 'Q', 'R', 'S');
-  OBJETIVOS_SECTORES_EVENTOS = leerSectoresPorCanal('W', 'X', 'Y', 'Z');
+  // Total Hearst B:F · Print I:M · Eventos P:T · Digital Total W:AA.
+  // Digital Directa (AD:AH) y Digital Programática (AK:AO) son desgloses
+  // auxiliares; el objetivo del canal Digital usa el bloque agregado W:AA.
+  OBJETIVOS_SECTORES         = leerBloqueObjetivosSectores('B', 'C', 'D', 'E', 'F');
+  OBJETIVOS_SECTORES_PRINT   = leerBloqueObjetivosSectores('I', 'J', 'K', 'L', 'M');
+  OBJETIVOS_SECTORES_EVENTOS = leerBloqueObjetivosSectores('P', 'Q', 'R', 'S', 'T');
+  OBJETIVOS_SECTORES_DIG     = leerBloqueObjetivosSectores('W', 'X', 'Y', 'Z', 'AA');
 
   const nPubs = Object.keys(OBJETIVOS_PUBS).length;
   const nSect = Object.keys(OBJETIVOS_SECTORES).length;
   actualizarStatusObjetivos(true, nPubs, nSect);
+  return nPubs;
 }
 
 function actualizarStatusObjetivos(ok, nPubs, nSect) {
@@ -6568,8 +6531,7 @@ function matchPubEstricto(pubExcel, pubFija) {
   const pubExcelUpper = pubExcel.toUpperCase().trim();
   // Si estamos evaluando "Elle", excluir explícitamente cualquier valor que sea de Gourmet/Travel
   if (pubFija === 'Elle') {
-    const elleGourmetNames = (MAPEO_PUBS_EXCEL['Elle Gourmet/Elle Travel'] || []).map(n => n.toUpperCase());
-    if (elleGourmetNames.some(n => pubExcelUpper === n)) return false;
+    if (['ELLE GOURMET','ELLE TRAVEL','ELLE GOURMET / ELLE TRAVEL'].includes(pubExcelUpper)) return false;
     // También excluir URLs de elle.com/es/ que contengan subrutas de gourmet o viajes
     const norm = pubExcel.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '').toLowerCase();
     if (/^www\.elle\.com\/es\/(gourmet|living\/viajes)(\/|$)/.test(norm)) return false;
@@ -9480,7 +9442,10 @@ function apGetPubUnified(r) {
   if (r._canal === 'DIGITAL') {
     const norm = normDigitalPub(r._pub || '');
     const det  = normDigitalPub(r._detalle || '');
-    if (/^www\.elle\.com\/es\/gourmet(\/|$)/.test(det))  { canon = 'ELLE GOURMET'; }
+    // processMultipleBuffers ya guarda el producto correcto en _pubClean/_pub.
+    if (/^ELLE GOURMET$/i.test(r._pubClean || '') || /^ELLE GOURMET$/i.test(r._pub || '')) { canon = 'ELLE GOURMET'; }
+    else if (/^ELLE TRAVEL$/i.test(r._pubClean || '') || /^ELLE TRAVEL$/i.test(r._pub || '')) { canon = 'ELLE TRAVEL'; }
+    else if (/^www\.elle\.com\/es\/gourmet(\/|$)/.test(det))  { canon = 'ELLE GOURMET'; }
     else if (/^www\.elle\.com\/es\/living\/viajes(\/|$)/.test(det))  { canon = 'ELLE TRAVEL'; }
     else if (/^www\.elle\.com\/es\/gourmet(\/|$)/.test(norm)) { canon = 'ELLE GOURMET'; }
     else if (/^www\.elle\.com\/es\/living\/viajes(\/|$)/.test(norm)) { canon = 'ELLE TRAVEL'; }
@@ -9610,7 +9575,33 @@ function rcGetYearBase() {
   return yrBase;
 }
 
-// Respeta el filtro de Publicación del selector de Análisis Publicación
+// Publicación para los dos primeros resúmenes de ingresos.
+// En Digital, Elle Gourmet y Elle Travel son productos virtuales: se separan
+// desde el Elle.com original usando el campo Detalle, sin tocar Print.
+function rcGetSummaryPub(r) {
+  if (r._canal === 'DIGITAL') {
+    const pubRaw = String(r[COL_PUB] || r._pubOriginal || r._pub || '').trim();
+    const pubKey = pubRaw.replace(/^https?:\/\//i, '').replace(/\/+$/, '').toLowerCase();
+    const esElleCom = /^(www\.)?elle\.com\/es(\/|$)/.test(pubKey) && !pubKey.includes('elledecor');
+    if (esElleCom) {
+      const detalleKey = Object.keys(r).find(key => String(key).trim().toLowerCase() === 'detalle');
+      const detalle = String(r._detalle || (detalleKey !== undefined ? r[detalleKey] : '') || r[COL_DETALLE] || '').toLowerCase();
+      if (detalle.includes('gourmet')) return 'Elle Gourmet';
+      if (detalle.includes('viajes') || detalle.includes('travel')) return 'Elle Travel';
+      return 'Elle';
+    }
+  }
+  return typeof apGetPubUnified === 'function' ? apGetPubUnified(r) : (r._pubClean || r._pub || null);
+}
+
+// Filtro específico de los dos bloques Resumen por Canal — Mes y Acumulado.
+function rcFilterByPubResumenCanal(rows) {
+  const pubSel = document.getElementById('ap-pub-select')?.value || 'all';
+  if (pubSel === 'all') return rows;
+  return rows.filter(r => rcGetSummaryPub(r) === pubSel);
+}
+
+// Filtro original para el resto de bloques del informe.
 function rcFilterByPub(rows) {
   const pubSel = document.getElementById('ap-pub-select')?.value || 'all';
   if (pubSel === 'all') return rows;
@@ -9670,8 +9661,8 @@ function actualizarResumenCanal() {
 
   rcLoadForecastInputs(yrBase, mesSelected);
 
-  const dataBase = rcFilterByPub(DATA.filter(r => r._yearRaw === yrBase && r._mesRaw === mesSelected));
-  const dataComp = rcFilterByPub(DATA.filter(r => r._yearRaw === yrComp && r._mesRaw === mesSelected));
+  const dataBase = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrBase && r._mesRaw === mesSelected));
+  const dataComp = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrComp && r._mesRaw === mesSelected));
 
   const fDig = rcGetForecast(yrBase, mesSelected, 'DIGITAL');
   const fPri = rcGetForecast(yrBase, mesSelected, 'PRINT');
@@ -9739,8 +9730,8 @@ function actualizarResumenCanalAcum() {
   const lblAcum = document.getElementById('rcAcumLabel');
   if (lblAcum) lblAcum.textContent = ` (${rcRangeLabel(mesSelected)})`;
 
-  const dataBase = rcFilterByPub(DATA.filter(r => r._yearRaw === yrBase && mesesAcum.has(r._mesRaw)));
-  const dataComp = rcFilterByPub(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
+  const dataBase = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrBase && mesesAcum.has(r._mesRaw)));
+  const dataComp = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
 
   // Previsiones manuales de todos los meses incluidos en el acumulado (año base)
   let fDig = 0, fPri = 0, fEvt = 0;
@@ -9837,8 +9828,8 @@ function actualizarResumenSectorAcum() {
   const lblSecAcum = document.getElementById('rcSecAcumLabel');
   if (lblSecAcum) lblSecAcum.textContent = ` (${rcRangeLabel(mesSelected)})`;
 
-  const dataBase = rcFilterByPub(DATA.filter(r => r._yearRaw === yrBase && mesesAcum.has(r._mesRaw)));
-  const dataComp = rcFilterByPub(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
+  const dataBase = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrBase && mesesAcum.has(r._mesRaw)));
+  const dataComp = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
 
   const sumSector = (rows, sec) => rows.filter(r => (r._sectorClean || '(sin sector)') === sec).reduce((s, r) => s + (r._ingreso || 0), 0);
 
@@ -9903,6 +9894,11 @@ function actualizarResumenSectorAcum() {
     const diff = f.base - f.comp;
     return `<tr><td>${esc(f.sec)}</td><td class="val">${rcFmt(f.base)}</td><td class="val">${rcFmt(f.comp)}</td><td class="val ${v.cls}">${v.txt}<span class="var-bruto-inline">(${rcFmtBruto(diff)})</span></td></tr>`;
   }).join('');
+  if (filas.length) {
+    const vTotal = rcVarPct(totBase, totComp);
+    const diffTotal = totBase - totComp;
+    html += `<tr class="total-row"><td>TOTAL (sin Vendors)</td><td class="val">${rcFmt(totBase)}</td><td class="val">${rcFmt(totComp)}</td><td class="val ${vTotal.cls}">${vTotal.txt}<span class="var-bruto-inline">(${rcFmtBruto(diffTotal)})</span></td></tr>`;
+  }
 
   tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Sin datos</td></tr>';
 }
@@ -9914,12 +9910,12 @@ function actualizarResumenSectorAcum() {
 
 // Traduce el valor de ap-pub-select (nombres de HEARST_ORDEN) a la clave usada
 // en OBJETIVOS_PUBS/DIG/PRINT/EVENTOS (nombres de PUBLICACIONES_FIJAS, leídos de
-// la hoja "Objetivos"). Elle Gourmet y Elle Travel comparten un único objetivo
-// combinado en el Excel, así que ambos apuntan a la misma clave.
+// la hoja "Objetivos"). Cada publicación apunta a su fila; la fila de
+// Elle Travel existe, pero actualmente no tiene objetivos cargados en el Excel.
 const OBJ_PUB_KEY_MAP = {
   'Elle': 'Elle',
-  'Elle Gourmet': 'Elle Gourmet/Elle Travel',
-  'Elle Travel': 'Elle Gourmet/Elle Travel',
+  'Elle Gourmet': 'Elle Gourmet',
+  'Elle Travel': 'Elle Travel',
   'Cosmopolitan': 'Cosmopolitan',
   "Harper's Bazaar": "Harper's Bazaar",
   'Esquire': 'Esquire',
@@ -9933,12 +9929,19 @@ const OBJ_PUB_KEY_MAP = {
   'Nuevo Estilo / Mi Casa': 'Mi Casa Revista / Nuevo Estilo'
 };
 function objGetPubKey(pubSelVal) { return OBJ_PUB_KEY_MAP[pubSelVal] || pubSelVal; }
+function objGetPubData(objetivos, pubSelVal) {
+  const key = objGetPubKey(pubSelVal);
+  if (objetivos[key]) return objetivos[key];
+  const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase().replace(/\s+/g, ' ');
+  const found = Object.keys(objetivos).find(k => norm(k) === norm(key) || norm(k) === norm(pubSelVal));
+  return found ? objetivos[found] : null;
+}
 
 // Suma total de un canal para TODOS los meses de un año (sin restringir al
 // "acumular hasta"), usada como referencia del año anterior completo, ya que
 // no existe un objetivo real para años pasados.
 function objSumarCanalAnioCompleto(yr, canal) {
-  const rows = rcFilterByPub(DATA.filter(r => r._yearRaw === yr));
+  const rows = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yr));
   return sumarCanal(rows, canal);
 }
 
@@ -10007,15 +10010,16 @@ function actualizarObjetivosBlock() {
 
   // ── Objetivo (año en curso), leído de la hoja "Objetivos" del Excel ──
   const objKey = objGetPubKey(pubSelVal);
-  const objDig = OBJETIVOS_DIG[objKey]?.total || 0;
-  const objPri = OBJETIVOS_PRINT[objKey]?.total || 0;
-  const objEvt = OBJETIVOS_EVENTOS[objKey]?.total || 0;
-  const objTot = OBJETIVOS_PUBS[objKey]?.total || (objDig + objPri + objEvt);
+  const objDig = objGetPubData(OBJETIVOS_DIG, pubSelVal)?.total || 0;
+  const objPri = objGetPubData(OBJETIVOS_PRINT, pubSelVal)?.total || 0;
+  const objEvt = objGetPubData(OBJETIVOS_EVENTOS, pubSelVal)?.total || 0;
+  const objTotalDirecto = objGetPubData(OBJETIVOS_PUBS, pubSelVal)?.total || 0;
+  const objTot = objTotalDirecto || (objDig + objPri + objEvt);
 
   // ── Producción real acumulada hasta el mes seleccionado (año en curso),
   //    incluyendo la previsión manual — igual criterio que el bloque
   //    "Resumen por Canal — Acumulado" ──
-  const dataBase = rcFilterByPub(DATA.filter(r => r._yearRaw === yrBase && mesesAcum.has(r._mesRaw)));
+  const dataBase = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrBase && mesesAcum.has(r._mesRaw)));
   let fDig = 0, fPri = 0, fEvt = 0;
   mesesAcum.forEach(m => {
     fDig += rcGetForecast(yrBase, m, 'DIGITAL');
@@ -10031,7 +10035,7 @@ function actualizarObjetivosBlock() {
   //    se usa como referencia el ingreso TOTAL real de esa marca en todo el
   //    año anterior (los 12 meses), y se compara con lo que llevábamos
   //    ingresado en el mismo mes de cierre de ese año anterior ──
-  const dataComp = rcFilterByPub(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
+  const dataComp = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
   const prodDigAnt = sumarCanal(dataComp, 'DIGITAL');
   const prodPriAnt = sumarCanal(dataComp, 'PRINT');
   const prodEvtAnt = sumarCanal(dataComp, 'EVENTOS');
@@ -10050,7 +10054,10 @@ function actualizarObjetivosBlock() {
   const note = document.getElementById('objAcumNote');
   if (note) {
     if (objTot <= 0) {
-      note.innerHTML = `⚠️ Aún no hay objetivo ${yrBase} cargado en la hoja "Objetivos" del Excel para esta publicación — en cuanto se incluya, esta tabla se rellenará automáticamente.`;
+      const nObjetivosCargados = Object.keys(OBJETIVOS_PUBS).length;
+      note.innerHTML = nObjetivosCargados
+        ? `⚠️ Se han leído objetivos para ${nObjetivosCargados} publicaciones, pero no se encontró uno para <strong>${esc(pubSelVal)}</strong> en la hoja "Objetivos".`
+        : `⚠️ No se han podido leer publicaciones de la hoja "Objetivos" del Excel. Comprueba que el HTML actualizado esté leyendo PRODUCCION EVENTOS.xlsx.`;
     } else {
       note.innerHTML = `El objetivo ${yrBase} se toma de la hoja "Objetivos" del Excel. Como <strong>${yrComp}</strong> no tuvo un objetivo definido, la columna "% Año pasado" usa como referencia el ingreso total real de la marca en todo ${yrComp} (los 12 meses) y lo compara con lo ingresado hasta ${mesLabelFull} de ${yrComp} — a modo de "objetivo equivalente" de ese año.`;
     }
@@ -10084,8 +10091,8 @@ function actualizarResumenFamiliaAcum() {
   const lblFamAcum = document.getElementById('rcFamAcumLabel');
   if (lblFamAcum) lblFamAcum.textContent = ` (${rcRangeLabel(mesSelected)})`;
 
-  const dataBase = rcFilterByPub(DATA.filter(r => r._yearRaw === yrBase && mesesAcum.has(r._mesRaw)));
-  const dataComp = rcFilterByPub(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
+  const dataBase = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrBase && mesesAcum.has(r._mesRaw)));
+  const dataComp = rcFilterByPubResumenCanal(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
 
   // Función para sumar por familia y canal
   const sumFamilia = (rows, fam, canal) => rows.filter(r => 
@@ -11256,7 +11263,7 @@ function renderAnalisisPub() {
   const prevAll = filterByPub(prevRowsAll);
 
   // ── MODO SPLIT: Elle Gourmet / Elle Travel ───────────────────────────────
-  const isSplit = pubSel === 'Elle Gourmet / Elle Travel';
+  const isSplit = false; // Gourmet y Travel ya tienen filtros y datos independientes
   const splitWrap     = document.getElementById('ap-ing-split-wrap');
   const splitAcumWrap = document.getElementById('ap-ing-acum-split-wrap');
   const normalTable   = document.getElementById('ap-ing-table');
@@ -12400,6 +12407,73 @@ function actualizarApIM() {
   const prev = rcFilterByPub(DATA.filter(r => r._yearRaw === yrComp && mesesAcum.has(r._mesRaw)));
   renderApIM(cur, prev, yrBase);
 }
+
+// Presupuesto medio: conserva el cálculo validado en
+// reunion-politica-comercial-fichas. El ámbito se separa por año/familia/
+// producto/publicación; los reparos usan anunciante+marca y priorizan el
+// comercial, con fallback a cualquier comercial. Las ventas conjuntas se
+// fusionan después, por importe, solo si los comerciales son distintos.
+function apBudgetTeam(row){
+  const clase=String(row._claseOrden||row['Clase de orden']||'').toLowerCase().trim(),first=clase.charAt(0);
+  if(first==='j')return 'Internacional';
+  if(first==='p'||first==='q')return 'Programatica';
+  const area=String(row._area||row[COL_AREA]||'').toLowerCase();
+  if(area.includes('programat'))return 'Programatica';
+  if(area.includes('barcelona'))return 'Barcelona';
+  if(area.includes('internacional'))return 'Internacional';
+  return 'Madrid';
+}
+function apBudgetComputeRealPubItems(pubItems){
+  const groups=new Map();
+  pubItems.forEach(row=>{
+    const amount=Number(row._ingreso)||0;if(amount===0)return;
+    const key=normSectorKey(row._anun||row[COL_ANUN])+'|||'+normSectorKey(row._marca||row[COL_MARCA]);
+    if(!groups.has(key))groups.set(key,{pos:[],neg:[]});
+    groups.get(key)[amount>0?'pos':'neg'].push(row);
+  });
+  const realItems=[];
+  groups.forEach(group=>{
+    const positives=group.pos.slice();
+    group.neg.forEach(negative=>{
+      const target=Math.abs(Number(negative._ingreso)||0),commercial=normSectorKey(negative._comercial||negative[COL_COMERCIAL]||'');
+      let idx=positives.findIndex(positive=>Math.round((Number(positive._ingreso)||0)*100)===Math.round(target*100)&&normSectorKey(positive._comercial||positive[COL_COMERCIAL]||'')===commercial);
+      if(idx<0)idx=positives.findIndex(positive=>Math.round((Number(positive._ingreso)||0)*100)===Math.round(target*100));
+      if(idx>=0){positives.splice(idx,1);return;}
+      idx=positives.findIndex(positive=>Math.round((Number(positive._ingreso)||0)*100)>Math.round(target*100)&&normSectorKey(positive._comercial||positive[COL_COMERCIAL]||'')===commercial);
+      if(idx<0)idx=positives.findIndex(positive=>Math.round((Number(positive._ingreso)||0)*100)>Math.round(target*100));
+      if(idx>=0)positives[idx]={...positives[idx],_ingreso:Math.round(((Number(positives[idx]._ingreso)||0)-target)*100)/100};
+    });
+    const byAmount=new Map();
+    positives.forEach(row=>{const amountCents=Math.round((Number(row._ingreso)||0)*100);if(!byAmount.has(amountCents))byAmount.set(amountCents,[]);byAmount.get(amountCents).push(row);});
+    byAmount.forEach(items=>{
+      const madrid=items.filter(row=>apBudgetTeam(row)==='Madrid'),barcelona=items.filter(row=>apBudgetTeam(row)==='Barcelona'),other=items.filter(row=>!['Madrid','Barcelona'].includes(apBudgetTeam(row))),pairs=Math.min(madrid.length,barcelona.length);
+      for(let i=0;i<pairs;i++){
+        if(normSectorKey(madrid[i]._comercial||madrid[i][COL_COMERCIAL])!==normSectorKey(barcelona[i]._comercial||barcelona[i][COL_COMERCIAL]))realItems.push({...madrid[i],_ingreso:Math.round((madrid[i]._ingreso+barcelona[i]._ingreso)*100)/100,_comercial:`${madrid[i]._comercial||madrid[i][COL_COMERCIAL]||''} + ${barcelona[i]._comercial||barcelona[i][COL_COMERCIAL]||''}`,_ventaConjunta:true});
+        else realItems.push({...madrid[i]},{...barcelona[i]});
+      }
+      for(let i=pairs;i<madrid.length;i++)realItems.push({...madrid[i]});
+      for(let i=pairs;i<barcelona.length;i++)realItems.push({...barcelona[i]});
+      other.forEach(row=>realItems.push({...row}));
+    });
+  });
+  return realItems;
+}
+function apBudgetComputeScopedRows(rows){
+  const excluded=['Article (Production Cost)','Content Ignition','COSTES FABRICACION PRODUCCION','COSTES REALIZACION','Gastos Ejecución (Production Cost)'].map(normSectorKey);
+  const scopes=new Map();
+  rows.filter(row=>!excluded.includes(normSectorKey(row._prod||row[COL_PROD]))).forEach(row=>{
+    const key=[row._yearRaw||row._year||row[COL_YEAR]||'',row._fam||row[COL_FAM]||'',row._prod||row[COL_PROD]||''].join('|||');
+    if(!scopes.has(key))scopes.set(key,[]);scopes.get(key).push(row);
+  });
+  const result=[];
+  scopes.forEach(scopeRows=>{
+    const zeros=scopeRows.filter(row=>(Number(row._ingreso)||0)===0),nonZero=scopeRows.filter(row=>(Number(row._ingreso)||0)!==0),byPub=new Map();
+    nonZero.forEach(row=>{const pub=row._pubOriginal||row[COL_PUB]||row._pub||'';if(!byPub.has(pub))byPub.set(pub,[]);byPub.get(pub).push(row);});
+    byPub.forEach(pubRows=>result.push(...apBudgetComputeRealPubItems(pubRows)));
+    result.push(...zeros);
+  });
+  return result;
+}
 function renderApIM(cur, prev, yr) {
   const wrap = document.getElementById('ap-im-container');
   const lbl  = document.getElementById('ap-im-year-label');
@@ -12409,14 +12483,8 @@ function renderApIM(cur, prev, yr) {
   const mesSelectedIM = (mesSelIM && mesSelIM.value) || getDefaultClosedMonth();
   if (lbl) lbl.textContent = yr !== 'all' ? `(${yr} vs ${prevYr} · ${rcRangeLabel(mesSelectedIM)})` : '(todos los años)';
 
-  const excludedProducts = [
-    'Article (Production Cost)', 'Content Ignition',
-    'COSTES FABRICACION PRODUCCION', 'COSTES REALIZACION',
-    'Gastos Ejecución (Production Cost)'
-  ];
-
-  const rowsY1 = cur.filter(r => !excludedProducts.includes(r._prod));
-  const rowsY0 = prev.filter(r => !excludedProducts.includes(r._prod));
+  const rowsY1 = apBudgetComputeScopedRows(cur);
+  const rowsY0 = apBudgetComputeScopedRows(prev);
   const prevYrLabel = prevYr || '';
   // zeroMode fijo a 'sin' (precio medio solo sobre líneas con ingreso positivo)
   const zeroMode = 'sin';
