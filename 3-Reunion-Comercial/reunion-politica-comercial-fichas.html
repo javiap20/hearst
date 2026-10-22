@@ -1152,6 +1152,10 @@ th.th-yoy {
 .fiche-site-weight-table tfoot td{background:#edf3f8;border-top:1px solid #dbe4ed;border-bottom:0;font-weight:700}
 .fiche-site-weight-table tfoot td:first-child{border-radius:0 0 0 8px}.fiche-site-weight-table tfoot td:last-child{border-radius:0 0 8px 0}
 .fiche-site-weight-note{margin:0;padding:0 16px 12px;color:#758196;font:400 10px Arial,Helvetica,sans-serif}
+.fiche-advertisers-pub-card{margin:22px auto 0;max-width:1450px;border:1px solid #e3e7ee;border-radius:17px;overflow:hidden;background:#fff;box-shadow:0 5px 16px rgba(26,29,39,.055)}
+.fiche-advertisers-pub-head{padding:15px 18px;background:#f7f9fc;border-bottom:1px solid #e9edf3;display:flex;align-items:baseline;justify-content:space-between;gap:12px}.fiche-advertisers-pub-head strong{font:700 14px Arial,Helvetica,sans-serif;color:#1a1d27}.fiche-advertisers-pub-head small{font:400 10px Arial,Helvetica,sans-serif;color:#758196}
+.fiche-advertisers-pub-scroll{overflow-x:auto;padding:12px 15px 15px}.fiche-advertisers-pub-table{width:100%;min-width:1000px;border-collapse:separate;border-spacing:0;table-layout:fixed;text-align:center;font-family:Arial,Helvetica,sans-serif}.fiche-advertisers-pub-table th{padding:9px 8px;background:#f1f4f8;color:#52627a;font:700 10px Arial,Helvetica,sans-serif;border-bottom:1px solid #dfe5ed}.fiche-advertisers-pub-table thead tr:first-child th{background:#e9eef5}.fiche-advertisers-pub-table td{padding:9px 8px;border-bottom:1px solid #edf0f4;color:#30394a;font:700 12px Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}.fiche-advertisers-pub-table tbody tr:nth-child(even) td{background:#fafbfd}.fiche-advertisers-pub-table td:first-child{font-weight:700;color:#3e4a5c}.fiche-advertisers-pub-table tr:last-child td{border-bottom:0}.fiche-advertisers-pub-table tfoot td{background:#e7eef6;border-top:2px solid #cbd8e6;border-bottom:0;color:#18324f;font-weight:800}.fiche-advertisers-pub-table tfoot td.fiche-advertiser-growth-positive{background:#dceedd!important}.fiche-advertisers-pub-table tfoot td.fiche-advertiser-growth-negative{background:#f3dddd!important}.fiche-advertisers-pub-table td.fiche-advertiser-hearst-total{background:#edf3f8!important;color:#18324f;font-weight:800;border-left:1px solid #dbe4ed}.fiche-advertisers-pub-table td.fiche-advertiser-growth{font-weight:700}.fiche-advertisers-pub-table td.fiche-advertiser-growth-positive{background:#e8f4e9!important;color:#237447}.fiche-advertisers-pub-table td.fiche-advertiser-growth-negative{background:#f9e9e9!important;color:#b33c3c}.fiche-advertisers-pub-table td.fiche-advertiser-growth-neutral{background:#f1f3f6!important;color:#758196}
+@media(max-width:620px){.fiche-advertisers-pub-head{align-items:flex-start;flex-direction:column;gap:4px}}
 .fiche-extra-family-note{margin-top:12px;padding:10px 13px;border-left:3px solid #b59be5;border-radius:7px;background:#faf8fe;color:#586174;font:400 11px/1.6 Arial,Helvetica,sans-serif}
 .fiche-extra-family-note>strong{display:block;margin-bottom:3px;color:#51406f}
 .fiche-family-weight-help{margin:10px 2px 0;color:#758196;font:400 10px/1.5 Arial,Helvetica,sans-serif}
@@ -3460,6 +3464,72 @@ function ficheSiteSort(key){
     button.setAttribute('aria-sort',active?(state.direction==='asc'?'ascending':'descending'):'none');
   });
 }
+function ficheRowsForChannelAndYear(year,channel){
+  const meses=mGetSelected('mes'),globalareas=mGetSelected('globalarea'),areas=mGetSelected('area'),sects=mGetSelected('sector'),coms=mGetSelected('com'),sit=document.getElementById('m-f-sit')?.value||'all';
+  return DATA.filter(r=>{
+    if(r._canal!==channel||r._yearRaw!==String(year))return false;
+    if(!meses.includes('all')&&!meses.includes(r._mesRaw))return false;
+    if(!globalareas.includes('all')&&!globalareas.includes((r[COL_AREA_GLOBAL]||'').trim()))return false;
+    if(!areas.includes('all')&&!areas.includes((r[COL_AREA]||'').trim()))return false;
+    if(!sects.includes('all')&&!sects.includes(r._sectorClean))return false;
+    if(!coms.includes('all')&&!coms.includes((r[COL_COMERCIAL]||'').trim()))return false;
+    if(sit!=='all'&&(r[COL_SIT]||'').trim()!==sit)return false;
+    return true;
+  });
+}
+function renderFicheAdvertisersByPublication(year){
+  const previousYear=String(Number(year)-1),rows=[
+    ...ficheRowsForChannelAndYear(year,'DIGITAL'),...ficheRowsForChannelAndYear(previousYear,'DIGITAL'),
+    ...ficheRowsForChannelAndYear(year,'PRINT'),...ficheRowsForChannelAndYear(previousYear,'PRINT')
+  ];
+  const pubs=new Map(),counts=new Map(),hearstAmounts=new Map(),globalChannelAmounts=new Map(),globalHearstAmounts=new Map();
+  const canonicalPublication=raw=>{
+    const label=String(raw||'').trim(),normalized=ficheNorm(label).replace(/[’‘`´]/g,"'");
+    const aliases={
+      'elle decor':['elle decor','Elle Decor'],'elle decoration':['elle decor','Elle Decor'],
+      'fotogramas':['fotogramas','Fotogramas'],'fotogramas & video':['fotogramas','Fotogramas'],
+      "harper's bazaar":["harper's bazaar","Harper's Bazaar"],
+      "men's health":["men's health","Men's Health"],
+      "runner's world":["runner's world","Runner's World"]
+    };
+    const match=aliases[normalized];return match?{key:match[0],label:match[1]}:{key:ficheNorm(label),label};
+  };
+  rows.forEach(r=>{
+    const raw=String(r._pubClean||r._pub||'').trim(),publication=canonicalPublication(raw),pubKey=publication.key,advertiser=String(r[COL_ANUN]||r._anun||'').trim(),advertiserKey=ficheNorm(advertiser);
+    if(!raw||!pubKey||!advertiserKey)return;
+    if(!pubs.has(pubKey))pubs.set(pubKey,publication.label);
+    const amount=Number(r._ingreso)||0,key=[r._canal,r._yearRaw,pubKey,advertiserKey].join('|||'),hearstKey=[r._yearRaw,pubKey,advertiserKey].join('|||'),globalChannelKey=[r._canal,r._yearRaw,advertiserKey].join('|||'),globalHearstKey=[r._yearRaw,advertiserKey].join('|||');
+    counts.set(key,(counts.get(key)||0)+amount);
+    hearstAmounts.set(hearstKey,(hearstAmounts.get(hearstKey)||0)+amount);
+    globalChannelAmounts.set(globalChannelKey,(globalChannelAmounts.get(globalChannelKey)||0)+amount);
+    globalHearstAmounts.set(globalHearstKey,(globalHearstAmounts.get(globalHearstKey)||0)+amount);
+  });
+  const positiveCounts={},hearstCounts={},globalChannelCounts={},globalHearstCounts={};
+  counts.forEach((amount,key)=>{if(amount<=0)return;const [channel,yr,pubKey]=key.split('|||');const field=`${channel}|||${yr}|||${pubKey}`;positiveCounts[field]=(positiveCounts[field]||0)+1;});
+  hearstAmounts.forEach((amount,key)=>{if(amount<=0)return;const [yr,pubKey]=key.split('|||'),field=`${yr}|||${pubKey}`;hearstCounts[field]=(hearstCounts[field]||0)+1;});
+  globalChannelAmounts.forEach((amount,key)=>{if(amount<=0)return;const [channel,yr]=key.split('|||'),field=`${channel}|||${yr}`;globalChannelCounts[field]=(globalChannelCounts[field]||0)+1;});
+  globalHearstAmounts.forEach((amount,key)=>{if(amount<=0)return;const [yr]=key.split('|||');globalHearstCounts[yr]=(globalHearstCounts[yr]||0)+1;});
+  const ordered=[...pubs.entries()].filter(([,label])=>!ficheIsMiCasaPublication(label)).sort((a,b)=>fichePublicationOrderCompare(a[1],b[1]));
+  const growthCell=(current,previous)=>{if(previous===0)return `<td class="fiche-advertiser-growth fiche-advertiser-growth-${current>0?'positive':'neutral'}">${current>0?'Nuevo':'—'}</td>`;const pct=(current-previous)/previous*100,cls=pct>0?'positive':pct<0?'negative':'neutral',value=`${pct>0?'+':''}${pct.toFixed(1)}%`;return `<td class="fiche-advertiser-growth fiche-advertiser-growth-${cls}">${value}</td>`;};
+  const body=ordered.map(([key,label])=>{const digitalNow=positiveCounts[`DIGITAL|||${year}|||${key}`]||0,digitalBefore=positiveCounts[`DIGITAL|||${previousYear}|||${key}`]||0,printNow=positiveCounts[`PRINT|||${year}|||${key}`]||0,printBefore=positiveCounts[`PRINT|||${previousYear}|||${key}`]||0,totalHearst=hearstCounts[`${year}|||${key}`]||0;return `<tr><td>${esc(label)}</td><td>${digitalNow}</td><td>${digitalBefore}</td>${growthCell(digitalNow,digitalBefore)}<td>${printNow}</td><td>${printBefore}</td>${growthCell(printNow,printBefore)}<td class="fiche-advertiser-hearst-total">${totalHearst}</td></tr>`;}).join('');
+  const totalDigitalNow=globalChannelCounts[`DIGITAL|||${year}`]||0,totalDigitalBefore=globalChannelCounts[`DIGITAL|||${previousYear}`]||0,totalPrintNow=globalChannelCounts[`PRINT|||${year}`]||0,totalPrintBefore=globalChannelCounts[`PRINT|||${previousYear}`]||0,totalHearstNow=globalHearstCounts[year]||0;
+  const totalsRow=`<tr><td>Total Hearst</td><td>${totalDigitalNow}</td><td>${totalDigitalBefore}</td>${growthCell(totalDigitalNow,totalDigitalBefore)}<td>${totalPrintNow}</td><td>${totalPrintBefore}</td>${growthCell(totalPrintNow,totalPrintBefore)}<td class="fiche-advertiser-hearst-total">${totalHearstNow}</td></tr>`;
+  const months=mGetSelected('mes'),monthsText=months.includes('all')?'todos los meses':months.map(m=>MESES_SHORT[m]||m).join(', ');
+  return `<article class="fiche-advertisers-pub-card"><header class="fiche-advertisers-pub-head"><strong>Recuento de anunciantes</strong><small>Total Hearst = anunciantes únicos sin duplicar entre publicaciones · ingreso neto superior a 0 € · ${esc(monthsText)}</small></header><div class="fiche-advertisers-pub-scroll"><table class="fiche-advertisers-pub-table"><colgroup><col style="width:20%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:14%"></colgroup><thead><tr><th rowspan="2">Publicación</th><th colspan="3">Digital</th><th colspan="3">Print</th><th rowspan="2">Total Hearst</th></tr><tr><th>${esc(year)}</th><th>${esc(previousYear)}</th><th>Variación</th><th>${esc(year)}</th><th>${esc(previousYear)}</th><th>Variación</th></tr></thead><tbody>${body||''}</tbody><tfoot>${totalsRow}</tfoot></table></div></article>`;
+}
+function fichePublicationOrderKey(label){
+  let key=ficheNorm(label).replace(/[’‘`´]/g,"'");
+  if(key==="womne's health")key="women's health";
+  if(key==="runner's")key="runner's world";
+  return key;
+}
+function ficheIsMiCasaPublication(label){return ficheNorm(label).replace(/[^a-z0-9]/g,'').startsWith('micasarevista');}
+function fichePublicationOrderCompare(a,b){
+  const labelA=typeof a==='string'?a:(a?.label||''),labelB=typeof b==='string'?b:(b?.label||''),priority=['elle','elle gourmet','elle travel',"harper's bazaar",'cosmopolitan','esquire','fotogramas','car and driver','elle decor','nuevo estilo',"men's health","women's health","runner's world",'diez minutos'];
+  const normA=fichePublicationOrderKey(labelA),normB=fichePublicationOrderKey(labelB),indexA=priority.indexOf(normA),indexB=priority.indexOf(normB);
+  if(indexA!==-1||indexB!==-1){if(indexA===-1)return 1;if(indexB===-1)return -1;return indexA-indexB;}
+  return labelA.localeCompare(labelB,'es');
+}
 function renderFichePesoPorSite(rows,year){
   const categories=[
     {key:'branded',label:'Branded Content + Branded Content Vídeo',test:r=>ficheFamilyGroup(r._fam||r._famLabel)==='Sponsorship'&&['branded content','branded content video'].includes(ficheNorm(r._prod))},
@@ -3469,7 +3539,7 @@ function renderFichePesoPorSite(rows,year){
   ];
   const sites=new Map();
   rows.forEach(r=>{const raw=String(r._pubClean||r._pub||r._pubNorm||'').trim();if(!raw)return;const key=ficheNorm(raw);if(!sites.has(key))sites.set(key,{label:raw,amounts:Object.fromEntries(categories.map(c=>[c.key,0]))});const site=sites.get(key);categories.forEach(c=>{if(c.test(r))site.amounts[c.key]+=Number(r._ingreso)||0;});});
-  const ordered=[...sites.values()].sort((a,b)=>a.label.localeCompare(b.label,'es'));
+  const ordered=[...sites.values()].sort((a,b)=>fichePublicationOrderCompare(a.label,b.label));
   const totals=Object.fromEntries(categories.map(c=>[c.key,ordered.reduce((sum,site)=>sum+site.amounts[c.key],0)]));
   const cell=(amount,total)=>'<td><strong>'+(total?((amount/total)*100).toFixed(1):'0.0')+'%</strong><small>('+fmtFull(amount)+')</small></td>';
   const sortableHeader=(key,label)=>'<th><button type="button" class="fiche-site-sort" data-key="'+key+'" aria-sort="none" onclick="ficheSiteSort(\''+key+'\')">'+esc(label)+'<span class="fiche-site-sort-mark">↕</span></button></th>';
@@ -3496,7 +3566,8 @@ function renderFichaPublicationView(mode){
   prevRows.forEach(r=>{const key=pubKey(r);if(!key)return;if(!prevMap.has(key))prevMap.set(key,[]);prevMap.get(key).push(r);if(!labels.has(key))labels.set(key,pubLabel(r));});
   let pubs=[...new Set([...curMap.keys(),...prevMap.keys()])].map(key=>({key,label:labels.get(key)||key,curRows:curMap.get(key)||[],prevRows:prevMap.get(key)||[]})).filter(x=>x.curRows.length||x.prevRows.length);
   [['elle.com/es','Elle'],['Elle Gourmet','Elle Gourmet'],['Elle Travel','Elle Travel']].forEach(([key,label])=>{if(!pubs.some(x=>x.label===label))pubs.push({key,label,curRows:[],prevRows:[]});});
-  const elleOrder=['Elle','Elle Gourmet','Elle Travel'];pubs.sort((a,b)=>{const ai=elleOrder.indexOf(a.label),bi=elleOrder.indexOf(b.label);if(ai!==-1||bi!==-1){if(ai===-1)return 1;if(bi===-1)return -1;return ai-bi;}return a.label.localeCompare(b.label,'es');});
+  pubs=pubs.filter(pub=>!ficheIsMiCasaPublication(pub.label));
+  pubs.sort((a,b)=>fichePublicationOrderCompare(a.label,b.label));
   if(mode==='publicaciones'){
     const nav=document.getElementById('ficha-publication-nav');
     const startSeparator=document.getElementById('fiche-publication-start-separator');
@@ -3510,7 +3581,7 @@ function renderFichaPublicationView(mode){
     }
     if(FICHE_SELECTED_PUBLICATION!=='all')pubs=pubs.filter(pub=>pub.key===FICHE_SELECTED_PUBLICATION);
   }
-  if(mode==='hearst'||mode==='hearst2')pubs=(curRows.length||prevRows.length)?[{key:'hearst',label:'Hearst',curRows,prevRows}]:[];
+  if(mode==='hearst'||mode==='hearst2'){const printCurRows=ficheRowsForChannelAndYear(year,'PRINT'),printPrevRows=ficheRowsForChannelAndYear(String(Number(year)-1),'PRINT');pubs=(curRows.length||prevRows.length||printCurRows.length||printPrevRows.length)?[{key:'hearst',label:'Hearst',curRows,prevRows}]:[];}
   const monthSel=mGetSelected('mes'),monthsText=monthSel.includes('all')?'todos los meses':monthSel.map(m=>(MESES_SHORT[m]||m)).join(', ');
   period.textContent=`Comparación ${year} vs ${Number(year)-1} · ${monthsText}`;
   if(!pubs.length){host.innerHTML='<div class="ficha-empty">No hay publicaciones digitales para los filtros seleccionados.</div>';return;}
@@ -3610,7 +3681,7 @@ function renderFichaPublicationView(mode){
     const activeMetric=(label,key)=>`<div class="fiche-active-metric"><div><span>${label}</span>${activeCompare(activeNow.counts[key]||0,activePrev.counts[key]||0)}</div><strong>${activeNow.counts[key]||0}</strong></div>`;
     const activeHtml=`<article class="fiche-card fiche-active-card"><header class="fiche-card-head"><span>Anunciantes activos</span><small>Mismo periodo · ${esc(year)} vs ${esc(prevYear)}</small></header><div class="fiche-card-body"><div class="fiche-active-cards"><section class="fiche-active-total"><span>Total anunciantes</span><small>Únicos, sin duplicar entre grupos</small><strong>${activeNow.total.toLocaleString('es-ES')}</strong>${activeCompare(activeNow.total,activePrev.total)}</section><section class="fiche-active-group ${activeTone('Sponsorship')}"><h3>Sponsorship</h3>${activeMetric('Branded Content + Vídeo','Sponsorship')}</section><section class="fiche-active-group ${activeTone('Curated')}"><h3>Curated</h3>${activeMetric('Curated','Curated')}</section><section class="fiche-active-group ${activeTone('Social Organic')}"><h3>Social Networks</h3>${activeMetric('Social Organic','Social Organic')}</section><section class="fiche-active-group ${activeTone('Social Paid')}"><h3>Social Networks</h3>${activeMetric('Social Paid','Social Paid')}</section><section class="fiche-active-group ${activeTone('Display Directo')}"><h3>Display Directo</h3>${activeMetric('Display + Programática Display Directo','Display Directo')}</section><section class="fiche-active-group ${activeTone('Video Directo')}"><h3>Vídeo Directo</h3>${activeMetric('Vídeo + Vídeo Programático Directo','Video Directo')}</section></div><div class="fiche-active-note">Activos = anunciantes con ingreso neto positivo en el periodo y filtros seleccionados. Diferencias en anunciantes frente al año anterior.</div>${printGapHtml}<div class="fiche-print-gap-footnote">La comparación toma los meses seleccionados del año anterior y los contrasta con el total del año actual, considerando todos sus meses.</div></div></article>`;
     const publicationCard=`<section class="ficha-publication-block" data-publication="${esc(pub.label)}"><div class="fiche-publication-head"><div class="fiche-eyebrow">${pub.label==='Hearst'?'TOTAL HEARST':`PUBLICACIÓN ${String(pubIndex+1).padStart(2,'0')}`}</div><h2>${esc(pub.label)}</h2><div class="fiche-period">${esc(year)} vs ${esc(String(Number(year)-1))}</div></div><div class="fiche-cards">${incomeHtml}${familyWeightHtml}${sectorHtml}${budgetSummaryHtml}${activeHtml}<article class="fiche-card fiche-revenue-card fiche-bc-horizontal"><header class="fiche-card-head"><span>Branded Content</span><small>Producto · ${esc(year)} vs ${esc(String(Number(year)-1))}</small></header><div class="fiche-card-body">${revenueMetrics(brandedCur,brandedPrev)}</div></article></div></section>`;
-    return mode==='hearst'||mode==='hearst2'?publicationCard+'<div class="fiche-publication-separator" aria-hidden="true"><span></span><i></i><span></span></div><header class="fiche-site-section-head"><div class="fiche-eyebrow">TOTAL HEARST</div><h2>Sites - Productos &amp; Peso</h2><div class="fiche-period">'+esc(year)+' vs '+esc(String(Number(year)-1))+'</div></header>'+renderFichePesoPorSite(pub.curRows,year):publicationCard;
+    return mode==='hearst'||mode==='hearst2'?publicationCard+'<div class="fiche-publication-separator" aria-hidden="true"><span></span><i></i><span></span></div><header class="fiche-site-section-head"><div class="fiche-eyebrow">TOTAL HEARST</div><h2>Sites - Productos &amp; Peso</h2><div class="fiche-period">'+esc(year)+' vs '+esc(String(Number(year)-1))+'</div></header>'+renderFichePesoPorSite(pub.curRows,year)+'<div class="fiche-publication-separator" aria-hidden="true"><span></span><i></i><span></span></div><header class="fiche-site-section-head"><div class="fiche-eyebrow">TOTAL HEARST</div><h2>Anunciantes por Publicación y Canal</h2><div class="fiche-period">'+esc(year)+' vs '+esc(String(Number(year)-1))+'</div></header>'+renderFicheAdvertisersByPublication(year):publicationCard;
   }).join('<div class="fiche-publication-separator" aria-hidden="true"><span></span><i></i><span></span></div>');
 }
 
