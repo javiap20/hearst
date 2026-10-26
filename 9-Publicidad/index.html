@@ -205,6 +205,14 @@ body::after {
   margin-bottom: 16px;
 }
 
+/* Grid de 2 columnas (bloques con 4 cards: 2 + 2) */
+.grid--2 {
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.grid--2 .btn-card { flex-basis: calc((100% - 12px) / 2); }
+
 /* ── BTN CARD ── */
 .btn-card {
   position: relative;
@@ -263,6 +271,15 @@ body::after {
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: -0.01em;
+}
+
+.btn-sub {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--c, var(--accent-blue));
+  opacity: 0.9;
+  margin-top: -1px;
 }
 
 .btn-desc {
@@ -344,7 +361,7 @@ body::after {
 }
 
 @media (max-width: 640px) {
-  .btn-card { flex-basis: 100%; }
+  .btn-card, .grid--2 .btn-card { flex-basis: 100%; }
   .header h1 { font-size: 2rem; }
   .page { padding: 40px 16px 60px; }
   .header { margin-bottom: 40px; }
@@ -364,7 +381,7 @@ body::after {
 
   <!-- ÍNDICE RÁPIDO -->
   <nav class="toc">
-    <a href="#s-info">📋 Información &amp; análisis</a>
+    <a href="#s-info">🔎 Información &amp; análisis</a>
     <a href="#s-equipo">👥 Equipo Comercial</a>
     <a href="#s-anunciantes">🏢 Anunciantes</a>
     <a href="#s-ingresos">💰 Ingresos &amp; Facturación</a>
@@ -376,13 +393,13 @@ body::after {
   ══════════════════════════════════════════════ -->
   <div class="repo-block repo-0" id="s-info">
     <div class="repo-title">
-      <div class="repo-title-icon">📋</div>
+      <div class="repo-title-icon">🔎</div>
       <div class="repo-title-text">
         <div class="repo-name">Información &amp; análisis</div>
       </div>
     </div>
 
-    <div class="grid">
+    <div class="grid grid--2">
       <a href="https://javiap20.github.io/hearst/9-Publicidad/resumen-ejecutivo.html" target="_blank" class="btn-card c-purple">
         <div class="stripe"></div>
         <div class="btn-body">
@@ -398,6 +415,24 @@ body::after {
           <div class="btn-icon">🧩</div>
           <div class="btn-title">Mix de Venta</div>
           <div class="btn-desc">Ingresos de los últimos 4 años, por productos digitales seleccionados y familias digitales</div>
+        </div>
+        <div class="btn-arrow">→</div>
+      </a>
+      <a href="https://javiap20.github.io/hearst/3-Reunion-Comercial/reunion-politica-comercial-fichas.html" target="_blank" class="btn-card c-purple">
+        <div class="stripe"></div>
+        <div class="btn-body">
+          <div class="btn-icon">🗓️</div>
+          <div class="btn-title">Reunión Política Comercial</div>
+          <div class="btn-desc">Ficha por publicación con los datos clave de ingresos para preparar y presentar la reunión mensual de política comercial.</div>
+        </div>
+        <div class="btn-arrow">→</div>
+      </a>
+      <a href="https://javiap20.github.io/hearst/7-Equipo-Comercial/estructura-comercial.html" target="_blank" class="btn-card c-purple">
+        <div class="stripe"></div>
+        <div class="btn-body">
+          <div class="btn-icon">♟️</div>
+          <div class="btn-title">Estrategia Comercial</div>
+          <div class="btn-desc">Análisis y evaluación del ingreso por sector y publicación, canal y zona. Reparto de carteras, principales anunciantes y responsable de cada sector y marca.</div>
         </div>
         <div class="btn-arrow">→</div>
       </a>
@@ -454,7 +489,7 @@ body::after {
       <a href="https://javiap20.github.io/hearst/6-Anunciantes/anunciantes-desglosados-por-canales.html" target="_blank" class="btn-card c-orange">
         <div class="stripe"></div>
         <div class="btn-body">
-          <div class="btn-icon">🏢</div>
+          <div class="btn-icon">📖</div>
           <div class="btn-title">Anunciantes (Biblia)</div>
           <div class="btn-desc">Ingreso de los anunciantes de cada año, dividios por canales. Se puede filtrar por Publicación, Oficina de venta, Sector y Familia</div>
         </div>
