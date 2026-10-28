@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planificación anual · Print, Eventos y Proyectos · Hearst</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f5f8;--paper:#fff;--ink:#202435;--muted:#697087;--line:#e4e7ee;--gold:#bd8610;--blue:#3159a5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px Inter,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;flex-direction:column;min-height:100vh;width:100%}
+
+/* Cabecera */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 28px;min-height:80px;background:#202b40;color:#fff;border-bottom:1px solid #35425a;flex:0 0 auto}
+.brand{font:700 28px Syne,sans-serif;white-space:nowrap}
+.brand:before{content:'';display:inline-block;width:13px;height:13px;border-radius:50%;background:var(--gold);margin-right:14px}
+.legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font-size:9px;color:#c7cfdd}
+.legend b{font-weight:600;color:#9aa6bd;margin-right:2px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:50%;background:hsl(var(--h) 60% 62%);display:inline-block}
+.hbtn{border:1px solid #4a5a78;background:#2b3852;color:#e6ebf5;border-radius:8px;padding:8px 16px;font:600 11px Inter;cursor:pointer}
+.hbtn:hover{background:#364764}
+.hacts{display:flex;align-items:center;gap:10px}
+.hstat{font:500 10px Inter;color:#9aa6bd;margin-right:6px}
+.hstat.ok{color:#7fd6b0}.hstat.err{color:#f0b27a}
+/* Modo solo lectura (datos del Excel) */
+.ro .plus,.ro .bnew,.ro .cx,.ro #import,.ro #export,.ro #reset{display:none!important}
+.ro .chip{cursor:default}
+.ro .chip:hover{transform:none;box-shadow:none}
+.ro .dsel{pointer-events:none;-webkit-text-fill-color:currentColor;opacity:1}
+.ro .yin{pointer-events:none}
+
+/* Fichas (arriba) */
+.tray{flex:0 0 auto;padding:34px 20px 0;display:flex;flex-direction:column;align-items:center;gap:16px}
+.tline{display:grid;grid-template-columns:84px minmax(0,1fr);gap:8px;align-items:center}
+.tlab{font:800 9px Syne,sans-serif;letter-spacing:.04em;text-align:center;border-radius:7px;padding:4px 2px;color:#fff;background:hsl(var(--k) 45% 32%)}
+.tchips{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px}
+
+/* Ficha */
+.chip{--h:210;display:inline-flex;align-items:center;gap:5px;border:1px solid hsl(var(--h) 45% 60%);background:hsl(var(--h) 65% 91%);color:hsl(var(--h) 55% 22%);border-radius:999px;padding:2px 8px;font:600 9px Inter;line-height:1.35;white-space:nowrap;cursor:grab;user-select:none;-webkit-user-select:none;transition:transform .12s,box-shadow .12s}
+.chip:hover{transform:translateY(-1px);box-shadow:0 3px 8px #26324a22}
+.chip.sel{box-shadow:0 0 0 2px hsl(var(--h) 70% 55%/.55);transform:scale(1.06)}
+.chip.dragging{opacity:.4}
+.cx{display:none;font-style:normal;font-size:9px;line-height:1;opacity:.55;cursor:pointer;padding:0 1px}
+.cx:hover{opacity:1}
+.tpanel .chip:hover .cx{display:inline}
+.chip-in{position:relative;width:100%;min-width:0;gap:3px;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;padding:2px 5px;cursor:grab}
+.chip-in .lbl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.chip-in .cx{position:absolute;right:3px;top:50%;transform:translateY(-50%);padding:1px 3px;border-radius:999px;background:hsl(var(--h) 65% 91%)}
+.chip-in:hover .cx{display:inline}
+.chip-in:hover{transform:none}
+
+.chip.gtm{background:hsl(var(--h) 60% 30%);border-color:hsl(var(--h) 60% 20%);color:#fff}
+.chip.gtm .dsel{background:#ffffff33;color:#fff}
+.chip-in.gtm .cx{background:hsl(var(--h) 60% 30%)}
+/* Fichas de Print (tono) un poco más claro */
+.chip[style*="--h:222"]{background:hsl(var(--h) 75% 95.5%);border-color:hsl(var(--h) 55% 74%)}
+
+/* Botón + y alta de ficha */
+.plus{width:16px;height:16px;border-radius:50%;border:1px dashed #9aa6bd;background:#fff;color:#46536b;font:700 10px/1 Inter;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.plus:hover{background:#eef2f9;border-color:var(--blue);color:var(--blue)}
+.addin{border:1px solid var(--blue);border-radius:999px;padding:2px 9px;font:600 9px Inter;width:150px;outline:none}
+
+/* Toggles y paneles */
+.tbar{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.tog{display:inline-flex;align-items:center;gap:9px;border:0;border-radius:10px;padding:9px 20px;background:hsl(var(--k) 45% 32%);color:#fff;font:800 11px Syne,sans-serif;letter-spacing:.04em;cursor:pointer;opacity:.78;transition:opacity .12s}
+.tog:hover{opacity:1}
+.tog.on{opacity:1;box-shadow:0 0 0 2px hsl(var(--k) 60% 70%)}
+.tog em{font:600 9px Inter;font-style:normal;background:#ffffff2b;border-radius:999px;padding:1px 7px}
+.tog b{font-size:10px}
+.tpanel{display:flex;justify-content:center;max-width:100%;padding:14px 22px;background:var(--paper);border:1px solid var(--line);border-radius:14px}
+.brands{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 26px;align-items:flex-start}
+.bcol{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:140px}
+.bhead{font:800 9px Syne,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--k) 40% 32%);border-bottom:2px solid hsl(var(--k) 45% 70%);padding-bottom:2px;width:100%;margin-bottom:2px;text-align:center}
+.addrow{display:inline-flex;align-items:center;gap:4px}
+.bnew{width:auto;padding:0 9px;height:18px;border-radius:999px;font:600 9px Inter}
+.dsel{appearance:none;-webkit-appearance:none;border:0;border-radius:6px;background:#ffffffcc;color:inherit;font:700 9px Inter;padding:1px 4px;min-width:20px;text-align:center;cursor:pointer;outline:none}
+.dsel:hover{background:#fff}
+
+.sep{display:flex;align-items:center;gap:14px;margin:34px 28px 0}
+.yin{font:inherit;letter-spacing:inherit;color:inherit;background:transparent;border:0;border-bottom:2px dashed transparent;border-radius:0;width:4.1ch;padding:0;text-align:left;outline:none;cursor:text}
+.yin:hover,.yin:focus{border-bottom-color:var(--gold)}
+.sep i{flex:1;height:1px;background:linear-gradient(90deg,transparent,#b9c2d4 45%,#b9c2d4 55%,transparent)}
+.sep b{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);flex:0 0 auto}
+.sep b.s{width:5px;height:5px;background:#b9c2d4}
+.btitle{display:flex;justify-content:center;align-items:baseline;gap:.35em;margin:34px 0 14px;text-align:center;font:700 20px Syne,sans-serif;letter-spacing:.02em;color:var(--ink)}
+
+/* Tablero de meses */
+.board{flex:0 0 auto;padding:0 20px 30px;overflow-x:auto}
+.grid{display:grid;grid-template-columns:84px repeat(12,minmax(0,1fr));gap:6px;min-width:1100px}
+.mh{text-align:center;font:700 9px Inter;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:#2b3852;border-radius:8px;padding:11px 0}
+.mh.now{background:var(--gold);color:#fff}
+.blab{display:flex;align-items:center;justify-content:center;font:800 10px Syne,sans-serif;letter-spacing:.03em;border-radius:10px;color:#fff;background:hsl(var(--k) 45% 32%);text-align:center;padding:4px}
+.cell{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px;display:flex;flex-direction:column;gap:3px;min-height:46px;transition:background .12s,box-shadow .12s}
+.cell:after{content:'';flex:0 0 18px}
+.cell:not([data-cell^="print"]),.blab:not(.k-print){margin-top:16px}
+.cell.armed{border-style:dashed;border-color:hsl(var(--k) 35% 62%);cursor:copy}
+.cell.over{background:hsl(var(--k) 70% 96%);border-color:hsl(var(--k) 45% 50%);box-shadow:0 0 0 3px hsl(var(--k) 60% 55%/.25)}
+.empty{margin:auto;color:#c1c7d4;font-size:16px;font-weight:300;pointer-events:none}
+.errmsg{grid-column:1/-1;text-align:center;padding:40px 10px;color:#8a5a1c;font:600 13px Inter}
+.dsel{display:inline-block}
+/* Vista por publicación */
+.hbtn.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.vsw{display:inline-flex;gap:0}
+.vsw .hbtn:first-child{border-radius:8px 0 0 8px}.vsw .hbtn:last-child{border-radius:0 8px 8px 0;border-left:0}
+.vbar{display:flex;justify-content:center;margin:0 0 22px}
+.vbar .hbtn{background:#fff;border-color:#cfd5e2;color:#46536b;padding:7px 16px}
+.vbar .hbtn:hover{background:#eef2f9}
+.vbar .hbtn.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.board.pvb{overflow-x:clip}
+.grid.gtmv .dsel{display:none}
+.gleg{grid-column:1/-1;display:flex;justify-content:center;gap:26px;flex-wrap:wrap;margin:2px 0 10px;font:600 10px Inter;color:#46536b}
+.gleg span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:28px;height:13px;border-radius:999px;display:inline-block;border:1px solid}
+.sw.l{background:hsl(var(--h) 65% 91%);border-color:hsl(var(--h) 45% 60%)}
+.sw.d{background:hsl(var(--h) 60% 30%);border-color:hsl(var(--h) 60% 20%)}
+.grid.pv .dsel{display:none}
+.grid.pv{grid-template-columns:repeat(12,minmax(0,1fr));gap:0 6px;min-width:0}
+.pv .mh{position:sticky;top:0;z-index:5;margin-bottom:10px;box-shadow:0 6px 0 var(--bg)}
+.mcol{display:flex;flex-direction:column;min-width:0}
+.pgrp{display:flex;flex-direction:column;gap:3px;margin-bottom:14px}
+.blab{position:relative}.bx{position:absolute;top:4px;right:4px;width:15px;height:15px;border-radius:50%;border:0;padding:0;background:#ffffff2e;color:#fff;font:700 11px/1 Inter;cursor:pointer;opacity:.65;display:flex;align-items:center;justify-content:center}.bx:hover{opacity:1;background:#ffffff55}.bhid{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;padding:7px 12px;border-radius:10px;border:1px dashed hsl(var(--k) 40% 55%);background:hsl(var(--k) 55% 94%);color:hsl(var(--k) 45% 26%);font:800 10px Syne,sans-serif;letter-spacing:.03em;cursor:pointer;transition:background .12s}.bhid:hover{background:hsl(var(--k) 60% 90%)}.bhid.k-print{margin-top:0}.bhid b{font:700 10px Inter}.bhid em{font:500 9px Inter;font-style:normal;color:hsl(var(--k) 25% 42%)}.cntl{display:flex;align-items:center;justify-content:center;text-align:center;font:700 8px Inter;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.cnt{display:flex;align-items:stretch;justify-content:center;padding:0}
+.cnt b{display:flex;align-items:center;justify-content:center;width:100%;min-height:32px;text-align:center;font:700 14px Arial,Helvetica,sans-serif;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 10px;box-shadow:0 1px 2px #26324a0f}
+.cnt.z b{color:#b4bbc9;font-weight:400;background:#fafbfc}
+.pv .cnt{margin-bottom:10px}
+</style></head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">Planificación anual</div>
+    <div class="hacts"><span class="hstat" id="hstat"></span><button class="hbtn" id="refresh" type="button" title="Volver a leer el Excel">Actualizar</button></div>
+  </header>
+  <section class="tray" id="tray"></section>
+  <div class="sep"><i></i><b class="s"></b><b></b><b class="s"></b><i></i></div>
+  <h2 class="btitle"><span>Calendario</span><span id="year"></span></h2>
+  <div class="vbar"><span class="vsw"><button class="hbtn on" type="button" data-view="tipo">Por tipo</button><button class="hbtn" type="button" data-view="pub">Por publicación</button><button class="hbtn" type="button" data-view="gtm">GTM</button></span></div>
+  <section class="board"><div class="grid" id="grid"></div></section>
+</div>
+
+<script>
+// Todos los datos salen del Excel de SharePoint (hojas Print, Eventos y Proyectos + Config con el año)
+const EXCEL_URL='https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDQ_ldxRyWMSIp6AYVR1BfUAeKqoSNa97wa4pCRQ3HAJqY';
+const MONTHS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const BASE=[{k:'print',t:'Print',h:222},{k:'eventos',t:'Eventos',h:175},{k:'proyectos',t:'Proyectos',h:280}];
+let KINDS=BASE.slice();
+// Colores para las hojas nuevas (cualquier hoja que no sea Print/Eventos/Proyectos/Config/Instrucciones)
+const XH=[18,340,48,105,200,255];
+const MES_N={ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,set:9,oct:10,nov:11,dic:12};
+
+const emptyState=()=>({year:new Date().getFullYear(),chips:{print:[],eventos:[],proyectos:[]},plan:{print:{},eventos:{},proyectos:{}},days:{},brands:{eventos:[],proyectos:[]},extra:[]});
+const HKEY='planificacion-anual-ocultos-v1';
+function loadHidden(){try{const o=JSON.parse(localStorage.getItem(HKEY)||'{}');return o&&typeof o==='object'?o:{}}catch(e){return{}}}
+function saveHidden(){try{localStorage.setItem(HKEY,JSON.stringify(hidden))}catch(e){}}
+let state=emptyState(),open={},loadErr='',view='tipo',hidden=loadHidden();
+// A partir de este año (el de la hoja Config), los meses ya pasados se ocultan: el 1 de feb se oculta enero, el 1 de mar enero y febrero...
+// Antes de ese año, o cuando el año de Config no es el actual, se ven los 12 meses.
+const HIDE_FROM=2027;
+const isNow=m=>new Date().getFullYear()===state.year&&new Date().getMonth()===m;
+function visMonths(){
+  const t=new Date(),a=[];
+  for(let m=(state.year>=HIDE_FROM&&t.getFullYear()===state.year)?t.getMonth():0;m<12;m++)a.push(m);
+  return a;
+}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const str=v=>String(v==null?'':v).trim();
+const findChip=(k,id)=>(state.chips[k]||[]).find(c=>c.id===id);
+const dayOf=(k,m,c)=>+state.days[k+':'+m+':'+c.id]||99;
+const byOrder=(a,b)=>state.chips.print.indexOf(a)-state.chips.print.indexOf(b);
+
+/* ---- Lectura del Excel ---- */
+function monthsOf(v){
+  if(v===''||v==null)return [];
+  const out=new Set();
+  String(v).split(/[,;\/\s]+/).filter(Boolean).forEach(p=>{
+    const rg=p.match(/^(\d{1,2})[-–](\d{1,2})$/);
+    if(rg){for(let i=+rg[1];i<=+rg[2];i++)if(i>=1&&i<=12)out.add(i-1);return}
+    const n=+p;if(Number.isInteger(n)&&n>=1&&n<=12){out.add(n-1);return}
+    const m=MES_N[norm(p).slice(0,3)];if(m)out.add(m-1);
+  });
+  return [...out].sort((a,b)=>a-b);
+}
+function sheetKind(name){const t=norm(name);return t.startsWith('print')?'print':t.startsWith('event')?'eventos':t.startsWith('proy')?'proyectos':null}
+function buildFromWorkbook(wb){
+  const st=emptyState(),n={v:1};
+  wb.SheetNames.forEach(sn=>{
+    if(norm(sn).startsWith('config')){
+      XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''}).forEach(r=>{if(norm(r.Clave)==='ano'&&+r.Valor)st.year=+r.Valor});
+      return;
+    }
+    let k=sheetKind(sn);
+    if(!k){
+      const t=norm(sn),hid=((wb.Workbook&&wb.Workbook.Sheets)||[]).find(x=>x.name===sn);
+      if(t.startsWith('instruc')||(hid&&hid.Hidden))return;
+      k='x'+(st.extra.length+1);st.extra.push({k,t:sn.trim(),h:XH[st.extra.length%XH.length]});
+      st.chips[k]=[];st.plan[k]={};st.brands[k]=[];
+    }
+    const idx={},withMonth=new Set();
+    XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''}).forEach(r0=>{
+      const r={};for(const key in r0)r[norm(key)]=r0[key];
+      const name=k==='print'?(str(r.nombre)||str(r.marca)):str(r.nombre);if(!name)return;
+      const key=norm(name);let c=idx[key];
+      if(!c){
+        c={id:k[0]+(n.v++),name,h:[...BASE,...st.extra].find(x=>x.k===k).h,s:[]};
+        if(k!=='print'){c.b=str(r.marca)||'Otros';if(!st.brands[k].includes(c.b))st.brands[k].push(c.b)}
+        idx[key]=c;st.chips[k].push(c);
+      }
+      const sh=str(r.corto).split(';').map(x=>x.trim()).filter(Boolean);if(sh.length)c.s=sh;
+      if(k!=='print'&&/^(si|s|yes|x)$/.test(norm(r.gtm)))c.g=true;
+      const ms=monthsOf(r.mes);
+      ms.forEach(m=>{
+        const arr=st.plan[k][m]||(st.plan[k][m]=[]);if(!arr.includes(c.id))arr.push(c.id);
+        const d=+r.dia;if(k!=='print'&&Number.isInteger(d)&&d>=1&&d<=31)st.days[k+':'+m+':'+c.id]=d;
+      });
+      if(ms.length)withMonth.add(c.id);
+    });
+    if(k==='print')st.chips.print.forEach(c=>{if(!withMonth.has(c.id))for(let m=0;m<12;m++)(st.plan.print[m]||(st.plan.print[m]=[])).push(c.id)});
+  });
+  st.extra=st.extra.filter(x=>st.chips[x.k].length);
+  return st;
+}
+function setStatus(t,cls){const e=document.getElementById('hstat');if(e){e.textContent=t;e.className='hstat '+(cls||'')}}
+async function loadExcel(){
+  setStatus('Cargando Excel…');
+  try{
+    const res=await fetch(EXCEL_URL,{cache:'no-cache'});if(!res.ok)throw new Error('HTTP '+res.status);
+    const wb=XLSX.read(await res.arrayBuffer(),{type:'array'});
+    state=buildFromWorkbook(wb);KINDS=BASE.concat(state.extra);loadErr='';
+    if(!KINDS.some(K=>state.chips[K.k].length))throw new Error('No hay hojas Print, Eventos o Proyectos con datos');
+    const t=new Date();setStatus('Excel cargado · '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'),'ok');
+  }catch(e){
+    state=emptyState();KINDS=BASE.slice();loadErr=String(e&&e.message||e);setStatus('No se pudo leer el Excel','err');
+  }
+  render();
+}
+
+/* Fila de totales: nº de fichas colocadas en cada mes, sumando todos los bloques visibles (Print, Eventos, Proyectos y hojas extra) */
+function cntRow(VM,lab){
+  const ks=kinds().filter(K=>!(view==='tipo'&&hidden[K.k]));
+  const cells=VM.map(m=>{
+    const n=ks.reduce((q,K)=>q+((state.plan[K.k]||{})[m]||[]).filter(id=>findChip(K.k,id)).length,0);
+    return `<div class="cnt${n?'':' z'}" title="${n} activaci${n===1?'ón':'ones'} en ${MONTHS[m]}"><b>${n}</b></div>`;
+  }).join('');
+  return (lab?'<div class="cntl">Activaciones</div>':'')+cells;
+}
+/* ---- Pintado ---- */
+const gcl=c=>view==='gtm'&&c.g?' gtm':'';
+function chipHtml(c){return `<span class="chip${gcl(c)}" style="--h:${c.h}" title="${esc(c.name)}"><span>${esc(c.name)}</span></span>`}
+function placedHtml(c,k,m){
+  const d=state.days[k+':'+m+':'+c.id];
+  const day=k==='print'?'':`<span class="dsel" title="Día del mes en que se celebra">${d||'–'}</span>`;
+  return `<span class="chip chip-in${gcl(c)}" style="--h:${c.h}" title="${esc(c.name)}">${day}<span class="lbl" data-full="${esc(c.name)}" data-short="${esc((c.s||[]).join(';'))}">${esc((c.s&&c.s[0])||c.name)}</span></span>`;
+}
+const kinds=()=>view==='gtm'?KINDS.filter(K=>K.k!=='print'):KINDS;
+function trayHtml(){
+  const bar=kinds().map(K=>`<button class="tog ${open[K.k]?'on':''}" type="button" style="--k:${K.h}" data-tog="${K.k}"><span>${K.t}</span><em>${state.chips[K.k].length}</em><b>${open[K.k]?'▾':'▸'}</b></button>`).join('');
+  const panels=kinds().filter(K=>open[K.k]).map(K=>{
+    if(K.k==='print')return `<div class="tpanel" style="--k:${K.h}"><div class="tchips">${state.chips.print.map(chipHtml).join('')}</div></div>`;
+    const cols=state.brands[K.k].map(b=>`<div class="bcol"><div class="bhead">${esc(b)}</div>${state.chips[K.k].filter(c=>c.b===b).map(chipHtml).join('')}</div>`).join('');
+    return `<div class="tpanel" style="--k:${K.h}"><div class="brands">${cols}</div></div>`;
+  }).join('');
+  return `<div class="tbar">${bar}</div>${panels}`;
+}
+function render(){
+  document.getElementById('tray').innerHTML=trayHtml();
+  document.getElementById('year').textContent=state.year;
+  const VM=visMonths();
+  let g='<div></div>'+VM.map(i=>`<div class="mh ${isNow(i)?'now':''}">${MONTHS[i]}</div>`).join('');
+  if(!loadErr&&view!=='pub')g+=cntRow(VM,true);
+  if(view==='pub'&&!loadErr)g=pubGrid();
+  else if(loadErr)g+=`<div class="errmsg">No se pudo cargar el Excel de SharePoint (${esc(loadErr)}). Revisa el enlace y los permisos y pulsa «Actualizar».</div>`;
+  else for(const K of kinds()){
+    if(view==='tipo'&&hidden[K.k]){
+      const n=Object.values(state.plan[K.k]||{}).reduce((q,a)=>q+a.length,0);
+      g+=`<div class="bhid k-${K.k}" style="--k:${K.h}" data-showkind="${K.k}" role="button" tabindex="0" title="Mostrar ${esc(K.t)}"><b>▸</b><span>${esc(K.t)}</span><em>oculto · ${n} ficha${n===1?'':'s'} colocada${n===1?'':'s'}</em></div>`;
+      continue;
+    }
+    g+=`<div class="blab k-${K.k}" style="--k:${K.h}">${K.t}${view==='tipo'?`<button class="bx" type="button" data-hidekind="${K.k}" title="Ocultar ${esc(K.t)}" aria-label="Ocultar ${esc(K.t)}">−</button>`:''}</div>`;
+    for(const m of VM){
+      const items=(state.plan[K.k][m]||[]).map(id=>findChip(K.k,id)).filter(Boolean);
+      if(K.k==='print')items.sort(byOrder);else items.sort((a,b)=>dayOf(K.k,m,a)-dayOf(K.k,m,b));
+      g+=`<div class="cell" style="--k:${K.h}" data-cell="${K.k}:${m}">${items.length?items.map(c=>placedHtml(c,K.k,m)).join(''):'<span class="empty">·</span>'}</div>`;
+    }
+    if(view==='gtm')g+=`<div class="gleg" style="--h:${K.h}"><span><i class="sw l"></i>Claro: falta por hacer el GTM</span><span><i class="sw d"></i>Oscuro: GTM compartido con el equipo comercial</span></div>`;
+  }
+  const gd=document.getElementById('grid');const pv=view==='pub'&&!loadErr;gd.classList.toggle('pv',pv);gd.style.gridTemplateColumns=(pv?'':'84px ')+'repeat('+VM.length+',minmax(0,1fr))';gd.style.minWidth=pv?'0':Math.min(1100,84+VM.length*84)+'px';gd.classList.toggle('gtmv',view==='gtm');gd.parentElement.classList.toggle('pvb',pv);gd.innerHTML=g;
+  fitLabels();
+}
+/* ---- Vista por publicación ---- */
+const alnum=v=>norm(v).replace(/[^a-z0-9]/g,'');
+// Asocia la Marca de un evento/proyecto con una publicación de Print (nombre, Corto o prefijo único)
+function pubOf(b){
+  const kb=alnum(b),pr=state.chips.print;if(!kb)return null;
+  let p=pr.find(c=>alnum(c.name)===kb)||pr.find(c=>(c.s||[]).some(x=>alnum(x)===kb));
+  if(!p){const cand=pr.filter(c=>alnum(c.name).startsWith(kb));if(cand.length===1)p=cand[0]}
+  return p||null;
+}
+function pubGrid(){
+  const np=KINDS.filter(K=>K.k!=='print');
+  const mk=(title,print)=>{const o={title,print};np.forEach(K=>o[K.k]=[]);return o};
+  const groups=state.chips.print.map(p=>mk(p.name,p));
+  const extra={};
+  np.forEach(K=>state.chips[K.k].forEach(c=>{
+    const p=pubOf(c.b),g=p?groups.find(x=>x.print===p):(extra[c.b]||(extra[c.b]=mk(c.b,null)));
+    g[K.k].push(c);
+  }));
+  let g='';
+  const VM=visMonths();
+  for(const m of VM){
+    let col='';
+    [...groups,...Object.values(extra)].forEach(gr=>{
+      let h='';
+      [['print',gr.print?[gr.print]:[]],...np.map(K=>[K.k,gr[K.k]])].forEach(([k,list])=>{
+        const ids=new Set(state.plan[k][m]||[]);
+        const items=list.filter(c=>ids.has(c.id));
+        if(k!=='print')items.sort((a,b)=>dayOf(k,m,a)-dayOf(k,m,b));
+        items.forEach(c=>{h+=placedHtml(c,k,m)});
+      });
+      if(h)col+=`<div class="pgrp">${h}</div>`;
+    });
+    g+=`<div class="mcol">${col}</div>`;
+  }
+  g=VM.map(i=>`<div class="mh ${isNow(i)?'now':''}">${MONTHS[i]}</div>`).join('')+cntRow(VM,false)+g;
+  return g;
+}
+
+// Calendario: muestra el Corto del Excel; si no hay Corto, el Nombre. (Los botones de arriba siempre llevan el Nombre.)
+// Si hay varios cortos separados por ';' y el primero no cabe, prueba con los siguientes.
+function fitLabels(){
+  document.querySelectorAll('.chip-in .lbl').forEach(el=>{
+    const sh=el.dataset.short?el.dataset.short.split(';'):[];
+    if(!sh.length){el.textContent=el.dataset.full;return}
+    for(const t of sh){el.textContent=t;if(el.scrollWidth<=el.clientWidth+1)return}
+  });
+}
+
+document.addEventListener('click',e=>{
+  const x=e.target.closest('[data-tog]');if(x){open[x.dataset.tog]=!open[x.dataset.tog];render();return}
+  const hd=e.target.closest('[data-hidekind]');if(hd){hidden[hd.dataset.hidekind]=true;saveHidden();render();return}
+  const sh=e.target.closest('[data-showkind]');if(sh){delete hidden[sh.dataset.showkind];saveHidden();render()}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  const sh=e.target.closest&&e.target.closest('[data-showkind]');if(sh){e.preventDefault();delete hidden[sh.dataset.showkind];saveHidden();render()}
+});
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
+  view=b.dataset.view;document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('on',x===b));render();
+}));
+document.getElementById('refresh').addEventListener('click',loadExcel);
+window.addEventListener('resize',fitLabels);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitLabels);
+render();
+loadExcel();
+</script>
+</body></html>
