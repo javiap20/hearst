@@ -87,6 +87,9 @@
   .franja-filter input[type="number"]:focus{outline:none;border-color:var(--accent);}
   .franja-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:12px;cursor:pointer;color:var(--navy);font-weight:600;white-space:nowrap;}
   .franja-btn:hover{background:#eef2f7;}
+  .zero-activations-btn{margin-left:auto;padding:7px 14px;border:1px solid #7e22ce;border-radius:7px;background:#f5efff;color:#7e22ce;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s;}
+  .zero-activations-btn:hover{background:#f5efff;}
+  .zero-activations-btn.active{background:#7e22ce;color:#fff;box-shadow:0 2px 5px rgba(126,34,206,.2);}
 
   /* ── Bloques de contenido ── */
   #blocksContainer{display:flex;flex-direction:column;gap:20px;}
@@ -129,6 +132,10 @@
   table.desglose-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
   table.desglose-table td.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   table.desglose-table thead th{background:#e7edf4;color:var(--navy);text-align:center;padding:6px 10px;font-weight:600;border-bottom:1px solid var(--border);}
+  .desglose-sort-btn{border:0;background:transparent;padding:0;color:inherit;font:inherit;cursor:pointer;white-space:nowrap;}
+  .desglose-sort-btn:hover{color:#7e22ce;}
+  .desglose-sort-indicator{color:#8290a2;font-size:10px;margin-left:3px;}
+  .desglose-sort-indicator.active{color:#7e22ce;}
   table.desglose-table tbody td{padding:6px 10px;border-bottom:1px solid #eaeef3;color:var(--text);}
   table.desglose-table tbody tr:last-child td{border-bottom:none;}
   table.desglose-table tbody tr:hover{background:#eef2f7;}
@@ -300,6 +307,7 @@
     <span style="font-size:12px;color:var(--muted)">Hasta</span>
     <input type="number" id="franjaHasta" placeholder="—" oninput="onFranjaChange()">
     <button class="franja-btn" onclick="clearFranja()">✕ Limpiar</button>
+    <button type="button" class="zero-activations-btn" id="zeroActivationsBtn" onclick="toggleZeroActivations()" aria-pressed="false">Activaciones a 0€</button>
   </div>
 
   <div id="blocksContainer">
@@ -321,7 +329,9 @@ let selectedPubs = {}; // { Digital: Set([...]), Print: Set([...]), Eventos: Set
 let ALL_COMERCIALES = [];
 let selectedSectors = new Set();
 let selectedZones = new Set();
+let showZeroActivations = false;
 let expandedProductos = new Set(); // claves "canal|||producto" con el desglose abierto
+let desgloseSorts = new Map(); // orden elegido por tabla, si lo hay
 let canalViewMode = {Digital:'anunciantes',Print:'anunciantes',Eventos:'anunciantes'};
 let expandedBudgetProduct = {Digital:null,Print:null,Eventos:null}; // un producto abierto por canal; todos empiezan plegados
 let expandedBudgetRanges = new Set(); // claves "canal|||producto|||rango" abiertas en la vista presupuestaria
@@ -355,6 +365,7 @@ const HEADER_ALIASES = {
   marca:       ['marca'],
   comercial:   ['comercial'],
   publicacion: ['publicación','publicacion','publicaciones','cabecera','revista','site','medio'],
+  accionComercial: ['acción comercial','accion comercial'],
   detalle:     ['detalle'],
   producto:    ['producto','productos'],
   familia:     ['familia','familias']
@@ -677,6 +688,7 @@ function processWorkbook(data,canal,filename){
   const colAnunciante=findColIndex(hr,HEADER_ALIASES.anunciante);
   const colMarca=findColIndex(hr,HEADER_ALIASES.marca);
   const colComercial=findColIndex(hr,HEADER_ALIASES.comercial);
+  const colAccionComercial=findColIndex(hr,HEADER_ALIASES.accionComercial);
   const colPublicacion=findColIndex(hr,HEADER_ALIASES.publicacion);
   const colProducto=findColIndex(hr,HEADER_ALIASES.producto);
   const colFamilia=findColIndex(hr,HEADER_ALIASES.familia);
@@ -697,6 +709,7 @@ function processWorkbook(data,canal,filename){
     const anunciante=colAnunciante!==-1?String(row[colAnunciante]||'').trim():'';
     const marca=colMarca!==-1?String(row[colMarca]||'').trim():'';
     const comercial=colComercial!==-1?String(row[colComercial]||'').trim():'';
+    const accionComercial=colAccionComercial!==-1?String(row[colAccionComercial]||'').trim():'';
     const publicacion=colPublicacion!==-1?String(row[colPublicacion]||'').trim():'';
     const producto=colProducto!==-1?String(row[colProducto]||'').trim():'';
     const familia=colFamilia!==-1?String(row[colFamilia]||'').trim():'';
@@ -724,9 +737,9 @@ function processWorkbook(data,canal,filename){
       let pubLabel='Elle';
       if(isGourmet) pubLabel='Elle Gourmet';
       else if(isTravel) pubLabel='Elle Travel';
-      DATA.push({sector,team,zona,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase,pubLabel});
+      DATA.push({sector,team,zona,anio,mes,importe,canal,anunciante,marca,comercial,accionComercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase,pubLabel});
     } else {
-      DATA.push({sector,team,zona,anio,mes,importe,canal,anunciante,marca,comercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase});
+      DATA.push({sector,team,zona,anio,mes,importe,canal,anunciante,marca,comercial,accionComercial,publicacion,detalle:detalleRaw,producto,familia,claseOrden:rawClase});
     }
   }
   rebuildYears();
@@ -959,6 +972,13 @@ function populateZoneButtons(){
 
 /* ────────────── FRANJA DE IMPORTE ────────────── */
 function onFranjaChange(){ render(); }
+function toggleZeroActivations(){
+  showZeroActivations=!showZeroActivations;
+  const button=document.getElementById('zeroActivationsBtn');
+  button.classList.toggle('active',showZeroActivations);
+  button.setAttribute('aria-pressed',String(showZeroActivations));
+  render();
+}
 function clearFranja(){
   document.getElementById('franjaDesde').value='';
   document.getElementById('franjaHasta').value='';
@@ -1179,6 +1199,13 @@ function toggleProductoDesglose(canal,producto){
   else expandedProductos.add(key);
   render();
 }
+function toggleDesgloseSort(canal,producto,field){
+  const key=canal+'|||'+producto;
+  const current=desgloseSorts.get(key);
+  const direction=current&&current.field===field&&current.direction==='asc'?'desc':'asc';
+  desgloseSorts.set(key,{field,direction});
+  render();
+}
 
 /* ────────────── RENDER ────────────── */
 // Familias que se excluyen por completo del dashboard: sus productos no
@@ -1212,6 +1239,13 @@ function computeProductosParaCanal(canal,franja,year=selectedYear){
   });
   const items=[];
   byProducto.forEach((prodRows,producto)=>{
+    if(showZeroActivations){
+      const zeroRows=prodRows.filter(d=>Math.round((Number(d.importe)||0)*100)===0);
+      if(zeroRows.length===0) return;
+      const familia=zeroRows[0]?zeroRows[0].familia:'';
+      items.push({producto,realCount:zeroRows.length,ingresoTotal:0,franjaCount:zeroRows.length,familia,desglosable:isFamiliaDesglosable(canal,familia),prodRows:zeroRows});
+      return;
+    }
     const values=isFamiliaFusionRows(prodRows)?computeFusionMergedValues(prodRows):computeGroupRealValues(prodRows);
     if(values.length===0) return;
     const realCount=values.length;
@@ -1230,8 +1264,11 @@ function computeProductosParaCanal(canal,franja,year=selectedYear){
 }
 function renderCanalHeader(canal){
   const mode=canalViewMode[canal]||'anunciantes';
+  const digitalNote=showZeroActivations
+    ?'(no se tienen en cuenta las familias de programática · 🔴 más activaciones a 0 € que el año anterior = negativo)'
+    :'(no se tienen en cuenta las familias de programática · 🔴 menos líneas que el año anterior = positivo)';
   return `<div class="block-card-title channel-title-row">
-    <span class="channel-title-label"><span class="${CANAL_DOT[canal]}">●</span> ${canal}${canal==='Digital'?'<span class="channel-title-note">(no se tienen en cuenta las familias de programática)</span>':''}</span>
+    <span class="channel-title-label"><span class="${CANAL_DOT[canal]}">●</span> ${canal}${canal==='Digital'?`<span class="channel-title-note">${digitalNote}</span>`:''}</span>
     <span class="channel-view-toggle" aria-label="Vista de ${escapeHtml(canal)}">
       <button type="button" class="channel-view-btn${mode==='anunciantes'?' active':''}" data-canal-view="anunciantes" data-canal="${escapeHtml(canal)}">Anunciantes</button>
       <button type="button" class="channel-view-btn${mode==='franjas'?' active':''}" data-canal-view="franjas" data-canal="${escapeHtml(canal)}">Franja Presupuestaria</button>
@@ -1537,7 +1574,7 @@ function renderAnunciantesCanalBlock(canal,franja){
   const items=computeProductosParaCanal(canal,franja);
   const previousItems=computeProductosParaCanal(canal,franja,selectedYear-1);
   const previousCounts=new Map(previousItems.map(it=>[it.producto,it.realCount]));
-  const showFranja=franja.hasta!==null;
+  const showFranja=!showZeroActivations&&franja.hasta!==null;
   const totalLineas=items.reduce((s,it)=>s+it.realCount,0);
   const totalLineasPrevious=previousItems.reduce((s,it)=>s+it.realCount,0);
   const totalIngreso=items.reduce((s,it)=>s+it.ingresoTotal,0);
@@ -1546,7 +1583,7 @@ function renderAnunciantesCanalBlock(canal,franja){
   if(items.length===0){
     return `<div class="block-card">
       ${renderCanalHeader(canal)}
-      <div class="empty-state" style="padding:30px 20px;"><p>Sin líneas reales para los filtros seleccionados.</p></div>
+      <div class="empty-state" style="padding:30px 20px;"><p>${showZeroActivations?'Sin activaciones a 0 €':'Sin líneas reales'} para los filtros seleccionados.</p></div>
     </div>`;
   }
 
@@ -1568,23 +1605,36 @@ function renderAnunciantesCanalBlock(canal,franja){
     <tr class="${rowClass}">
       <td>${triangle}${it.producto}</td>
       <td class="franja-col" style="display:${showFranja?'table-cell':'none'}">${it.franjaCount!==null?formatInt(it.franjaCount):'—'}</td>
-      <td>${formatInt(it.realCount)}${it.realCount<(previousCounts.get(it.producto)||0)?`<span class="line-count-warning" title="Menos líneas que en ${selectedYear-1}" aria-label="Menos líneas que en ${selectedYear-1}"></span>`:''}</td>
+      <td>${formatInt(it.realCount)}${(showZeroActivations?it.realCount>(previousCounts.get(it.producto)||0):it.realCount<(previousCounts.get(it.producto)||0))?`<span class="line-count-warning" title="${showZeroActivations?'Más activaciones a 0 €':'Menos líneas'} que en ${selectedYear-1}" aria-label="${showZeroActivations?'Más activaciones a 0 €':'Menos líneas'} que en ${selectedYear-1}"></span>`:''}</td>
       <td>${formatInt(previousCounts.get(it.producto)||0)}</td>
       <td>${formatEUR(it.ingresoTotal)}</td>
     </tr>`;
 
     if(isExpanded){
-      let desgloseItems=computeGroupRealItems(it.prodRows);
+      let desgloseItems=showZeroActivations
+        ?it.prodRows.filter(d=>Math.round((Number(d.importe)||0)*100)===0).map(d=>({...d,importe:0}))
+        :computeGroupRealItems(it.prodRows);
       if(showFranja){
         desgloseItems=desgloseItems.filter(d=>franja.desde!==null?(d.importe>=franja.desde&&d.importe<=franja.hasta):d.importe<=franja.hasta);
       }
-      desgloseItems=desgloseItems.slice().sort((a,b)=>b.importe-a.importe);
+      const sortState=desgloseSorts.get(key);
+      desgloseItems=desgloseItems.slice().sort((a,b)=>{
+        if(!sortState) return b.importe-a.importe;
+        const comparison=String(a[sortState.field]||'').localeCompare(String(b[sortState.field]||''),'es',{sensitivity:'base',numeric:true});
+        return sortState.direction==='asc'?comparison:-comparison;
+      });
+      const sortHeader=(label,field)=>{
+        const active=sortState&&sortState.field===field;
+        const indicator=`<span class="desglose-sort-indicator${active?' active':''}">${active?(sortState.direction==='asc'?'▲':'▼'):'▾'}</span>`;
+        return `<button type="button" class="desglose-sort-btn" data-sort-canal="${escapeHtml(canal)}" data-sort-producto="${escapeHtml(it.producto)}" data-sort-field="${field}" title="Ordenar por ${label}">${label}${indicator}</button>`;
+      };
       const desgloseRows=desgloseItems.map(d=>`
         <tr>
           <td class="truncate" title="${escapeHtml(d.anunciante)}">${escapeHtml(d.anunciante)||'—'}</td>
           <td class="truncate" title="${escapeHtml(d.marca)}">${escapeHtml(d.marca)||'—'}</td>
           <td class="truncate" title="${escapeHtml(getPublicacion(d))}">${escapeHtml(getPublicacion(d))||'—'}</td>
           <td class="truncate" title="${escapeHtml(d.comercial)}">${escapeHtml(d.comercial)||'—'}</td>
+          <td class="truncate" title="${escapeHtml(d.accionComercial||'')}">${escapeHtml(d.accionComercial)||'—'}</td>
           <td class="desglose-ingreso">${formatEURExact(d.importe)}</td>
         </tr>`).join('');
       html+=`
@@ -1594,16 +1644,18 @@ function renderAnunciantesCanalBlock(canal,franja){
           <table class="desglose-table">
             <colgroup>
               <col style="width:12%">
-              <col style="width:18%">
-              <col style="width:18%">
-              <col style="width:34%">
-              <col style="width:18%">
+              <col style="width:15%">
+              <col style="width:15%">
+              <col style="width:23%">
+              <col style="width:23%">
+              <col style="width:12%">
             </colgroup>
             <thead><tr>
               <th>Anunciante</th>
               <th>Marca</th>
-              <th>Publicación</th>
-              <th>Comercial</th>
+              <th>${sortHeader('Publicación','publicacion')}</th>
+              <th>${sortHeader('Comercial','comercial')}</th>
+              <th>${sortHeader('Acción comercial','accionComercial')}</th>
               <th class="desglose-ingreso-th">Ingreso exacto</th>
             </tr></thead>
             <tbody>${desgloseRows}</tbody>
@@ -1621,9 +1673,9 @@ function renderAnunciantesCanalBlock(canal,franja){
       <thead><tr>
         <th>Producto</th>
         <th class="franja-col" style="display:${showFranja?'table-cell':'none'}">Nº líneas en franja</th>
-        <th>Nº líneas reales (${selectedYear})</th>
-        <th>Nº líneas reales (${selectedYear-1})</th>
-        <th>Ingreso total real</th>
+        <th>${showZeroActivations?'Nº activaciones a 0 €':'Nº líneas reales'} (${selectedYear})</th>
+        <th>${showZeroActivations?'Nº activaciones a 0 €':'Nº líneas reales'} (${selectedYear-1})</th>
+        <th>${showZeroActivations?'Ingreso total a 0 €':'Ingreso total real'}</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
       <tfoot><tr>
@@ -1637,7 +1689,7 @@ function renderAnunciantesCanalBlock(canal,franja){
   </div>`;
 }
 function renderCanalBlock(canal,franja){
-  return canalViewMode[canal]==='franjas'
+  return !showZeroActivations&&canalViewMode[canal]==='franjas'
     ?renderBudgetRangeBlock(canal)
     :renderAnunciantesCanalBlock(canal,franja);
 }
@@ -1771,6 +1823,11 @@ window.addEventListener('resize',()=>{
 window.addEventListener('blur',hideBudgetTooltip);
 
 document.getElementById('blocksContainer').addEventListener('click',function(e){
+  const sortBtn=e.target.closest('.desglose-sort-btn');
+  if(sortBtn){
+    toggleDesgloseSort(sortBtn.dataset.sortCanal,sortBtn.dataset.sortProducto,sortBtn.dataset.sortField);
+    return;
+  }
   const viewBtn=e.target.closest('.channel-view-btn');
   if(viewBtn){
     setCanalView(viewBtn.dataset.canal,viewBtn.dataset.canalView);
