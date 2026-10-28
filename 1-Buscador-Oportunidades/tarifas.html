@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tarifas · Hearst</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f5f8;--paper:#fff;--ink:#202435;--muted:#697087;--line:#e4e7ee;--gold:#bd8610}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px Arial,Arial,sans-serif;overflow-x:hidden}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 28px;min-height:80px;background:#202b40;color:#fff;border-bottom:1px solid #35425a}
+.brand{font:700 28px Syne,sans-serif;white-space:nowrap}
+.brand:before{content:'';display:inline-block;width:13px;height:13px;border-radius:50%;background:var(--gold);margin-right:14px}
+.hacts{display:flex;align-items:center;gap:10px}
+.hbtn{border:1px solid #4a5a78;background:#2b3852;color:#e6ebf5;border-radius:8px;padding:8px 16px;font:600 11px Arial;cursor:pointer}
+.hbtn:hover{background:#364764}
+.hstat{font:500 10px Arial;color:#9aa6bd;margin-right:6px}
+.hstat.ok{color:#7fd6b0}.hstat.err{color:#f0b27a}
+#file{display:none}
+
+.btitle #year{font-family:Arial,Helvetica,sans-serif}
+.btitle{display:flex;justify-content:center;align-items:baseline;flex-wrap:wrap;gap:.35em;margin:46px 20px 0;font:700 34px Syne,sans-serif;letter-spacing:.01em;text-align:center}
+.tbar{display:flex;gap:8px;flex-wrap:nowrap;justify-content:center;padding:34px 20px 0}
+.tog{border:0;border-radius:10px;padding:9px 14px;background:hsl(var(--k) 30% 95%);color:hsl(var(--k) 20% 62%);font:800 10px Syne,sans-serif;letter-spacing:.02em;white-space:nowrap;cursor:pointer;transition:background .12s,color .12s}
+.tog:hover{background:hsl(var(--k) 35% 89%);color:hsl(var(--k) 35% 40%)}
+.tog.on{background:hsl(var(--k) 55% 20%);color:#fff}
+
+.sep{display:flex;align-items:center;gap:14px;margin:36px 28px 52px}
+.sep i{flex:1;height:1px;background:linear-gradient(90deg,transparent,#b9c2d4 45%,#b9c2d4 55%,transparent)}
+.sep b{width:9px;height:9px;background:var(--gold);transform:rotate(45deg)}
+
+.groups{max-width:1300px;margin:34px auto 40px;padding:0 24px}
+.sec{margin-bottom:38px}
+.sec.mid{margin-top:60px}
+.sec.air{margin-top:68px;margin-bottom:68px}
+.sec.air .stitle{margin-bottom:26px}
+.sec.air .kvrow{--g:16px}
+.stitle{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 14px;font:800 13px Syne,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.stitle:before,.stitle:after{content:'';flex:1;height:1px;background:var(--line)}
+.stitle span{display:flex;align-items:center;gap:12px;text-align:center}
+.ghead{position:relative}
+.ibtn{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);background:transparent;color:#fff;font:italic 700 12px Georgia,serif;line-height:1;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s}
+.ibtn:hover,.ibtn:focus-visible{background:#fff;color:hsl(var(--k) 45% 32%);outline:none}
+.imod{position:fixed;inset:0;z-index:50;background:rgba(20,24,38,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+.ibox{background:var(--paper);border-radius:14px;max-width:min(720px,100%);min-width:min(300px,100%);max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.ihead{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;background:hsl(var(--k) 45% 32%);color:#fff;padding:14px 44px;border-radius:14px 14px 0 0}
+.ihead b{display:block;font:800 13px Syne,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.ihead span{display:block;font:600 11px Syne,sans-serif;opacity:.75;margin-top:2px}
+.iclose{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:0;color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0 4px}
+.icols{display:grid;gap:0 28px;padding:14px 20px 18px}
+.icols ul{list-style:none;margin:0;padding:0}
+.icols li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;display:block;text-align:center;white-space:pre-line}
+.icols li em{display:block;margin-top:2px;font-style:normal;font:600 10px Syne,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.icols ul:not(:first-child){padding-left:20px;border-left:1px solid var(--line)}
+@media(max-width:600px){.icols{grid-template-columns:1fr!important}.icols ul:not(:first-child){padding-left:0;border-left:0}}
+.stitle .tt{display:flex;flex-direction:column;align-items:center;font-style:normal;gap:3px}
+.stitle .tt small{font:600 10px Syne,sans-serif;letter-spacing:.08em;opacity:.7}
+.ggrid{display:grid;gap:18px}
+.ggrid.al{gap:0;justify-content:center}
+.ggrid.al>div{margin:0 9px}
+.ghead{background:hsl(var(--k) 45% 32%);color:#fff;border-radius:12px;padding:14px 10px 13px;text-align:center}
+.ghead.plain{padding:12px 10px}
+.ghead.plain .gname{font-size:13px;opacity:1}
+.gname{font:800 10px Syne,sans-serif;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.gprice{font:700 28px Arial,Helvetica,sans-serif;margin-top:4px;line-height:1.1}
+.gunit{font:600 10px Arial;opacity:.75;margin-top:3px}
+.gkpi{font:600 11px Arial;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.25);opacity:.95}
+.gbody{background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-top:8px;padding:12px 10px;display:flex;flex-direction:column;gap:6px;min-height:60px}
+.pchip{display:block;text-align:center;border:1px solid hsl(var(--k) 45% 60%);background:hsl(var(--k) 65% 93%);color:hsl(var(--k) 55% 22%);border-radius:999px;padding:5px 10px;font:600 11px Arial;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{margin:auto;color:#c1c7d4}
+.gbody.lines{gap:0;padding:4px 12px}
+.gbody.tipos{gap:8px;padding:10px}
+.tbtn{position:relative;border:1px solid hsl(var(--k) 45% 60%);background:hsl(var(--k) 65% 95%);border-radius:12px;padding:9px 30px;text-align:center}
+.tbtn span{display:block;font:600 11px Arial,Helvetica,sans-serif;color:hsl(var(--k) 35% 28%)}
+.tbtn .tdet{display:block;font:600 10.5px/1.3 Arial,Helvetica,sans-serif;font-style:normal;color:hsl(var(--k) 30% 38%);margin-top:3px}
+.tbtn .tdet b{display:inline;font:700 10.5px/1.3 Arial,Helvetica,sans-serif;color:inherit;margin:0}
+.tbtn b{display:block;font:700 16px Arial,Helvetica,sans-serif;color:hsl(var(--k) 55% 18%);margin-top:2px}
+.tbtn .ibtn{right:8px;border-color:hsl(var(--k) 45% 45%);color:hsl(var(--k) 45% 32%)}
+.tbtn .ibtn:hover,.tbtn .ibtn:focus-visible{background:hsl(var(--k) 45% 32%);color:#fff}
+.lcols{display:flex;align-items:flex-start}
+.lcol{flex:1 1 0;min-width:0;padding:0 8px}
+.lcol+.lcol{border-left:1px solid hsl(var(--k) 30% 88%)}
+.lrow{padding:10px 4px;border-top:1px solid hsl(var(--k) 30% 88%);text-align:center}
+.lrow:first-child{border-top:0}
+.lrow.ghost{border-top-color:transparent}
+.lrow span{display:block;font:600 11px Arial,Helvetica,sans-serif;color:hsl(var(--k) 35% 28%)}
+.lrow b{display:block;font:700 15px Arial,Helvetica,sans-serif;color:hsl(var(--k) 55% 18%);margin-top:3px}
+.msg{text-align:center;padding:50px 20px;color:#8a5a1c;font:600 13px Arial;line-height:1.6}
+
+.tblw{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:auto}
+.tbl{width:100%;border-collapse:collapse;min-width:620px;table-layout:fixed}
+.tbl th{background:hsl(var(--k) 45% 32%);color:#fff;font:800 10px Syne,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:12px 10px;text-align:center}
+.tbl th.pl{background:#202b40}
+.tbl td{padding:11px 10px;border-top:1px solid var(--line);text-align:center;font-weight:700;font-size:14px;color:hsl(var(--k) 55% 22%)}
+.tbl td.pn{color:var(--ink);font-size:13px}
+.tbl td.ex{color:var(--muted);font:600 12px Arial}
+.tbl tr:hover td{background:#f8f9fc}
+.snote{color:var(--muted);font:500 12px Arial;margin:10px 4px 0;text-align:center}
+.kvrow{--g:12px;display:flex;flex-wrap:nowrap;justify-content:center;gap:var(--g);margin-bottom:var(--g)}
+.kv{flex:0 0 calc((100% - 2*var(--g))/3);min-width:0;text-align:center;background:linear-gradient(90deg,hsl(var(--k) 50% 80%),hsl(var(--k) 55% 96%));border:1px solid hsl(var(--k) 35% 78%);border-left:4px solid hsl(var(--k) 55% 42%);border-radius:12px;padding:12px 10px}
+.kv b{display:block;font:800 10px Syne,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--k) 35% 28%);margin-bottom:5px}
+.kv span{font:700 14px Arial,Helvetica,sans-serif;color:hsl(var(--k) 55% 14%)}
+
+@media(max-width:900px){.ggrid.wide{grid-template-columns:1fr!important}.lcols{flex-direction:column}.lcol+.lcol{border-left:0}.ggrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.ggrid.al{gap:18px}.ggrid.al>div{margin:0}}
+@media(max-width:1250px){.tbar{flex-wrap:wrap}}
+@media(max-width:700px){.kvrow{flex-wrap:wrap}.kv{flex:1 1 100%}}
+@media(max-width:520px){.ggrid{grid-template-columns:1fr!important}}
+/* Política Comercial: títulos de sección más grandes, sin rombo, con más aire */
+.pol .stitle{flex-direction:column;font-size:18px;letter-spacing:.07em;gap:26px}
+.pol .stitle:before{flex:none;width:100%;background:linear-gradient(90deg,transparent,#b9c2d4 45%,#b9c2d4 55%,transparent)}
+.pol .stitle:after{display:none}
+.pol .sec:first-child .stitle:before{display:none}
+.pol .stitle span:before{display:none}
+.pol .sec .stitle{margin-bottom:30px}
+.pol .sec,.pol .sec.air,.pol .sec.mid{margin-top:0;margin-bottom:68px}
+@media(max-width:700px){.btitle{font-size:24px;margin-top:34px}.pol .stitle{font-size:14px}}
+</style></head>
+<body>
+<header class="top">
+  <div class="brand">Tarifas</div>
+  <div class="hacts"><span class="hstat" id="hstat"></span><button class="hbtn" id="open" type="button" title="Cargar un Excel desde tu equipo">Abrir Excel</button><button class="hbtn" id="refresh" type="button" title="Volver a leer el Excel">Actualizar</button><input id="file" type="file" accept=".xlsx,.xls"></div>
+</header>
+<div class="tbar" id="tbar"></div>
+<h2 class="btitle"><span id="ttl">Tarifas</span><span id="year"></span></h2>
+<div class="sep"><i></i><b></b><i></i></div>
+<section class="groups" id="groups"></section>
+<div id="skipnote" style="max-width:900px;margin:18px auto 0;padding:0 16px;font:12px/1.5 system-ui,sans-serif;color:#8a6d3b"></div>
+
+<script>
+// Todos los datos salen del Excel (una hoja por vista + hoja Config con el año). Pega aquí el enlace de descarga de SharePoint:
+const EXCEL_URL='https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQA2mr6jXkGTRpc1f_hcyiRwAS1S_CrRSZDIgc5RsZqo_uA';
+const HUES=[222,175,280,35,330,150];
+
+// Título grande de la página para hojas concretas (clave = nombre de hoja normalizado). Los títulos de los bloques salen de las cabeceras del Excel.
+const CFG={'digital':{h2:'Tarifas Digitales'},'social organic':{h2:'Tarifas Social Organic'}};
+
+let state={year:'',views:[]},cur=0,msg='';
+
+const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const str=v=>String(v==null?'':v).trim();
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtPrice=v=>{if(typeof v!=='number')return str(v);const[i,d]=(Math.round(v*100)/100).toString().split('.');return i.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(d?','+d:'')};
+const eur=v=>typeof v==='number'?fmtPrice(v)+' €':str(v);
+const pct=v=>typeof v==='number'?(v<=1?Math.round(v*100)+' %':fmtPrice(v)):str(v);
+
+/* ---------- Vistas por grupos (hojas con Grupo / Tarifa / Unidad / Publicación) ---------- */
+function groupsFrom(rows,pk,kk){
+  const out=[],idx={};
+  rows.forEach(r=>{
+    const pub=str(r.publicacion);if(!pub)return;
+    const gn=str(r.grupo)||'Sin grupo',key=norm(gn);
+    let g=idx[key];if(!g){g=idx[key]={name:gn,tarifa:'',unidad:'',kpi:'',pubs:[]};out.push(g)}
+    if(g.tarifa===''&&pk&&r[pk]!==''&&r[pk]!=null)g.tarifa=r[pk];
+    if(g.kpi===''&&kk&&r[kk]!==''&&r[kk]!=null)g.kpi=r[kk];
+    if(!g.unidad&&str(r.unidad))g.unidad=str(r.unidad);
+    g.pubs.push({n:pub,note:str(r.notas),p:pk?r[pk]:''});
+  });
+  return out;
+}
+function groupSec(groups){
+  const uni=groups.every(g=>new Set(g.pubs.map(p=>str(p.p))).size<=1);
+  if(uni)return {type:'groups',title:'',kl:'',groups};
+  return {type:'lines',title:'',basis:groups.length,cards:groups.map(g=>({name:g.name,rows:g.pubs.map(p=>({l:p.n,v:eur(p.p)+(g.unidad?' '+g.unidad:'')}))}))};
+}
+function buildSheet(ws,sn){
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  let hr=raw.slice(0,20).findIndex(r=>r.some(c=>norm(c).startsWith('publicacion'))&&r.some(c=>norm(c).startsWith('grupo')));if(hr<0)hr=0;
+  const rawOf={};
+  const rows=XLSX.utils.sheet_to_json(ws,{defval:'',range:hr}).map(r0=>{const r={};for(const k in r0){let n=norm(k);if(n.startsWith('publicacion'))n='publicacion';else if(n==='grupo'||n.startsWith('grupo '))n='grupo';r[n]=r0[k];rawOf[n]=String(k).trim()}return r});
+  const cfg=CFG[norm(sn)],keys=Object.keys(rows[0]||{});
+  const tk=keys.filter(k=>k.startsWith('tarifa')),kk=keys.filter(k=>k.startsWith('kpi'));
+  const core=k=>norm(String(rawOf[k]||k).split(/\r?\n/)[0]).replace(/^(tarifa|kpi)\s*/,'').replace(/[^a-z0-9]/g,'');
+  let secs;
+  if(tk.length>1){
+    // varios bloques de precio en la misma hoja: título = cabecera de la columna; KPI = columna «KPI…» con el mismo nombre (o la de su misma posición)
+    secs=tk.map((k,i)=>{
+      const kp=kk.find(x=>core(x)&&core(x)===core(k))||(kk.length===tk.length?kk[i]:undefined);
+      const kl=kp?String(rawOf[kp]).split(/\r?\n/).slice(1).join(' ').trim().toLowerCase():'';
+      return {type:'groups',title:String(rawOf[k]).replace(/\r\n?/g,'\n'),kl,groups:groupsFrom(rows,k,kp)};
+    });
+  }else secs=[groupSec(groupsFrom(rows,tk[0]||'tarifa',null))];
+  secs=secs.filter(s=>s.type==='lines'?s.cards.length:s.groups.length);
+  return {name:sn.trim(),key:norm(sn),h2:cfg?cfg.h2:sn.trim(),sections:secs,keys,nrows:rows.length};
+}
+
+/* ---------- Vista plana: hojas sin Grupo/Publicación, con una columna de nombre + Tarifa (p. ej. Revista | Tarifa | Notas) ---------- */
+function buildFlat(ws,sn){
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const hr=raw.slice(0,20).findIndex(r=>r.some(c=>norm(c).startsWith('tarifa')));
+  if(hr<0)return null;
+  const H=raw[hr],tc=H.findIndex(c=>norm(c).startsWith('tarifa'));
+  const gc=H.findIndex(c=>{const n=norm(c);return n==='grupo'||n.startsWith('grupo ')});
+  const uc=H.findIndex(c=>norm(c).startsWith('unidad')),oc=H.findIndex(c=>norm(c).startsWith('nota'));
+  const nc=H.findIndex((c,i)=>i!==tc&&i!==gc&&i!==uc&&i!==oc&&str(c)!=='');
+  if(nc<0)return null;
+  const body=raw.slice(hr+1).filter(r=>str(r[nc])!==''&&str(r[tc])!==''),h2=sn.trim();
+  if(!body.length)return null;
+  if(gc>=0){
+    const out=[],idx={};let cg='';
+    body.forEach(r=>{
+      cg=str(r[gc])||cg;const gn=cg||'Sin grupo',key=norm(gn);
+      let g=idx[key];if(!g){g=idx[key]={name:gn,tarifa:'',unidad:'',kpi:'',pubs:[]};out.push(g)}
+      if(g.tarifa==='')g.tarifa=r[tc];
+      if(!g.unidad&&uc>=0&&str(r[uc]))g.unidad=str(r[uc]);
+      g.pubs.push({n:str(r[nc]),note:oc>=0?str(r[oc]):'',p:r[tc]});
+    });
+    return {name:sn.trim(),key:norm(sn),h2,sections:[groupSec(out)]};
+  }
+  const rows=body.map(r=>({l:str(r[nc]),v:eur(r[tc])+(uc>=0&&str(r[uc])?' '+str(r[uc]):'')}));
+  return {name:sn.trim(),key:norm(sn),h2,sections:[{type:'lines',title:'',basis:1,cards:[{name:sn.trim(),hue:222,rows}]}]};
+}
+/* ---------- Vista resumen: hoja «Política Comercial» ---------- */
+function parseResumen(ws){
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const cells=r=>r.map((v,i)=>({i,v})).filter(x=>str(x.v)!=='');
+  const T=[['soportes','grupo de soportes'],['tarifa','tarifa por producto'],['minima','inversion minima por producto'],['cpm','consideraciones generales'],['costes','costes de produccion'],['sectores','descuento maximo']];
+  const pos=T.map(([id,t])=>({id,i:rows.findIndex(r=>{const c=cells(r);return c.length&&norm(c[0].v).startsWith(t)})})).filter(p=>p.i>=0).sort((a,b)=>a.i-b.i);
+  const out={};
+  pos.forEach((p,k)=>{
+    const title=str(cells(rows[p.i])[0].v),body=rows.slice(p.i+1,k+1<pos.length?pos[k+1].i:rows.length);
+    if(p.id==='cpm'||p.id==='costes'){
+      // Bloques de 3 filas del Excel (tras una fila separadora bajo el título): cada bloque = una fila de tarjetas.
+      const band=body.slice(1),layout=[],items=[];
+      for(let b=0;b<band.length;b+=3){
+        const its=band.slice(b,b+3).map(cells).filter(c=>c.length).map(c=>{
+          if(p.id==='cpm')return c.length>=2?{l:str(c[0].v),t:eur(c[c.length-1].v)}:{l:str(c[0].v),t:''};
+          const t=str(c[0].v),m=t.match(/^([^:]+):\s*(.*)$/);return {l:m?m[1].trim():t,t:m?m[2].trim():''};
+        });
+        if(its.length){layout.push(its.length);items.push(...its)}
+      }
+      if(items.length)out[p.id]={type:'kv',title,air:true,layout,items};
+      return;
+    }
+    const hr=body.findIndex(r=>cells(r).length);
+    if(hr<0)return;
+    const H=cells(body[hr]),rest=body.slice(hr+1);
+    if(p.id==='soportes'){
+      out.soportes={type:'groups',title,kl:'',align:true,groups:H.map(h=>({name:str(h.v),plain:true,tarifa:'',unidad:'',kpi:'',pubs:rest.map(r=>str(r[h.i])).filter(Boolean).map(n=>({n,note:''}))}))};
+    }else if(p.id==='sectores'){
+      // Cada bloque «Sectores I…IV» (columna izquierda) agrupa por filas los sectores que aparecen a la derecha.
+      const G=H.filter(h=>norm(h.v).startsWith('grupo')),first=G.length?G[0].i:0,last=G.length?G[G.length-1].i:0,bands=[];
+      rest.forEach(r=>{
+        const c=cells(r),lab=c.find(x=>x.i<first&&norm(x.v).startsWith('sectores'));
+        if(lab)bands.push({name:str(lab.v),plain:true,tarifa:'',unidad:'',kpi:'',pubs:[]});
+        const b=bands[bands.length-1];if(!b)return;
+        c.filter(x=>x.i>last).forEach(x=>b.pubs.push({n:str(x.v),note:''}));
+      });
+      out.sectores={type:'groups',title,kl:'',air:true,groups:bands};
+    }else if(p.id==='tarifa'||p.id==='minima'){
+      const G=H.filter(h=>norm(h.v).startsWith('grupo'));if(!G.length)return;
+      const first=G[0].i,last=G[G.length-1].i,trows=[],notes=[];
+      rest.forEach(r=>{
+        const c=cells(r);if(!c.length)return;
+        const name=c.find(x=>x.i<first),vals=G.map(g=>r[g.i]),extra=c.filter(x=>x.i>last).map(x=>x.v);
+        if(name&&vals.some(v=>str(v)!==''))trows.push({name:str(name.v),vals,extra:extra.length?(extra.length===1?extra[0]:extra.join(' · ')):''});
+        else notes.push(str(c[0].v));
+      });
+      out[p.id]={type:'table',title,head:G.map(g=>str(g.v)),rows:trows,notes,exLabel:p.id==='minima'?'Descuento máx.':'Observaciones'};
+    }
+  });
+  // Si el Excel no trae guardado el valor calculado de la inversión mínima, se calcula aquí (tarifa − descuento).
+  if(out.minima&&out.tarifa)out.minima.rows.forEach((r,ri)=>{
+    const d=typeof r.extra==='number'&&r.extra<=1?r.extra:0,t=out.tarifa.rows[ri];
+    r.vals=r.vals.map((v,j)=>str(v)!==''?v:(t&&typeof t.vals[j]==='number'?t.vals[j]*(1-d):v));
+  });
+  return ['soportes','tarifa','minima','cpm','costes','sectores'].map(k=>out[k]).filter(Boolean);
+}
+
+/* ---------- Hoja de producción, formato nuevo: Tipología | Tipo de gasto | Tarifa | Tipo Post  +  bloques de gastos con fila de título («Gastos Extra») ---------- */
+// Hoja de apoyo con los tipos de post: una columna (o dos: publicación + producto) por grupo, con el nombre del grupo en la cabecera
+function parseTipoPost(ws){
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const hr=rows.findIndex(r=>r.some(c=>norm(c).startsWith('grupo')));
+  if(hr<0)return {};
+  const W=Math.max(...rows.map(r=>r.length)),after=rows.slice(hr+1);
+  const starts=rows[hr].map((v,i)=>({v,i})).filter(x=>str(x.v)!=='');
+  const used=c=>after.some(r=>str(r[c])!=='');
+  const out={};
+  starts.forEach((x,k)=>{
+    let e=k+1<starts.length?starts[k+1].i-1:W-1;
+    while(e>x.i&&!used(e))e--;
+    const two=e>x.i;
+    out[norm(x.v)]=after.map(r=>two?{n:str(r[x.i+1]),p:str(r[x.i])}:{n:str(r[x.i]),p:''}).filter(t=>t.n||t.p).map(t=>t.n?t:{n:t.p,p:''});
+  });
+  return out;
+}
+function parseProd(wb,sn){
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
+  const hr=rows.findIndex(r=>r.some(c=>norm(c)==='tipologia'));
+  if(hr<0)return null;
+  const H=rows[hr],tc=H.findIndex(c=>norm(c)==='tipologia'),pc=H.findIndex(c=>norm(c).startsWith('tarifa'));
+  if(pc<tc+2)return null;                                   // otro formato: aquí hay una columna de «tipo de gasto» entre Tipología y Tarifa
+  const lc=H.findIndex((c,i)=>i>tc&&i<pc&&str(c)!=='');if(lc<0)return null;
+  const gc=H.findIndex((c,i)=>i>pc&&str(c)!=='');           // columna «Tipo Post» (grupo de cada botón)
+  const key=gc>=0?norm(H[gc]):'';
+  const support=key?wb.SheetNames.find(n=>n!==sn&&norm(n).includes(key)):undefined;   // la pestaña cuyo nombre contiene el texto de esa cabecera
+  const tp=support?parseTipoPost(wb.Sheets[support]):{};
+  // Columna opcional entre el botón y la tarifa (p. ej. «Tipo de vídeo»): se muestra entre paréntesis bajo el nombre del botón, conservando las negritas del Excel
+  const ws0=wb.Sheets[sn],rg0=XLSX.utils.decode_range(ws0['!ref']||'A1'),dc=H.findIndex((c,i)=>i>lc&&i<pc&&str(c)!=='');
+  const detailOf=bi=>{
+    if(dc<0)return null;
+    const cell=ws0[XLSX.utils.encode_cell({r:rg0.s.r+hr+1+bi,c:rg0.s.c+dc})],t=cell?str(cell.v):'';
+    if(!t)return null;
+    const h=typeof cell.h==='string'?cell.h.replace(/<(?!\/?b>)[^>]*>/g,''):esc(t);   // solo se admite <b>; el resto de etiquetas se descarta
+    return {t,h:/^\(.*\)$/.test(t)?h:'('+h+')'};
+  };
+  const cards=[],extras=[];let cur=null,ex=null;
+  rows.slice(hr+1).forEach((r,bi)=>{
+    const a=str(r[tc]),rest=r.some((c,i)=>i!==tc&&str(c)!=='');
+    if(a&&!rest){ex={title:String(r[tc]).trim().replace(/\r\n?/g,'\n'),blocks:[],cur:null};extras.push(ex);cur=null;return}   // fila de título → empieza un bloque de gastos
+    if(ex){
+      const vals=r.slice(tc+1).filter(c=>str(c)!=='').map(eur);
+      if(a&&vals.length){if(!ex.cur){ex.cur=[];ex.blocks.push(ex.cur)}ex.cur.push({l:a,v:vals.join(' · ')})}
+      else if(!a&&!vals.length)ex.cur=null;          // fila en blanco: el siguiente bloque empieza en otra columna
+      return}
+    const label=str(r[lc]),price=r[pc];
+    if(a){cur={name:String(r[tc]).trim().replace(/\r\n?/g,'\n'),rows:[]};cards.push(cur)}
+    else if(label===''&&str(price)==='')cur=null;            // fila vacía: termina la tipología
+    if(!cur||label===''||str(price)==='')return;
+    const g=gc>=0?str(r[gc]):'';
+    const d=detailOf(bi);
+    cur.rows.push({l:label,v:eur(price),info:g,types:g&&tp[norm(g)]||[],...(d?{d:d.h,dt:d.t}:{})});
+  });
+  const secs=[],cs=cards.filter(c=>c.rows.length);
+  if(cs.length)secs.push({type:'tipos',title:'',cards:cs});
+  extras.forEach(x=>{const blocks=x.blocks.filter(b=>b.length);if(blocks.length)secs.push({type:'lines',title:'',mid:true,basis:3,cards:[{name:x.title,hue:222,cols:blocks,rows:blocks.flat()}]})});
+  return secs.length?{support,view:{name:sn.trim(),key:norm(sn),gastos:true,h2:'Social Organic · Gastos de producción',sections:secs}}:null;
+}
+/* ---------- Vista «gastos de producción» (hoja con columnas Grupo / Tipología / Tarifa Reel / Tarifa Post Feed) ---------- */
+function parseGastos(ws,sn){
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const cells=r=>r.map((v,i)=>({i,v})).filter(x=>str(x.v)!=='');
+  const hr=rows.findIndex(r=>cells(r).some(x=>norm(x.v)==='tipologia'));
+  if(hr<0)return null;
+  const H=cells(rows[hr]),tc=H.find(x=>norm(x.v)==='tipologia').i,gh=H.find(x=>norm(x.v)==='grupo'),gc=gh?gh.i:-1;
+  const tks=H.filter(x=>x.i!==tc&&norm(x.v).startsWith('tarifa'));
+  if(!tks.length)return null;
+  const W=Math.max(...rows.map(r=>r.length)),g2=rows[hr+1]||[],body=rows.slice(hr+2);
+  // Bloque «Tipología de post»: bajo su cabecera, cada grupo lista sus tipos de post.
+  // Si el grupo ocupa dos columnas, la 1.ª es la publicación y la 2.ª el nombre del producto; si ocupa una, solo el nombre.
+  const isTp=c=>{const n=norm(c);return n.startsWith('tipologia')&&n.includes('post')};
+  const tr=rows.findIndex((r,i)=>i>hr+1&&r.some(isTp));
+  const th=tr>=0?str(rows[tr].find(isTp)):'';
+  const used=c=>rows.slice(hr+1).some(r=>str(r[c])!=='');
+  const typesOf=(c0,two)=>tr<0?[]:rows.slice(tr+1).map(r=>two?{n:str(r[c0+1]),p:str(r[c0])}:{n:str(r[c0]),p:''}).filter(x=>x.n||x.p).map(x=>x.n?x:{n:x.p,p:''});
+  const secs=tks.map((tk,bi)=>{
+    const from=tk.i,to=bi+1<tks.length?tks[bi+1].i-1:W-1,title=String(tk.v).trim().replace(/\r\n?/g,'\n'),bt=title.split('\n')[0];
+    const starts=[];for(let c=from;c<=to;c++)if(str(g2[c])!=='')starts.push(c);
+    let cards=[];
+    if(starts.length){
+      cards=starts.map((s0,k)=>{
+        let e=k+1<starts.length?starts[k+1]-1:to;
+        while(e>s0&&!used(e))e--;            // ignora columnas vacías a la derecha del grupo
+        const out=[];body.forEach((r,bi)=>{const t=str(r[tc]);if(t&&str(r[s0])!=='')out.push({l:t,v:eur(r[s0]),pos:bi})});
+        return {name:str(g2[s0]),rows:out,th,bt,types:typesOf(s0,e>s0)};
+      });
+    }else{
+      // Bloque sin nombres de grupo en la fila 2: una sola tarjeta (o una por valor de la columna «Grupo», si existe)
+      // Si la primera columna del bloque trae textos (no importes), el bloque lleva sus propias etiquetas: etiqueta = esa columna, importe = la siguiente
+      const priceLike=v=>typeof v==='number'||/^(tbc|tba|n\/?a|-|—)$/i.test(str(v))||/^[\d.,\s€]+$/.test(str(v));
+      const own=body.some(r=>str(r[from])!==''&&!priceLike(r[from]));
+      const lc=own?from:tc,pc=own?from+1:from;
+      const ri={};let g='';
+      body.forEach((r,bi)=>{
+        if(gc>=0&&str(r[gc])!=='')g=str(r[gc]);
+        const t=str(r[lc]);if(!t||str(r[pc])==='')return;
+        let o=ri[g];if(!o){o=ri[g]={name:g,hue:gh?undefined:222,rows:[],th,bt,types:own?[]:typesOf(from,false)};cards.push(o)}
+        o.rows.push({l:t,v:eur(r[pc]),pos:bi});
+      });
+    }
+    return {type:'lines',title,mid:bi>0,cards:cards.filter(c=>c.rows.length)};
+  }).filter(x=>x.cards.length);
+  const basis=Math.max(1,...secs.map(x=>x.cards.length));
+  secs.forEach(x=>x.basis=basis);
+  return secs.length?{name:sn.trim(),gastos:true,h2:'Social Organic · Gastos de producción',sections:secs}:null;
+}
+
+function build(wb){
+  const st={year:new Date().getFullYear(),views:[],skipped:[]};
+  const prod={},support=new Set();
+  wb.SheetNames.forEach(sn=>{
+    const t=norm(sn),hid=((wb.Workbook&&wb.Workbook.Sheets)||[]).find(x=>x.name===sn);
+    if(t.startsWith('config')||t.startsWith('instruc')||t.startsWith('politica')||(hid&&hid.Hidden))return;
+    const r=parseProd(wb,sn);if(r){prod[sn]=r;if(r.support)support.add(r.support)}
+  });
+  wb.SheetNames.forEach(sn=>{
+    const t=norm(sn),hid=((wb.Workbook&&wb.Workbook.Sheets)||[]).find(x=>x.name===sn);
+    if(t.startsWith('config')){XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''}).forEach(r=>{if(norm(r.Clave)==='ano'&&+r.Valor)st.year=+r.Valor});return}
+    if(t.startsWith('instruc')||(hid&&hid.Hidden)){st.skipped.push({n:sn.trim(),why:hid&&hid.Hidden?'está oculta':'es una hoja de instrucciones'});return}
+    if(support.has(sn))return;                       // hoja de apoyo (tipos de post): no genera toggle propio
+    if(prod[sn]){st.views.push(prod[sn].view);return}
+    if(t.startsWith('politica')){
+      const secs=parseResumen(wb.Sheets[sn]);
+      if(secs.length)st.views.push({name:sn.trim(),pol:true,h2:'Política Comercial · Resumen',sections:secs});
+      return;
+    }
+    const gv=parseGastos(wb.Sheets[sn],sn);
+    if(gv){st.views.push(gv);return}
+    const v=buildSheet(wb.Sheets[sn],sn);
+    if(v.sections.length)st.views.push(v);
+    else if(v.keys.length&&v.nrows===0||!v.keys.some(k=>k.startsWith('publicacion'))){const fv=buildFlat(wb.Sheets[sn],sn);if(fv)st.views.push(fv);else skip()}
+    else skip();
+    function skip(){
+      const has=p=>v.keys.some(k=>k.startsWith(p)),miss=[];
+      if(!has('grupo'))miss.push('Grupo');if(!has('tarifa'))miss.push('Tarifa');if(!has('publicacion'))miss.push('Publicación');
+      st.skipped.push({n:sn.trim(),why:!v.nrows?'está vacía o no se lee ninguna fila bajo la cabecera':miss.length?'no encuentro la columna '+miss.join(', '):'ninguna fila tiene valor en la columna Publicación'});
+    }
+  });
+  // La hoja de producción va justo después de Tarifas Social Organic
+  const gi=st.views.findIndex(v=>v.gastos),si=st.views.findIndex(v=>v.key==='social organic');
+  if(gi>=0&&si>=0&&gi!==si+1){const [g]=st.views.splice(gi,1);st.views.splice(si+(gi<si?0:1),0,g)}
+  return st;
+}
+
+/* ---------- Render ---------- */
+function groupsHTML(s){
+  const n=Math.max(1,Math.min(s.groups.length,5));
+  const al=s.align&&s.groups.length===5;
+  return `<div class="ggrid${al?' al':''}" style="grid-template-columns:${al?'20% repeat(4,16%)':`repeat(${n},minmax(0,1fr))`}">`+s.groups.map((g,gi)=>{
+    const h=HUES[(g.plain?gi:gi+1)%HUES.length]; // Grupo 1 = verde (como en «Grupo de soportes», donde Lujo es el primero)
+    const head=g.plain
+      ?`<div class="ghead plain"><div class="gname">${esc(g.name)}</div></div>`
+      :`<div class="ghead"><div class="gname">${esc(g.name)}</div><div class="gprice">${esc(fmtPrice(g.tarifa)||'–')}</div><div class="gunit">${esc(g.unidad)}&nbsp;</div>${g.kpi!==''?`<div class="gkpi">KPI: ${esc(fmtPrice(g.kpi))}${s.kl?' '+esc(s.kl):''}</div>`:''}</div>`;
+    return `<div style="--k:${h}">${head}<div class="gbody">${g.pubs.map(p=>`<span class="pchip" title="${esc(p.note||p.n)}">${esc(p.n)}</span>`).join('')||'<span class="empty">·</span>'}</div></div>`;
+  }).join('')+`</div>`;
+}
+function infoBtn(c){
+  if(!c.types||!c.types.length)return '';
+  const tip=c.th||'Información';
+  return `<button class="ibtn" type="button" title="${esc(tip)}" aria-label="${esc(tip+' · '+c.name)}" data-info="${esc(JSON.stringify({n:c.name,h:c.th||'',b:c.bt||'',t:c.types}))}">i</button>`;
+}
+// 10 por columna: hasta 10 → 1 columna; 11-20 → 2; 21-30 → 3… (máx. 4), repartidas por igual
+function splitCols(a){const k=Math.max(1,Math.min(4,Math.ceil(a.length/10))),per=Math.ceil(a.length/k);return Array.from({length:k},(_,i)=>a.slice(i*per,(i+1)*per)).filter(x=>x.length)}
+function openInfo(b){
+  closeInfo();
+  const d=JSON.parse(b.dataset.info),host=b.closest('[style*="--k"]'),k=host?host.style.getPropertyValue('--k').trim():'222',cols=splitCols(d.t);
+  const o=document.createElement('div');o.className='imod';o.id='imod';o.style.setProperty('--k',k);
+  o.innerHTML=`<div class="ibox" role="dialog" aria-modal="true" aria-label="${esc(d.n)}"><div class="ihead"><div><b>${esc(d.n)}</b>${d.h||d.b?`<span>${esc([d.h,d.b].filter(Boolean).join(' · '))}</span>`:''}</div><button class="iclose" type="button" aria-label="Cerrar" data-close>×</button></div><div class="icols" style="grid-template-columns:repeat(${cols.length},minmax(0,1fr))">${cols.map(c=>`<ul>${c.map(x=>{x=typeof x==='string'?{n:x,p:''}:x;return `<li><span>${esc(x.n)}</span>${x.p?`<em>${esc(x.p)}</em>`:''}</li>`}).join('')}</ul>`).join('')}</div></div>`;
+  document.body.appendChild(o);o.querySelector('.iclose').focus();
+}
+function closeInfo(){const o=document.getElementById('imod');if(o)o.remove()}
+function tiposHTML(s){
+  const n=Math.max(1,Math.min(s.cards.length,5));
+  const btn=(r,c)=>{const lb=r.l+(r.dt?` (${r.dt})`:'');return `<div class="tbtn"><span>${esc(r.l)}</span>${r.d?`<i class="tdet">${r.d}</i>`:''}<b>${esc(r.v)}</b>${r.types&&r.types.length?`<button class="ibtn" type="button" title="${esc(r.info)}" aria-label="${esc(r.info+' · '+lb)}" data-info="${esc(JSON.stringify({n:r.info,h:c.name,b:lb,t:r.types}))}">i</button>`:''}</div>`};
+  return `<div class="ggrid" style="justify-content:center;grid-template-columns:repeat(${n},minmax(0,1fr))">`+s.cards.map((c,ci)=>`<div style="--k:${HUES[(ci+1)%HUES.length]}"><div class="ghead plain"><div class="gname">${esc(c.name)}</div></div><div class="gbody tipos">${c.rows.map(r=>btn(r,c)).join('')}</div></div>`).join('')+`</div>`;
+}
+function linesHTML(s){
+  const n=Math.max(1,Math.min(s.cards.length,5)),b=Math.max(n,Math.min(s.basis||n,5));
+  // Una sola tarjeta (p. ej. Reel): más ancha y con las líneas repartidas en hasta 3 columnas, rellenando de arriba abajo (la primera columna se llena antes: 7 líneas = 3+2+2)
+  const wide=s.cards.length===1;
+  const cols=wide?(b>=3?`calc((100% - ${(b-1)*18}px)/${b}*3 + 36px)`:'minmax(0,720px)'):`repeat(${n},calc((100% - ${(b-1)*18}px)/${b}))`;
+  const rowH=r=>`<div class="lrow"><span>${esc(r.l)}</span><b>${esc(r.v)}</b></div>`;
+  const body=c=>{
+    if(!wide)return c.rows.map(rowH).join('');
+    // Tres columnas alineadas con las tarjetas de arriba. Se respeta la posición de las filas del Excel: las filas vacías quedan como hueco,
+    // la 1.ª columna toma las filas 1-3, la 2.ª las 4-6 y la 3.ª las 7-9 (a partir de 10 filas, se reparten por igual). Con 3 filas o menos, una sola columna.
+    let slots=c.rows;
+    if(c.rows.length&&c.rows.every(r=>r.pos!==undefined)){const p0=c.rows[0].pos,p1=c.rows[c.rows.length-1].pos;slots=Array(p1-p0+1).fill(null);c.rows.forEach(r=>{slots[r.pos-p0]=r})}
+    const n=slots.length,per=Math.max(3,Math.ceil(n/3)),parts=c.cols&&c.cols.length?c.cols:n<=3?[slots]:[0,1,2].map(q=>slots.slice(q*per,(q+1)*per));
+    const slotH=r=>r?rowH(r):`<div class="lrow ghost"><span>&nbsp;</span><b>&nbsp;</b></div>`;
+    return `<div class="lcols">`+parts.map(part=>`<div class="lcol"${part.length?'':' style="border-left:0"'}>${part.map(slotH).join('')}</div>`).join('')+`</div>`;
+  };
+  return `<div class="ggrid${wide?' wide':''}" style="justify-content:center;grid-template-columns:${cols}">`+s.cards.map((c,ci)=>`<div style="--k:${c.hue!==undefined?c.hue:HUES[(ci+1)%HUES.length]}">${c.name?`<div class="ghead plain"><div class="gname">${esc(c.name)}</div>${infoBtn(c)}</div>`:''}<div class="gbody lines"${c.name?'':' style="margin-top:0"'}>${body(c)}</div></div>`).join('')+`</div>`;
+}
+function tableHTML(s){
+  return `<div class="tblw"><table class="tbl"><colgroup><col style="width:20%">${s.head.map(()=>'<col style="width:16%">').join('')}<col style="width:16%"></colgroup><thead><tr><th class="pl">Producto</th>${s.head.map((h,i)=>`<th style="--k:${HUES[(i+1)%HUES.length]}">${esc(h)}</th>`).join('')}<th class="pl">${esc(s.exLabel)}</th></tr></thead><tbody>`
+   +s.rows.map(r=>`<tr><td class="pn">${esc(r.name)}</td>${r.vals.map((v,i)=>`<td style="--k:${HUES[(i+1)%HUES.length]}">${esc(eur(v))}</td>`).join('')}<td class="ex">${esc(pct(r.extra))}</td></tr>`).join('')
+   +`</tbody></table></div>`+s.notes.map(n=>`<div class="snote">${esc(n)}</div>`).join('');
+}
+function kvHTML(s){
+  const lay=s.layout&&s.layout.reduce((a,b)=>a+b,0)===s.items.length?s.layout:[s.items.length];
+  let k=0;
+  return lay.map((n,ri)=>`<div class="kvrow" style="--k:${[222,175,35][ri%3]}">`+s.items.slice(k,k+=n).map(i=>`<div class="kv"><b>${esc(i.l)}</b>${i.t?`<span>${esc(i.t)}</span>`:''}</div>`).join('')+`</div>`).join('');
+}
+function titleHTML(t){const [a,...b]=String(t).split('\n').map(x=>x.trim()).filter(Boolean);return `<i class="tt">${esc(a||'')}${b.map(x=>`<small>${esc(x)}</small>`).join('')}</i>`}
+function render(){
+  document.getElementById('year').textContent=state.year||'';
+  const v=state.views[cur];
+  document.getElementById('ttl').textContent=(!msg&&v&&v.h2)||'Tarifas';
+  document.getElementById('tbar').innerHTML=state.views.map((v,i)=>`<button class="tog ${i===cur?'on':''}" type="button" style="--k:${HUES[i%HUES.length]}" data-v="${i}">${esc(v.name)}</button>`).join('');
+  document.getElementById('skipnote').innerHTML=(state.skipped||[]).filter(x=>!/^(config|instruc)/.test(norm(x.n))).map(x=>`⚠ La hoja «${esc(x.n)}» no genera toggle: ${esc(x.why)}.`).join('<br>');
+  const el=document.getElementById('groups');
+  el.classList.toggle('pol',!!(v&&v.pol&&!msg));
+  if(msg||!state.views.length){el.innerHTML=`<div class="msg">${esc(msg||'No hay datos')}</div>`;return}
+  el.innerHTML=v.sections.map(s=>`<div class="sec${s.air?' air':''}${s.mid?' mid':''}">${s.title?`<h3 class="stitle"><span>${titleHTML(s.title)}</span></h3>`:''}${s.type==='table'?tableHTML(s):s.type==='kv'?kvHTML(s):s.type==='lines'?linesHTML(s):s.type==='tipos'?tiposHTML(s):groupsHTML(s)}</div>`).join('');
+}
+function setStatus(t,c){const e=document.getElementById('hstat');e.textContent=t;e.className='hstat '+(c||'')}
+function apply(wb,label){
+  try{
+    const prev=state.views[cur]&&state.views[cur].name;
+    state=build(wb);const ni=state.views.findIndex(v=>v.name===prev);cur=ni>=0?ni:0;msg='';
+    if(!state.views.length)throw new Error('No hay hojas con datos (columnas Grupo, Tarifa, Unidad, Publicación)');
+    const t=new Date();setStatus((label||'Excel cargado')+' · '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'),'ok');
+  }catch(e){state={year:'',views:[]};msg=String(e.message||e);setStatus('No se pudo leer el Excel','err')}
+  render();
+}
+let localFile=false;
+async function loadExcel(silent){
+  if(silent===true&&localFile)return;
+  if(silent!==true)localFile=false;
+  if(!EXCEL_URL){msg='Aún no hay enlace al Excel. Pulsa «Abrir Excel» para cargar el archivo desde tu equipo, o pega el enlace de SharePoint en EXCEL_URL.';setStatus('Sin enlace','err');render();return}
+  if(silent!==true)setStatus('Cargando Excel…');
+  try{const res=await fetch(EXCEL_URL,{cache:'no-cache'});if(!res.ok)throw new Error('HTTP '+res.status);apply(XLSX.read(await res.arrayBuffer(),{type:'array'}))}
+  catch(e){if(silent===true)return;state={year:'',views:[]};msg='No se pudo cargar el Excel de SharePoint ('+(e.message||e)+'). Revisa el enlace y los permisos y pulsa «Actualizar».';setStatus('No se pudo leer el Excel','err');render()}
+}
+document.addEventListener('click',e=>{
+  const i=e.target.closest('[data-info]');if(i){openInfo(i);return}
+  if(e.target.closest('[data-close]')||e.target.id==='imod'){closeInfo();return}
+  const b=e.target.closest('[data-v]');if(b){cur=+b.dataset.v;render()}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeInfo()});
+document.getElementById('refresh').addEventListener('click',()=>loadExcel());
+document.getElementById('open').addEventListener('click',()=>document.getElementById('file').click());
+document.getElementById('file').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  localFile=true;apply(XLSX.read(await f.arrayBuffer(),{type:'array'}),f.name);e.target.value='';
+});
+render();loadExcel();
+setInterval(()=>{if(!document.hidden)loadExcel(true)},5*60*1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadExcel(true)});
+</script>
+</body></html>
