@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estructura comercial por fases</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--ink:#1b2a41;--mut:#66748a;--bg:#f4f5f8;--card:#fff;--line:#e4e8ef;--b1:#1f4e8c;--b2:#e5edf8;--navy:#14243d;--gold:#b99a5f;--warn:#b4531a;--ok:#2f7d52;--serif:'Cormorant Garamond',Georgia,serif;--shadow:0 1px 2px rgba(20,36,61,.05),0 12px 26px -16px rgba(20,36,61,.25)}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 'DM Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg);text-align:center}
+button,select{font:inherit;color:inherit}
+
+/* Cabecera */
+header{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:30px 32px 34px;background:var(--navy);color:#fff}
+header::before{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold) 20%,var(--gold) 80%,transparent)}
+header::after{content:"";position:absolute;left:50%;bottom:-6px;width:11px;height:11px;margin-left:-5.5px;background:var(--gold);transform:rotate(45deg)}
+h1{grid-column:2;grid-row:1;margin:0;font:600 32px/1.1 var(--serif);letter-spacing:.01em;text-align:center}
+.badge{font-size:11.5px;color:var(--mut)}
+#upd{grid-column:1;grid-row:1;justify-self:start;color:#aebbd0}
+header .hbtns{grid-column:3;grid-row:1;justify-self:end;display:flex;align-items:center;gap:8px}
+header .btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.3);color:#fff}
+header .btn:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.55)}
+
+/* Botones y toggles */
+.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:#fff;color:var(--b1);padding:9px 20px;border-radius:999px;cursor:pointer;font-weight:500;transition:background .15s,color .15s,border-color .15s,box-shadow .15s}
+.btn:hover{border-color:var(--b1)}
+.btn:disabled{opacity:.6;cursor:default}
+.btn.on{background:var(--b1);border-color:var(--b1);color:#fff;box-shadow:0 6px 14px -6px rgba(31,78,140,.65)}
+.btn:focus-visible,.btn:focus-within,select:focus-visible{outline:2px solid var(--b1);outline-offset:2px}
+header .btn:focus-within{outline-color:#fff}
+.sm{padding:5px 15px;font-size:12.5px}
+select{appearance:none;-webkit-appearance:none;padding:6px 32px 6px 16px;border:1px solid var(--line);border-radius:999px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%231f4e8c' stroke-width='1.6'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 14px center;font-size:12.5px;cursor:pointer}
+
+nav{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;padding:40px 28px 0}
+main{max-width:1200px;margin:0 auto;padding:36px 28px 72px;text-align:center}
+.bar{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:36px}
+.bar>label:not(.btn){color:var(--mut);font-weight:500;display:inline-flex;align-items:center;gap:8px}
+
+/* Separador línea + rombo */
+.sep{display:flex;align-items:center;gap:16px;max-width:560px;margin:46px auto;color:var(--gold)}
+.sep::before,.sep::after{content:"";flex:1;height:1px}
+.sep::before{background:linear-gradient(90deg,transparent,currentColor)}
+.sep::after{background:linear-gradient(270deg,transparent,currentColor)}
+.sep i{flex:none;width:9px;height:9px;background:currentColor;transform:rotate(45deg)}
+
+/* Bloques */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,300px));justify-content:center;gap:24px}
+.cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;align-items:stretch}
+.col,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 18px 22px;box-shadow:var(--shadow)}
+.col{display:flex;flex-direction:column}
+.col .chips{flex:1;margin-bottom:16px}
+.col .tot{margin-top:0}
+.col.warn,.card.warn{border-color:#e6bfa3;background:#fffaf6}
+h3{margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line);font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px}
+h3 small{background:var(--b2);color:var(--b1);font-weight:500;font-size:11px;padding:1px 9px;border-radius:999px}
+h2{font:600 24px/1.2 var(--serif);margin:0 0 20px}
+h2.vt{font-size:30px;margin:6px 0 26px}h2.vt::after{content:"";display:block;width:46px;height:2px;margin:14px auto 0;background:var(--gold)}
+
+/* Chips de publicaciones */
+.chip{display:inline-block;margin:0 3px 7px;padding:3px 11px;border-radius:999px;background:var(--b2);color:var(--b1);border:1px solid rgba(31,78,140,.12);font-size:12px;font-weight:500;line-height:1.5}
+.chip em{font-style:normal;color:var(--mut);margin-left:6px;font-size:11px;font-weight:400}
+.chip.pct{background:#eef1f5;color:var(--ink)}
+.free{max-width:900px;margin:0 auto}
+
+.row{padding:8px 0;border-bottom:1px dashed var(--line)}.row:last-child{border:0}.row small{color:var(--mut)}
+.flag{color:var(--warn);font-weight:500}.good{color:var(--ok);font-weight:500}.dim{opacity:.55}
+.empty{padding:64px 20px;text-align:center;color:var(--mut)}
+.empty::before{content:"";display:block;width:9px;height:9px;margin:0 auto 22px;background:var(--gold);transform:rotate(45deg)}
+
+/* KPIs */
+.kpi{display:flex;flex-direction:column;align-items:center;border-radius:12px;background:var(--b2);color:var(--b1);padding:6px 11px;line-height:1.25}
+.kpi small{font-size:11px;opacity:.85}.kpi b{font-size:13px}
+.kpi.big{background:var(--navy);color:#fff;padding:10px 20px;border-radius:14px}.kpi.big b{font-size:18px}.kpi.big small{color:#c9d3e3;opacity:1}
+.tot{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:8px;align-items:center}
+.tot .mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%}
+.tot .mini .kpi{padding:6px 3px;white-space:nowrap}
+
+/* Tablas */
+table{width:100%;max-width:900px;margin:0 auto;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+th,td{text-align:center;padding:13px 18px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{background:#f7f9fc;color:var(--mut);font-weight:500}
+tr:last-child td{border-bottom:0}
+
+/* Flujo de trabajo y comprobación */
+details.proc{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+details.proc+details.proc{margin-top:24px}
+details.proc summary{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 20px;cursor:pointer;font-weight:700;list-style:none}
+details.proc summary::-webkit-details-marker{display:none}
+details.proc summary::before{content:"";width:7px;height:7px;background:var(--gold);transform:rotate(45deg);flex:none}
+.step{display:grid;grid-template-columns:170px 150px 1fr 160px;gap:14px;justify-items:center;align-items:center;padding:14px 20px;border-top:1px solid var(--line)}
+.step b{font-weight:700}.step span{color:var(--mut)}
+.step.hd{background:#f7f9fc;color:var(--mut);font-size:12px;padding:10px 20px}.step.hd+.step{border-top:0}
+
+.alert{max-width:760px;margin:0 auto;padding:18px 24px;border:1px solid #e6bfa3;background:#fffaf6;border-radius:16px;text-align:left;box-shadow:var(--shadow)}
+.alert ul{margin:8px 0 0;padding-left:20px}.alert li{margin:4px 0}
+
+/* Checklist de la fase 4 */
+.chk{display:flex;align-items:center;justify-content:center;gap:14px;max-width:640px;margin:0 auto;padding:12px 0;border-bottom:1px solid var(--line)}
+.chk:last-of-type{border-bottom:0}
+.chk b{display:inline-grid;place-items:center;flex:none;min-width:32px;height:32px;border-radius:50%;background:var(--b2)}
+.chk b.flag{background:#fbeee3}.chk b.good{background:#e5f3ea}
+
+@media(max-width:1100px){.cols4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.step{grid-template-columns:1fr}.step.hd{display:none}
+  header{grid-template-columns:1fr;justify-items:center;padding:24px 20px 28px}
+  h1,#upd,header .hbtns{grid-column:1;justify-self:center}h1{grid-row:1;font-size:28px}#upd{grid-row:2}header .hbtns{grid-row:3}}
+@media(max-width:560px){.cols4{grid-template-columns:1fr}main{padding:28px 18px 56px}nav{padding:32px 18px 0}.sep{margin:38px auto}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<header><h1>Estructura comercial</h1><span class="badge" id="upd"></span>
+<div class="hbtns"><button class="btn sm" id="refresh" type="button" title="Volver a leer el Excel de estructura">↻ Actualizar</button><label class="btn sm">Cargar Excel<input type="file" id="file" accept=".xlsx,.xls" hidden></label></div></header>
+<nav id="nav"></nav><main id="main"><div class="empty">Carga el Excel estructura-fases.xlsx para empezar.</div></main>
+<script>
+// Excel de estructura en SharePoint: se carga solo al abrir. Si falla, sale un aviso arriba y se puede usar «Cargar Excel».
+const EXCEL_URL='https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCzZV98gmSCSJaId2gzgpWfASnhXcTZe1AsVf7R4HB0g8M';
+// Los toggles salen solos de las hojas del Excel (con el nombre de la hoja). Hojas con vista propia por nombre. La fase de cada hoja es su posición entre las pestañas (1.ª = Fase I, 2.ª = Fase II…) y enlaza con la columna Fase de la hoja Proceso. Cualquier otra hoja nueva se muestra como tabla.
+const SPECIAL={responsables:()=>f1(),sectores:()=>f2(),anunciantes:()=>f3()};
+const TECH=['datos','proceso','meta','asignaciones','marcas'];// hojas de apoyo: no generan toggle
+const RES='__resumen';
+const ROM=i=>{const m=[[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let r='';for(const[v,l]of m)while(i>=v){r+=l;i-=v}return r};
+const faseKey=v=>{v=n(v).toUpperCase().replace(/^FASE\s*/,'');return /^\d+$/.test(v)?ROM(+v):v};let TABS=[];
+const DEBUG=/[?&#]debug/.test(location.href);
+const SEP='<div class="sep" role="separator"><i></i></div>';
+let UPD='',HASH='',BUSY=false,CHK='',LOCAL=false;const ERR=[];
+const badge=()=>{const p=[];if(UPD)p.push(UPD);if(CHK)p.push('Revisado '+CHK);if(ERR.length)p.push('⚠ No se pudo cargar: '+ERR.join(', ')+' (usa los botones Cargar)');document.getElementById('upd').textContent=p.join(' · ')};
+const S={phase:'',year:'',sector:'',view:'dest',rev:''};let D=null;
+const n=v=>String(v??'').trim();
+const k=v=>n(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const esc=s=>n(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SM=['y','e','de','del','la','el','los','las','en','a'];
+const nice=s=>{s=n(s).replace(/\s+/g,' ');if(s==='AAPP'||s!==s.toUpperCase())return s;return s.toLowerCase().split(' ').map((w,i)=>i&&SM.includes(w)?w:w.replace(/(^|[\/\-'])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase())).join(' ')};
+const pct=v=>{v=parseFloat(v);if(isNaN(v))return'';return Math.round((v>1?v:v*100))+'%'};
+const pnum=v=>{v=parseFloat(v);return isNaN(v)?0:(v>1?v/100:v)};
+const mk=(a,m)=>k(a)+'|'+k(m);
+
+function load(wb,bytes){
+  const t=name=>{const s=wb.SheetNames.find(x=>k(x)===k(name));return s?XLSX.utils.sheet_to_json(wb.Sheets[s],{defval:''}):[]};
+  const g=(r,c)=>n(r[Object.keys(r).find(x=>k(x)===k(c))]);
+  const meta={};t('Meta').forEach(r=>meta[k(g(r,'Campo'))]=r[Object.keys(r).find(x=>k(x)==='valor')]);
+  D={
+    personas:t('Datos').map(r=>({nombre:g(r,'Nombre'),rol:g(r,'Rol'),zona:g(r,'Zona')})).filter(x=>x.nombre),
+    sectoresLista:t('Datos').map(r=>g(r,'Sectores')).filter(Boolean),
+    destinos:t('Responsables').map(r=>({destino:g(r,'Destino'),tipo:g(r,'Tipo'),resp:g(r,'Responsable'),perfil:g(r,'Perfil de audiencia')})).filter(x=>x.destino),
+    sectores:t('Sectores').map(r=>({sector:g(r,'Sector'),coms:Object.keys(r).filter(x=>k(x).startsWith('comercial')).map(x=>n(r[x])).filter(Boolean),pct:r[Object.keys(r).find(x=>x==='%')]})).filter(x=>x.sector),
+    marcas:(t('Marcas').length?t('Marcas'):t('Anunciantes')).map(r=>({anunc:g(r,'Anunciante'),marca:g(r,'Marca'),sector:g(r,'Sector'),target:g(r,'Target')})).filter(x=>x.marca),
+    asig:t('Asignaciones').map(r=>({year:g(r,'Año'),anunc:g(r,'Anunciante'),marca:g(r,'Marca'),destino:g(r,'Destino'),com:g(r,'Comercial'),nota:g(r,'Notas')})).filter(x=>x.marca&&x.destino),
+    proceso:procRows(wb),
+    meta
+  };
+  if(SPLIT_ELLE_DIGITAL)['Elle Gourmet','Elle Travel'].forEach(nm=>{if(!D.destinos.some(d=>canonPub(d.destino)===nm))D.destinos.push({destino:nm,tipo:'Digital',resp:'',perfil:''})});
+  D.sectores=D.sectores.filter(x=>sKey(x.sector)!=='vendors');D.sectoresLista=D.sectoresLista.filter(x=>sKey(x)!=='vendors');// Vendors no se muestra
+  D.hasAsig=wb.SheetNames.some(x=>k(x)==='asignaciones');
+  const hid=(wb.Workbook&&wb.Workbook.Sheets)||[];
+  TABS=wb.SheetNames.filter((x,i)=>!(hid[i]&&hid[i].Hidden)&&!TECH.includes(k(x)));
+  D.raw={};TABS.forEach(x=>D.raw[x]=sheetTable(wb.Sheets[x]));
+  if(S.phase!==RES&&!TABS.includes(S.phase))S.phase=TABS[0]||RES;
+  D.sectorOf={};D.marcas.forEach(m=>D.sectorOf[mk(m.anunc,m.marca)]=m.sector);
+  const ys=[...new Set(D.asig.map(a=>a.year))].sort();if(!S.year||(ys.length&&!ys.includes(S.year)))S.year=ys.length?ys[ys.length-1]:n(meta['ano']);
+  let u=meta['actualizado'];if(u instanceof Date)u=u.toLocaleDateString('es-ES');
+  UPD=u?'Actualizado '+u:'';badge();
+  render();
+  const d=D;if(bytes)richProceso(bytes).then(m=>{if(m&&D===d){d.rich=m;render()}}).catch(()=>{});
+}
+// Hoja Proceso con su posición de celda, para poder recuperar el formato (negrita, color…) de cada una.
+function procRows(wb){
+  const s=wb.SheetNames.find(x=>k(x)==='proceso');if(!s)return[];
+  const w=wb.Sheets[s],c0=w['!ref']?XLSX.utils.decode_range(w['!ref']).s.c:0;
+  return XLSX.utils.sheet_to_json(w,{defval:''}).map(r=>{
+    const ks=Object.keys(r),ix=c=>ks.findIndex(x=>k(x)===k(c)),v=c=>ix(c)<0?'':n(r[ks[ix(c)]]),ad=c=>XLSX.utils.encode_cell({c:ix(c)+c0,r:r.__rowNum__});
+    return{fase:faseKey(v('Fase')),paso:v('Paso'),quien:v('Quién'),cuando:v('Cuándo'),que:v('Qué hace'),entrega:v('Entregable'),a:{quien:ad('Quién'),cuando:ad('Cuándo'),que:ad('Qué hace'),entrega:ad('Entregable')}}});
+}
+// SheetJS no lee el formato de las celdas, así que se lee a mano del .xlsx (zip): negrita, cursiva, subrayado y color, tanto de la celda entera como de trozos de texto dentro de ella.
+async function richProceso(u){
+  if(typeof JSZip==='undefined')return null;
+  const z=await JSZip.loadAsync(u),rd=async p=>{const f=z.file(p);return f?new DOMParser().parseFromString(await f.async('string'),'application/xml'):null};
+  const wbx=await rd('xl/workbook.xml'),rel=await rd('xl/_rels/workbook.xml.rels');if(!wbx||!rel)return null;
+  const sh=[...wbx.getElementsByTagName('sheet')].find(x=>k(x.getAttribute('name'))==='proceso');if(!sh)return null;
+  const rid=sh.getAttribute('r:id'),tg=[...rel.getElementsByTagName('Relationship')].find(x=>x.getAttribute('Id')===rid)?.getAttribute('Target');if(!tg)return null;
+  const [sx,sst,th,ws]=await Promise.all([rd('xl/styles.xml'),rd('xl/sharedStrings.xml'),rd('xl/theme/theme1.xml'),rd(tg.startsWith('/')?tg.slice(1):'xl/'+tg)]);if(!ws)return null;
+  const T=th&&th.getElementsByTagName('a:clrScheme')[0]?[...th.getElementsByTagName('a:clrScheme')[0].children].map(e=>{const c=e.firstElementChild;return c.getAttribute('lastClr')||c.getAttribute('val')}):[];
+  const TH=T.length>=4?[T[1],T[0],T[3],T[2],...T.slice(4)]:[];// el índice de tema de Excel intercambia claro/oscuro
+  const IDX={2:'FF0000',3:'00FF00',4:'0000FF',5:'FFFF00',6:'FF00FF',7:'00FFFF',10:'FF0000',11:'00FF00',12:'0000FF',13:'FFFF00',14:'FF00FF',15:'00FFFF'};
+  const kids=(e,t)=>e?[...e.children].filter(c=>c.tagName===t):[];
+  const col=e=>{if(!e)return'';let h;if(e.hasAttribute('rgb'))h=e.getAttribute('rgb').slice(-6);else if(e.hasAttribute('theme'))h=TH[+e.getAttribute('theme')];else if(e.hasAttribute('indexed'))h=IDX[+e.getAttribute('indexed')];
+    if(!h||h.length!==6)return'';const t=parseFloat(e.getAttribute('tint')||0);
+    if(t)h=[0,2,4].map(i=>{let c=parseInt(h.substr(i,2),16);c=t<0?c*(1+t):c+(255-c)*t;return Math.round(c).toString(16).padStart(2,'0')}).join('');
+    h=h.toUpperCase();return h==='000000'||h==='FFFFFF'?'':'#'+h};
+  const fnt=f=>{if(!f)return{};const on=t=>{const e=kids(f,t)[0];return !!e&&!['0','false'].includes(e.getAttribute('val'))},u=kids(f,'u')[0];return{b:on('b'),i:on('i'),u:!!u&&u.getAttribute('val')!=='none',c:col(kids(f,'color')[0])}};
+  const fonts=kids(sx&&sx.getElementsByTagName('fonts')[0],'font').map(fnt),xfs=kids(sx&&sx.getElementsByTagName('cellXfs')[0],'xf').map(x=>fonts[+x.getAttribute('fontId')||0]||{});
+  const raw=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])).replace(/\n/g,'<br>');
+  const wrap=(t,o)=>{const h=raw(t);if(!h)return'';const st=(o.c?'color:'+o.c+';':'')+(o.b?'font-weight:700;':'')+(o.i?'font-style:italic;':'')+(o.u?'text-decoration:underline;':'');return st?`<span style="${st}">${h}</span>`:h};
+  const txt=e=>kids(e,'t').map(c=>c.textContent).join('');
+  const si=(e,base)=>{const rs=kids(e,'r');return rs.length?rs.map(r=>wrap(txt(r),kids(r,'rPr')[0]?fnt(kids(r,'rPr')[0]):base)).join(''):wrap(txt(e),base)};
+  const strs=sst?kids(sst.documentElement,'si'):[],out={};
+  for(const c of ws.getElementsByTagName('c')){
+    const t=c.getAttribute('t'),base=xfs[+c.getAttribute('s')||0]||{},v=kids(c,'v')[0];let h='';
+    if(t==='s'&&v)h=si(strs[+v.textContent],base);else if(t==='inlineStr')h=si(kids(c,'is')[0],base);
+    if(h.includes('<span'))out[c.getAttribute('r')]=h}
+  return out;
+}
+// Hoja cualquiera → {h:cabeceras, r:filas}, sin filas ni columnas vacías.
+function sheetTable(ws){
+  const a=XLSX.utils.sheet_to_json(ws,{header:1,defval:''}).filter(r=>r.some(c=>n(c)!==''));if(!a.length)return{h:[],r:[]};
+  const w=Math.max(...a.map(r=>r.length)),keep=[];for(let c=0;c<w;c++)if(a.some(r=>n(r[c])!==''))keep.push(c);
+  return{h:keep.map(c=>n(a[0][c])),r:a.slice(1).map(r=>keep.map(c=>r[c]))};
+}
+function fg(name){
+  const t=D.raw[name];if(!t||!t.r.length)return `<div class="empty">La hoja «${esc(name)}» está vacía.</div>`;
+  const c=v=>v instanceof Date?v.toLocaleDateString('es-ES'):esc(v);
+  return `<table><tr>${t.h.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>${t.r.map(r=>`<tr>${r.map(v=>`<td>${c(v)}</td>`).join('')}</tr>`).join('')}</table>`;
+}
+// Excel de ingresos (PRODUCCION DIGITAL / PRINT / EVENTOS) en SharePoint: se cargan solos; los botones de la Fase I sirven de plan B.
+const CFG={
+  Digital:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQBtUVlYDjlRRoCaM7gsBE1eATJ8miXAVtnTs6Qcuioee-Y',
+  Print:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQCgA4a20KbOTIY3RsToUyewAROi0viVXnYcoXICS4M0cNU',
+  Eventos:'https://hearstspain-my.sharepoint.com/personal/japaricio_hearst_es/_layouts/15/download.aspx?share=IQDZNkSJLhXFToC-uOPwQt-KAcAnft0wGr7bEwH4pJhzMoU'};
+const R={};
+const eur=v=>new Intl.NumberFormat('es-ES',{maximumFractionDigits:0}).format(v)+' €';
+const cmp=v=>v>=1e6?(v/1e6).toFixed(2).replace('.',',')+' M€':v>=1e4?Math.round(v/1e3)+' K€':eur(v);
+const num=v=>{if(typeof v==='number')return v;v=n(v);if(!v)return 0;return parseFloat(v.includes(',')?v.replace(/\./g,'').replace(',','.'):v)||0};
+// Lógica unificada de nombres de publicaciones (logica-publicaciones-nombres.txt). El orden del array es el orden de importancia.
+const norm=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const PUB_CANON=[['Elle',['elle']],['Elle Gourmet',['ellegourmet']],['Elle Travel',['elletravel']],["Harper's Bazaar",['harpersbazaar']],['Cosmopolitan',['cosmopolitan']],['Esquire',['esquire']],['Fotogramas',['fotogramas','fotogramasvideo']],
+  ['Elle Decor',['elledecor','elledecoration']],['Nuevo Estilo',['nuevoestilo']],["Men's Health",['menshealth']],
+  ["Women's Health",['womenshealth','womenshealthmag']],["Runner's World",['runnersworld']],['Diez Minutos',['diezminutos']],['Car and driver',['caranddriver','cardriver']]];
+const PUB_ALIAS=new Map(PUB_CANON.flatMap(([name,keys])=>keys.map(x=>[x,name])));
+const PUB_ORDER=PUB_CANON.map(x=>x[0].toLowerCase());
+function canonPub(v){
+  let p=String(v??'').replace(/\u00a0/g,' ').trim();
+  if(!p)return '(Sin publicación)';
+  if(/^(https?:\/\/|www\.)/i.test(p)||/\.(es|com|net|org)(\/|$)/i.test(p)){
+    if(/elle\.com/i.test(p)){const lp=p.toLowerCase();if(lp.includes('gourmet'))return 'Elle Gourmet';if(lp.includes('viajes')||lp.includes('travel'))return 'Elle Travel'}
+    p=p.replace(/^https?:\/\//i,'').replace(/^www\./i,'').split('/')[0].replace(/\.(es|com|net|org)$/i,'')}
+  const x=norm(p);if(PUB_ALIAS.has(x))return PUB_ALIAS.get(x);
+  return p.replace(/[´`’‘]/g,"'").replace(/\s+/g,' ').toLowerCase().replace(/(^|[\s\-(])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase());
+}
+const pubRank=nm=>{const i=PUB_ORDER.indexOf(String(nm).toLowerCase());return i<0?999:i};
+const pubCmp=(a,b)=>pubRank(a)-pubRank(b)||String(a).localeCompare(String(b),'es');
+const pk=v=>canonPub(v).toLowerCase();
+// En los Excel de ingresos el sector viene como «99009 * Moda»: se ignora el código y el asterisco.
+const sClean=v=>String(v??'').replace(/^\s*\d+\s*\*\s*/,'').trim();
+const sKey=v=>norm(sClean(v)),sName=v=>nice(sClean(v));
+// Split de www.elle.com/es/ en Digital (instrucciones_elle_gourmet_travel.txt): según la columna «Detalle», 'gourmet' → Elle Gourmet, 'viajes'/'travel' → Elle Travel, el resto → Elle. Solo Digital; Print ya trae sus propias líneas.
+const SPLIT_ELLE_DIGITAL=true;
+const years=()=>[...new Set(Object.values(R).flatMap(x=>Object.keys(x.t)))].sort().reverse();
+function loadRev(c,wb){
+  let best,bn=-1;wb.SheetNames.forEach(sn=>{const r=wb.Sheets[sn]['!ref'],m=r?XLSX.utils.decode_range(r).e.r:0;if(m>bn){bn=m;best=sn}});
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[best],{defval:''}),h=rows.length?Object.keys(rows[0]):[];
+  const f=(...res)=>{for(const re of res){const x=h.find(c=>re.test(k(c)));if(x)return x}};
+  const cp=f(/^publicacion$/,/publicacion/),cy=f(/^ano$/,/^ano /,/^anio/,/ano/),cd=f(/^detalle$/),
+    cs=f(/^sector$/,/sector/),
+    ci=f(/^imp.*neto.*comision/,/^importe/)||h.find(x=>/imp.*neto|ingreso/.test(k(x))&&!/ant/.test(k(x)));
+  const t={},names={},el={},sec={},secN={};let ok=0;
+  if(cp&&cy&&ci)rows.forEach(r=>{let key=pk(r[cp]);const y=n(r[cy]).slice(0,4);if(!key||!/^\d{4}$/.test(y))return;
+    if(SPLIT_ELLE_DIGITAL&&c==='Digital'&&key==='elle'&&cd){const d=k(r[cd]);key=d.includes('gourmet')?'elle gourmet':(d.includes('viajes')||d.includes('travel'))?'elle travel':'elle';
+      const dv=n(r[cd])||'(vacío)',E=((el[y]??={})[dv]??={key:'',imp:0,n:0});E.key=key;E.imp+=num(r[ci]);E.n++}
+    const o=(t[y]??={});o[key]=(o[key]||0)+num(r[ci]);names[key]??=key==='elle gourmet'?'Elle Gourmet':key==='elle travel'?'Elle Travel':canonPub(r[cp]);
+    if(cs){const sk=sKey(r[cs])||'sinsector',so=(sec[y]??={});so[sk]=(so[sk]||0)+num(r[ci]);secN[sk]??=sClean(r[cs])?sName(r[cs]):'(Sin sector)'}
+    ok++});
+  R[c]={t,names,el,sec:cs?sec:null,secN,rows:rows.length,ok,cols:{pub:cp,year:cy,imp:ci,det:cd,sec:cs}};
+  const ys=years();if(!ys.includes(S.rev))S.rev=ys[0]||'';
+  render();
+}
+function kpi(l){const ks=l.map(d=>pk(d.destino));return kpiBox(c=>R[c]?ks.reduce((a,x)=>a+(R[c].t[S.rev]?.[x]||0),0):null)}
+function kpiSec(sector){const sk=sKey(sector);return kpiBox(c=>R[c]&&R[c].sec?(R[c].sec[S.rev]?.[sk]||0):null)}
+function kpiBox(v){
+  const vs=['Digital','Print','Eventos'].map(c=>[c,v(c)]),tot=vs.reduce((a,[,x])=>a+(x||0),0);
+  return `<div class="tot"><span class="kpi big"><small>Total ${esc(S.rev)}</small><b>${eur(tot)}</b></span><div class="mini">${vs.map(([c,x])=>`<span class="kpi"><small>${c}</small><b>${x==null?'—':cmp(x)}</b></span>`).join('')}</div></div>`;
+}
+function elleDiag(r){
+  const e=r.el&&r.el[S.rev];if(!e)return'';
+  const L=Object.entries(e).sort((a,b)=>b[1].imp-a[1].imp),tot=L.reduce((a,[,v])=>a+v.imp,0),nm={'elle':'Elle','elle gourmet':'Elle Gourmet','elle travel':'Elle Travel'};
+  const by={};L.forEach(([,v])=>by[v.key]=(by[v.key]||0)+v.imp);
+  return `<br><small><b>Reparto de www.elle.com/es/ por «Detalle» en ${esc(S.rev)}</b> (total ${cmp(tot)} = ${Object.entries(by).map(([x,v])=>nm[x]+' '+cmp(v)).join(' + ')})</small>`+L.slice(0,12).map(([d,v])=>`<br><small>«${esc(d)}» → ${nm[v.key]} · ${v.n} líneas · ${cmp(v.imp)}</small>`).join('')+(L.length>12?`<br><small>… y ${L.length-12} valores más</small>`:'');
+}
+function dupDiag(){
+  const c={};D.destinos.forEach(d=>(c[pk(d.destino)]??=[]).push(d.destino));
+  const dup=Object.values(c).filter(l=>l.length>1);
+  return dup.length?`<div class="row"><b class="flag">Destinos que apuntan a la misma publicación (su ingreso se cuenta en cada uno)</b><br><small>${dup.map(l=>l.map(esc).join(' = ')).join(' · ')}</small></div>`:'';
+}
+function problems(ph){
+  const out=[],keys=new Set(D.destinos.map(d=>pk(d.destino))),sk=new Set([...D.sectores.map(x=>sKey(x.sector)),'vendors']);
+  Object.entries(R).forEach(([c,r])=>{
+    const cl=r.cols,miss=[['publicación',cl.pub],['año',cl.year],['importe',cl.imp]].filter(x=>!x[1]).map(x=>x[0]);
+    if(miss.length)out.push(`<b>${c}:</b> no encuentro en el Excel la columna de ${miss.join(', ')}.`);
+    else if(!r.ok)out.push(`<b>${c}:</b> el Excel se ha leído, pero ninguna fila tiene año e importe válidos.`);
+    if(ph==='1'){
+      if(c==='Digital'&&SPLIT_ELLE_DIGITAL&&!cl.det)out.push('<b>Digital:</b> no encuentro la columna «Detalle», así que Elle no se puede repartir en Gourmet y Travel.');
+      const un=Object.entries(r.t[S.rev]||{}).filter(([x,v])=>!keys.has(x)&&Math.abs(v)>=0.5).sort((a,b)=>b[1]-a[1]);
+      if(un.length)out.push(`<b>${c} ${esc(S.rev)}:</b> hay ingresos de publicaciones que no están en ningún bloque y no suman en los totales: ${un.slice(0,8).map(([x,v])=>esc(r.names[x])+' ('+cmp(v)+')').join(', ')}${un.length>8?'…':''}.`);
+    }else if(!miss.length){
+      if(!cl.sec)out.push(`<b>${c}:</b> no encuentro en el Excel la columna «Sector».`);
+      else{const un=Object.entries(r.sec[S.rev]||{}).filter(([x,v])=>!sk.has(x)&&Math.abs(v)>=0.5).sort((a,b)=>b[1]-a[1]);
+        if(un.length)out.push(`<b>${c} ${esc(S.rev)}:</b> hay ingresos de sectores que no tienen card y no suman en ninguna: ${un.slice(0,8).map(([x,v])=>esc(r.secN[x])+' ('+cmp(v)+')').join(', ')}${un.length>8?'…':''}. Revisa que el nombre coincida con el de la hoja Sectores.`)}
+    }
+  });
+  if(ph==='1'){
+    const c={};D.destinos.forEach(d=>(c[pk(d.destino)]??=[]).push(d.destino));
+    const dup=Object.values(c).filter(l=>l.length>1);
+    if(dup.length)out.push('<b>Destinos repetidos en la hoja</b> (su ingreso se cuenta dos veces): '+dup.map(l=>l.map(esc).join(' = ')).join(' · ')+'.');
+  }
+  return out;
+}
+function diag(ph){
+  if(!Object.keys(R).length)return'';
+  if(DEBUG&&ph==='1')return diagFull();
+  const m=problems(ph);
+  return m.length?`<div class="alert"><b class="flag">Revisa estos datos</b><ul>${m.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:'';
+}
+function diagFull(){
+  const cs=Object.keys(R);if(!cs.length)return'';const keys=new Set(D.destinos.map(d=>pk(d.destino)));
+  return `<details class="proc"><summary>Comprobación de los datos de ingresos</summary><div style="padding:6px 14px 12px">${dupDiag()}${cs.map(c=>{const r=R[c],cl=r.cols,
+    un=Object.entries(r.t[S.rev]||{}).filter(([x,v])=>!keys.has(x)&&Math.abs(v)>=0.5).sort((a,b)=>b[1]-a[1]).slice(0,8),
+    al=Object.entries(r.t[S.rev]||{}).sort((a,b)=>pubCmp(r.names[a[0]],r.names[b[0]])).map(([x,v])=>esc(r.names[x])+' '+cmp(v)).join(', ');
+    return `<div class="row"><b>${c}</b> · ${r.ok}/${r.rows} filas · columnas: publicación «${esc(cl.pub||'NO ENCONTRADA')}», año «${esc(cl.year||'NO ENCONTRADA')}», importe «${esc(cl.imp||'NO ENCONTRADA')}»${c==='Digital'&&SPLIT_ELLE_DIGITAL?`, detalle «${esc(cl.det||'NO ENCONTRADA')}»`:''}<br><small>Detectado en ${esc(S.rev)}: ${al||'nada'}</small><br><small>Publicaciones del Excel sin bloque en ${esc(S.rev)}: ${un.map(([x,v])=>esc(r.names[x])+' ('+cmp(v)+')').join(', ')||'ninguna'}</small>${c==='Digital'&&SPLIT_ELLE_DIGITAL?elleDiag(r):''}</div>`}).join('')}</div></details>`;
+}
+const H=(x,f)=>(D.rich&&D.rich[x.a[f]])||esc(x[f]);
+function proc(f){
+  const p=D.proceso.filter(x=>x.fase===faseKey(f));if(!p.length)return'';
+  return `<details class="proc" open><summary>Flujo de trabajo</summary><div class="step hd"><span>Quién</span><span>Cuándo</span><span>Qué hace</span><span>Entrega</span></div>${p.map(x=>`<div class="step"><b>${H(x,'quien')}</b><span>${H(x,'cuando')}</span><div>${H(x,'que')}</div><span>${H(x,'entrega')}</span></div>`).join('')}</details>`;
+}
+function revBar(){
+  const ys=years();
+  return `<div class="bar">${ys.length?`<label>Año <select id="revyear">${ys.map(y=>`<option ${y===S.rev?'selected':''}>${y}</option>`).join('')}</select></label>`:''}${['Digital','Print','Eventos'].map(c=>`<label class="btn sm">${R[c]?c+' ✓':'Cargar '+c}<input type="file" data-c="${c}" accept=".xlsx,.xls,.xlsm" hidden></label>`).join('')}</div>`;
+}
+function f1(){
+  const by={};D.destinos.forEach(d=>{(by[k(d.resp)||'-']??={n:d.resp?nice(d.resp):'Sin responsable',l:[]}).l.push(d)});
+  const ents=Object.values(by).sort((a,b)=>(a.n==='Sin responsable')-(b.n==='Sin responsable')||b.l.length-a.l.length),ys=years();
+  const bar=revBar();
+  return bar+`<div class="cols4">${ents.map(g=>`<section class="col ${g.n==='Sin responsable'?'warn':''}"><h3>${esc(g.n)}<small>${g.l.length}</small></h3><div class="chips">${g.l.map(d=>canonPub(d.destino)).sort(pubCmp).map(nm=>`<span class="chip">${esc(nm)}</span>`).join('')}</div>${Object.keys(R).length?kpi(g.l):''}</section>`).join('')}</div>`+(dg=>dg?SEP+dg:'')(diag('1'));
+}
+function f2(){
+  const tot=s=>['Digital','Print','Eventos'].reduce((a,c)=>a+(R[c]&&R[c].sec?R[c].sec[S.rev]?.[sKey(s.sector)]||0:0),0);
+  const cards=[...D.sectores].sort((a,b)=>tot(b)-tot(a)).map(s=>{const m=s.coms.length,tot=m*pnum(s.pct),
+    bad=!m?'<div class="flag">Sin comercial</div>':Math.abs(tot-1)>.02?`<div class="flag">Suma ${Math.round(tot*100)}%</div>`:'',
+    multi=m>1;
+    return `<section class="col ${bad?'warn':''}"><h3>${esc(nice(s.sector))}</h3><div class="chips">${s.coms.map(c=>`<span class="chip">${esc(nice(c))}${multi?`<em>${pct(s.pct)}</em>`:''}</span>`).join('')}${bad}</div>${Object.keys(R).length?kpiSec(s.sector):''}</section>`}).join('');
+  return revBar()+`<div class="cols4">${cards}</div>`+(dg=>dg?SEP+dg:'')(diag('2'));
+}
+function f3(){
+  if(!D.hasAsig)return '<div class="empty">Esta fase se activará cuando añadamos la hoja Asignaciones al Excel.</div>';
+  const ys=[...new Set(D.asig.map(a=>a.year))].sort(),sec=[...new Set(D.marcas.map(m=>m.sector))].filter(Boolean).sort();
+  const A=D.asig.filter(a=>(!S.year||a.year==S.year)&&(!S.sector||k(D.sectorOf[mk(a.anunc,a.marca)])===k(S.sector)));
+  let h=`<div class="bar"><select id="year">${ys.map(y=>`<option ${y==S.year?'selected':''}>${esc(y)}</option>`).join('')}</select>
+  <select id="sector"><option value="">Todos los sectores</option>${sec.map(s=>`<option ${s===S.sector?'selected':''}>${esc(s)}</option>`).join('')}</select>
+  <button class="btn sm ${S.view==='dest'?'on':''}" data-v="dest">Por destino</button><button class="btn sm ${S.view==='anu'?'on':''}" data-v="anu">Por anunciante</button></div>`;
+  if(S.view==='dest'){
+    h+=`<div class="cols">${D.destinos.map(d=>{const l=A.filter(a=>k(a.destino)===k(d.destino));
+      return `<section class="card ${l.length?'':'dim'}"><h3>${esc(d.destino)}<small>${l.length} marcas</small></h3><div class="badge">${esc(d.resp)}</div>${l.map(a=>`<div class="row">${esc(a.marca)} <small>${esc(a.anunc)}${a.com?' · '+esc(a.com):''}</small></div>`).join('')||'<div class="badge">Sin marcas</div>'}</section>`}).join('')}</div>`;
+  }else{
+    const by={};A.forEach(a=>((by[a.anunc]??={})[a.marca]??=[]).push(a.destino));
+    h+=Object.keys(by).length?`<div class="cols">${Object.entries(by).sort().map(([an,ms])=>`<section class="card"><h3>${esc(an)}<small>${Object.keys(ms).length} marcas</small></h3>${Object.entries(ms).map(([m,ds])=>`<div class="row">${esc(m)}<br>${ds.map(d=>`<span class="chip">${esc(d)}</span>`).join('')}</div>`).join('')}</section>`).join('')}</div>`:'<div class="empty">No hay asignaciones para este filtro.</div>';
+  }
+  const used=new Set(D.asig.filter(a=>!S.year||a.year==S.year).map(a=>mk(a.anunc,a.marca)));
+  const free=D.marcas.filter(m=>(!S.sector||k(m.sector)===k(S.sector))&&!used.has(mk(m.anunc,m.marca)));
+  if(free.length)h+=SEP+`<h2 class="flag">Marcas sin destino (${free.length})</h2><div class="free">${free.map(m=>`<span class="chip">${esc(m.marca)}<em>${esc(m.anunc)}</em></span>`).join('')}</div>`;
+  return h;
+}
+function f4(){
+  const P=new Set(D.personas.map(p=>k(p.nombre))),miss=new Set();
+  D.destinos.forEach(d=>d.resp&&!P.has(k(d.resp))&&miss.add(nice(d.resp)));
+  D.sectores.forEach(s=>s.coms.forEach(c=>!P.has(k(c))&&miss.add(nice(c))));
+  const withCom=new Set(D.sectores.filter(s=>s.coms.length).map(s=>k(s.sector)));
+  const allSec=[...new Set([...D.sectoresLista,...D.sectores.map(s=>s.sector)])];
+  const c=[['Destinos sin responsable',D.destinos.filter(d=>!d.resp).map(d=>d.destino)],
+    ['Sectores sin comercial',allSec.filter(s=>!withCom.has(k(s))).map(nice)],
+    ['Nombres que no coinciden con la hoja Datos',[...miss]]];
+  const ppl=D.personas.map(p=>({p:nice(p.nombre),d:D.destinos.filter(x=>k(x.resp)===k(p.nombre)).length,s:D.sectores.filter(x=>x.coms.some(c=>k(c)===k(p.nombre))).length})).sort((a,b)=>(b.d+b.s)-(a.d+a.s));
+  return `<h2 style="margin-top:0">Qué queda por cerrar</h2>${c.map(([t,l])=>`<div class="chk"><b class="${l.length?'flag':'good'}">${l.length}</b><div>${t}${l.length?`<div class="badge">${l.slice(0,14).map(esc).join(', ')}${l.length>14?'…':''}</div>`:''}</div></div>`).join('')}${SEP}<h2>Carga por persona</h2><table><tr><th>Persona</th><th>Destinos</th><th>Sectores</th></tr>${ppl.map(x=>`<tr><td>${esc(x.p)}</td><td>${x.d||''}</td><td>${x.s||''}</td></tr>`).join('')}</table>`;
+}
+function render(){
+  const m=document.getElementById('main');
+  document.getElementById('nav').innerHTML=D?[...TABS.map(x=>[x,x]),[RES,'Resumen']].map(([i,t])=>`<button class="btn ${S.phase===i?'on':''}" data-p="${esc(i)}">${esc(t)}</button>`).join(''):'';
+  if(!D)return;
+  const sp=S.phase===RES?null:SPECIAL[k(S.phase)],pr=S.phase===RES?'':proc(ROM(TABS.indexOf(S.phase)+1));
+  const body=S.phase===RES?f4():sp&&!(k(S.phase)==='anunciantes'&&!D.hasAsig)?sp():fg(S.phase);
+  const tt=D.meta['titulo '+k(S.phase===RES?'Resumen':S.phase)],ti=tt?`<h2 class="vt">${esc(tt)}</h2>`:'';
+  m.innerHTML=ti+body+(pr?SEP+pr:'');
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-p],[data-v]');if(!b||!D)return;if(b.dataset.p)S.phase=b.dataset.p;if(b.dataset.v)S.view=b.dataset.v;render()});
+document.addEventListener('change',e=>{if(e.target.id==='year')S.year=e.target.value;if(e.target.id==='sector')S.sector=e.target.value;if(['year','sector'].includes(e.target.id))render()});
+document.getElementById('file').addEventListener('change',async e=>{const f=e.target.files[0];if(f){LOCAL=true;const u=new Uint8Array(await f.arrayBuffer());load(XLSX.read(u,{type:'array',cellDates:true}),u)}});
+document.addEventListener('change',async e=>{const c=e.target.dataset&&e.target.dataset.c,f=c&&e.target.files[0];
+  if(f)loadRev(c,XLSX.read(await f.arrayBuffer(),{type:'array'}));
+  if(e.target.id==='revyear'){S.rev=e.target.value;render()}});
+// Excel de estructura: se vuelve a leer solo cada 30 s (con la pestaña visible) y con el botón «Actualizar». Solo se redibuja si el archivo ha cambiado.
+const hashU8=u=>{let h=2166136261;for(let i=0;i<u.length;i++){h^=u[i];h=Math.imul(h,16777619)}return (h>>>0).toString(36)+'-'+u.length};
+async function refreshEstructura(manual){
+  if(BUSY||!EXCEL_URL||(!manual&&LOCAL))return;BUSY=true;
+  const b=document.getElementById('refresh');if(manual&&b){b.disabled=true;b.textContent='Actualizando…'}
+  try{
+    const r=await fetch(EXCEL_URL,{cache:'no-store'}).catch(()=>fetch(EXCEL_URL));if(!r.ok)throw 0;
+    const u=new Uint8Array(await r.arrayBuffer()),h=hashU8(u);
+    CHK=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const i=ERR.indexOf('estructura');if(i>-1)ERR.splice(i,1);
+    if(manual)LOCAL=false;
+    if(h!==HASH||!D){HASH=h;load(XLSX.read(u,{type:'array',cellDates:true}),u)}else badge();
+  }catch(e){if(manual||!D){if(!ERR.includes('estructura'))ERR.push('estructura');badge()}}
+  finally{BUSY=false;if(b){b.disabled=false;b.textContent='↻ Actualizar'}}
+}
+document.getElementById('refresh').addEventListener('click',()=>refreshEstructura(true));
+setInterval(()=>{if(!document.hidden)refreshEstructura(false)},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshEstructura(false)});
+const grab=(name,u,cb)=>u&&fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>cb(XLSX.read(new Uint8Array(b),{type:'array',cellDates:true}))).catch(()=>{ERR.push(name);badge()});
+refreshEstructura(false);Object.entries(CFG).forEach(([c,u])=>grab(c,u,wb=>loadRev(c,wb)));
+render();
+</script></body></html>
