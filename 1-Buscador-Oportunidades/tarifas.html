@@ -19,7 +19,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:13px Arial,Arial,sans-s
 .btitle #year{font-family:Arial,Helvetica,sans-serif}
 .btitle{display:flex;justify-content:center;align-items:baseline;flex-wrap:wrap;gap:.35em;margin:46px 20px 0;font:700 34px Syne,sans-serif;letter-spacing:.01em;text-align:center}
 .tbar{display:flex;gap:8px;flex-wrap:nowrap;justify-content:center;padding:34px 20px 0}
-.tog{border:0;border-radius:10px;padding:9px 14px;background:hsl(var(--k) 30% 95%);color:hsl(var(--k) 20% 62%);font:800 10px Syne,sans-serif;letter-spacing:.02em;white-space:nowrap;cursor:pointer;transition:background .12s,color .12s}
+.tog{border:0;border-radius:10px;padding:10px 16px;background:hsl(var(--k) 30% 95%);color:hsl(var(--k) 20% 62%);font:800 11px Syne,sans-serif;letter-spacing:.02em;white-space:nowrap;cursor:pointer;transition:background .12s,color .12s}
 .tog:hover{background:hsl(var(--k) 35% 89%);color:hsl(var(--k) 35% 40%)}
 .tog.on{background:hsl(var(--k) 55% 20%);color:#fff}
 
@@ -84,6 +84,35 @@ body{margin:0;background:var(--bg);color:var(--ink);font:13px Arial,Arial,sans-s
 .lrow span{display:block;font:600 11px Arial,Helvetica,sans-serif;color:hsl(var(--k) 35% 28%)}
 .lrow b{display:block;font:700 15px Arial,Helvetica,sans-serif;color:hsl(var(--k) 55% 18%);margin-top:3px}
 .msg{text-align:center;padding:50px 20px;color:#8a5a1c;font:600 13px Arial;line-height:1.6}
+.finder{max-width:1100px;margin:28px auto 10px;padding:0 22px}
+.fsearch{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(32,36,53,.06)}
+.fsearch h3{margin:0 0 10px;text-align:center;font:800 14px Syne,Arial;color:var(--ink)}
+.frow{display:flex;gap:8px;align-items:center}
+.frow input,.frow select{min-width:0;flex:1;border:1px solid #ccd2df;border-radius:9px;padding:11px 12px;font:14px Arial;color:var(--ink);background:#fff}
+.fresults{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
+.fresult{border:1px solid var(--line);border-left:4px solid #bd8610;border-radius:10px;padding:11px 13px;background:#fcfcfe}
+.fresult b{display:block;font-size:13px;color:#202b40}.fresult span{display:block;margin-top:5px;color:#596178;font-size:12px}
+.fresult strong{display:block;margin-top:7px;color:#222f46;font-size:18px}
+.fcalc{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.fcalc h4{margin:0 0 10px;font:700 13px Arial;color:#202b40}
+.fopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:10px 0}
+.fopt{display:flex;align-items:flex-start;gap:8px;background:#f7f8fb;border:1px solid var(--line);border-radius:9px;padding:9px;font:12px Arial;line-height:1.35}
+.fopt input{margin:1px 0 0;accent-color:#263954}.fmuted{color:#697087;font:11px/1.5 Arial;margin-top:8px}
+.ftotal{display:flex;justify-content:space-between;align-items:center;background:#202b40;color:#fff;border-radius:10px;padding:12px 14px;margin-top:10px}.ftotal b{font-size:20px}
+.fempty{padding:14px;color:#697087;text-align:center;font:12px Arial}
+.fback{border:0;background:none;color:#50617c;font:600 12px Arial;cursor:pointer;padding:2px 0 10px}
+.fchoose{border:1px solid #bd8610;background:#fff8e6;color:#6c4a00;border-radius:7px;padding:7px 10px;margin-top:9px;font:700 11px Arial;cursor:pointer}
+.fextras{margin-top:12px;border:1px solid #c59015;border-left:6px solid #a87500;border-radius:10px;padding:11px 14px;background:#fff0c2!important;box-shadow:0 2px 8px rgba(120,82,0,.12);transition:background .15s,border-color .15s}
+.fextras:hover{background:#ffe8a3!important;border-color:#a87500}
+.fextras[open]{background:#fff7e2!important}
+.fextras summary{display:flex;align-items:center;gap:8px;cursor:pointer;color:#573a00;font:800 14px Arial;list-style:none;padding:3px 0;min-height:24px}
+.fextras summary::-webkit-details-marker{display:none}
+.fextras summary::before{content:'+';display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:#a87500;color:#fff;font:700 16px Arial;flex:0 0 19px}
+.fextras[open] summary::before{content:'−'}
+.fcalc{margin-top:0;padding-top:0;border-top:0}
+.fcalc h4{margin:7px 0 10px;font:700 14px Arial;color:#202b40}
+.tog.search{--k:45!important}
+@media(max-width:600px){.frow{flex-direction:column}.frow input,.frow select{width:100%;flex:auto}}
 
 .tblw{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:auto}
 .tbl{width:100%;border-collapse:collapse;min-width:620px;table-layout:fixed}
@@ -94,6 +123,16 @@ body{margin:0;background:var(--bg);color:var(--ink);font:13px Arial,Arial,sans-s
 .tbl td.ex{color:var(--muted);font:600 12px Arial}
 .tbl tr:hover td{background:#f8f9fc}
 .snote{color:var(--muted);font:500 12px Arial;margin:10px 4px 0;text-align:center}
+.sec.tblk{margin-bottom:26px}
+.sec.tblk.nf{margin-top:90px}
+.blk{display:flex;align-items:center;gap:18px;margin:0;font:800 20px Syne,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.blk span{background:hsl(var(--k) 65% 93%);border:1px solid hsl(var(--k) 45% 68%);color:hsl(var(--k) 55% 22%);border-radius:999px;padding:9px 26px}
+.blk:before,.blk:after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#b9c2d4)}
+.blk:after{background:linear-gradient(270deg,transparent,#b9c2d4)}
+.pbtns{display:flex;flex-direction:column;gap:8px;max-width:440px;margin:0 auto}
+.pbtn{display:flex;align-items:center;justify-content:center;gap:12px;text-align:center;border:1.5px solid hsl(var(--k) 45% 62%);background:var(--paper);border-radius:999px;padding:10px 24px;box-shadow:0 1px 3px hsl(var(--k) 40% 40%/.12)}
+.pbtn span{font:600 12px Arial,Helvetica,sans-serif;color:hsl(var(--k) 35% 28%)}
+.pbtn b{font:700 15px Arial,Helvetica,sans-serif;color:hsl(var(--k) 55% 18%)}
 .kvrow{--g:12px;display:flex;flex-wrap:nowrap;justify-content:center;gap:var(--g);margin-bottom:var(--g)}
 .kv{flex:0 0 calc((100% - 2*var(--g))/3);min-width:0;text-align:center;background:linear-gradient(90deg,hsl(var(--k) 50% 80%),hsl(var(--k) 55% 96%));border:1px solid hsl(var(--k) 35% 78%);border-left:4px solid hsl(var(--k) 55% 42%);border-radius:12px;padding:12px 10px}
 .kv b{display:block;font:800 10px Syne,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--k) 35% 28%);margin-bottom:5px}
@@ -121,6 +160,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:13px Arial,Arial,sans-s
 <div class="tbar" id="tbar"></div>
 <h2 class="btitle"><span id="ttl">Tarifas</span><span id="year"></span></h2>
 <div class="sep"><i></i><b></b><i></i></div>
+<section class="finder" id="finder"></section>
 <section class="groups" id="groups"></section>
 <div id="skipnote" style="max-width:900px;margin:18px auto 0;padding:0 16px;font:12px/1.5 system-ui,sans-serif;color:#8a6d3b"></div>
 
@@ -132,9 +172,10 @@ const HUES=[222,175,280,35,330,150];
 // Título grande de la página para hojas concretas (clave = nombre de hoja normalizado). Los títulos de los bloques salen de las cabeceras del Excel.
 const CFG={'digital':{h2:'Tarifas Digitales'},'social organic':{h2:'Tarifas Social Organic'}};
 
-let state={year:'',views:[]},cur=0,msg='';
+let state={year:'',views:[]},cur=0,msg='',workbook=null,searchActive=false;
 
-const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+const canonicalPub=v=>{const n=norm(v);if(n==='elle decoration'||n==='elle decor')return 'Elle Decor';return String(v==null?'':v).trim()};
 const str=v=>String(v==null?'':v).trim();
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtPrice=v=>{if(typeof v!=='number')return str(v);const[i,d]=(Math.round(v*100)/100).toString().split('.');return i.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(d?','+d:'')};
@@ -166,7 +207,9 @@ function buildSheet(ws,sn){
   const rawOf={};
   const rows=XLSX.utils.sheet_to_json(ws,{defval:'',range:hr}).map(r0=>{const r={};for(const k in r0){let n=norm(k);if(n.startsWith('publicacion'))n='publicacion';else if(n==='grupo'||n.startsWith('grupo '))n='grupo';r[n]=r0[k];rawOf[n]=String(k).trim()}return r});
   const cfg=CFG[norm(sn)],keys=Object.keys(rows[0]||{});
-  const tk=keys.filter(k=>k.startsWith('tarifa')),kk=keys.filter(k=>k.startsWith('kpi'));
+  // Digital puede incluir tarifas nombradas por producto (p. ej. «Portada Digital»)
+  // que no llevan el prefijo «Tarifa». Trátalas como bloques de precio también.
+  const tk=keys.filter(k=>k.startsWith('tarifa')||(norm(sn)==='digital'&&norm(rawOf[k]||k).includes('portada digital'))),kk=keys.filter(k=>k.startsWith('kpi'));
   const core=k=>norm(String(rawOf[k]||k).split(/\r?\n/)[0]).replace(/^(tarifa|kpi)\s*/,'').replace(/[^a-z0-9]/g,'');
   let secs;
   if(tk.length>1){
@@ -178,6 +221,22 @@ function buildSheet(ws,sn){
     });
   }else secs=[groupSec(groupsFrom(rows,tk[0]||'tarifa',null))];
   secs=secs.filter(s=>s.type==='lines'?s.cards.length:s.groups.length);
+  // Bloques previos a la tabla (filas con una sola celda = título de bloque, p. ej. «Social PAID» / «Social ORGANIC»):
+  // tras el título, la 1.ª fila con 2+ celdas es la cabecera y las siguientes son líneas etiqueta | valor (columnas A y B)
+  const pre=[];let pb=null,ph=false;
+  raw.slice(0,hr).forEach(r=>{
+    const c=r.filter(x=>str(x)!=='');
+    if(!c.length)return;
+    if(c.length===1){pb={title:str(c[0]),items:[]};pre.push(pb);ph=false;return}
+    if(!pb)return;
+    if(!ph){ph=true;return}
+    pb.items.push({l:str(c[0]),t:eur(c[1])});
+  });
+  if(secs.length&&pre.some(b=>b.items.length)){
+    const head=[];
+    pre.forEach((b,i)=>{head.push({type:'blk',title:b.title,first:i===0});if(b.items.length)head.push({type:'pbtns',items:b.items})});
+    secs=head.concat(secs);
+  }
   return {name:sn.trim(),key:norm(sn),h2:cfg?cfg.h2:sn.trim(),sections:secs,keys,nrows:rows.length};
 }
 
@@ -265,9 +324,19 @@ function parseResumen(ws){
 }
 
 /* ---------- Hoja de producción, formato nuevo: Tipología | Tipo de gasto | Tarifa | Tipo Post  +  bloques de gastos con fila de título («Gastos Extra») ---------- */
-// Hoja de apoyo con los tipos de post: una columna (o dos: publicación + producto) por grupo, con el nombre del grupo en la cabecera
+// Acepta tanto la matriz antigua como la tabla normalizada Publicación | Tipo Formato / Creatividad | Grupo.
+function typePostFormats(rows){
+  const hr=rows.findIndex(r=>r.some(c=>norm(c)==='publicacion')&&r.some(c=>norm(c).includes('tipo formato'))&&r.some(c=>norm(c)==='grupo'));
+  if(hr<0)return null;
+  const H=rows[hr].map(norm),pc=H.findIndex(x=>x==='publicacion'),fc=H.findIndex(x=>x.includes('tipo formato')),gc=H.findIndex(x=>x==='grupo');
+  let group='';const out=[];
+  rows.slice(hr+1).forEach(r=>{if(str(r[gc]))group=str(r[gc]);const name=str(r[fc]),pub=str(r[pc]);if(name&&group)out.push({name,group,pub})});
+  return out;
+}
 function parseTipoPost(ws){
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const flat=typePostFormats(rows);
+  if(flat){const out={};flat.forEach(t=>{const k=norm(t.group);(out[k]||(out[k]=[])).push({n:t.name,p:t.pub})});return out}
   const hr=rows.findIndex(r=>r.some(c=>norm(c).startsWith('grupo')));
   if(hr<0)return {};
   const W=Math.max(...rows.map(r=>r.length)),after=rows.slice(hr+1);
@@ -389,7 +458,7 @@ function build(wb){
     if(prod[sn]){st.views.push(prod[sn].view);return}
     if(t.startsWith('politica')){
       const secs=parseResumen(wb.Sheets[sn]);
-      if(secs.length)st.views.push({name:sn.trim(),pol:true,h2:'Política Comercial · Resumen',sections:secs});
+      if(secs.length)st.views.push({name:sn.trim(),pol:true,h2:'Política Comercial Digital · Resumen',sections:secs});
       return;
     }
     const gv=parseGastos(wb.Sheets[sn],sn);
@@ -470,23 +539,85 @@ function kvHTML(s){
   let k=0;
   return lay.map((n,ri)=>`<div class="kvrow" style="--k:${[222,175,35][ri%3]}">`+s.items.slice(k,k+=n).map(i=>`<div class="kv"><b>${esc(i.l)}</b>${i.t?`<span>${esc(i.t)}</span>`:''}</div>`).join('')+`</div>`).join('');
 }
+function pbtnsHTML(s){return `<div class="pbtns" style="--k:${HUES[cur%HUES.length]}">`+s.items.map(i=>`<div class="pbtn"><span>${esc(i.l)}</span><b>${esc(i.t)}</b></div>`).join('')+`</div>`}
 function titleHTML(t){const [a,...b]=String(t).split('\n').map(x=>x.trim()).filter(Boolean);return `<i class="tt">${esc(a||'')}${b.map(x=>`<small>${esc(x)}</small>`).join('')}</i>`}
+function findCell(row,headers,prefix){return headers.findIndex(h=>norm(h).startsWith(prefix))}
+function finderData(){
+  if(!workbook)return {records:[],pubs:[],formats:[],production:[],extras:[]};
+  const read=name=>workbook.Sheets[name]?XLSX.utils.sheet_to_json(workbook.Sheets[name],{header:1,defval:''}):[];
+  const records=[],pubs=[],formats=[],production=[],extras=[];
+  let a=read('Digital');if(a.length){const H=a[0].map(norm),pi=H.findIndex(x=>x.startsWith('publicacion')),bc=H.findIndex(x=>x.includes('branded content')&&!x.includes('video')),bv=H.findIndex(x=>x.includes('branded content')&&x.includes('video')),cover=H.findIndex(x=>x.includes('portada digital'));a.slice(1).forEach(r=>{if(!r[pi])return;pubs.push(String(r[pi]));if(bc>=0)records.push({title:`Digital · Branded Content · ${r[pi]}`,detail:'Tarifa por pieza',price:r[bc]});if(bv>=0)records.push({title:`Digital · Branded Content Vídeo · ${r[pi]}`,detail:'Tarifa por pieza',price:r[bv]});if(cover>=0)records.push({title:`Digital · Portada Digital · ${r[pi]}`,detail:'Tarifa por pieza',price:r[cover]})})}
+  a=read('Tarifas Print');if(a.length){const H=a[0].map(norm),pi=H.findIndex(x=>x.includes('revista')),ti=H.findIndex(x=>x==='tarifa');a.slice(1).forEach(r=>{if(r[pi]&&r[ti]!=='')records.push({title:`Print · ${r[pi]}`,detail:'Tarifa print',price:r[ti]})})}
+  a=read('Social');if(a.length){let head=-1;for(let i=0;i<a.length;i++)if(norm(a[i][0])==='grupo'&&norm(a[i][1])==='publicacion'){head=i;break}if(head>=0){const H=a[head].map(norm),gi=H.findIndex(x=>x==='grupo'),pi=H.findIndex(x=>x==='publicacion'),vid=H.findIndex(x=>x.includes('tarifa')&&x.includes('video')),photo=H.findIndex(x=>x.includes('tarifa')&&x.includes('foto'));a.slice(head+1).forEach(r=>{if(!r[pi])return;const pub=String(r[pi]),group=String(r[gi]||'');pubs.push(pub);['Vídeo','Foto'].forEach(media=>{const price=media==='Vídeo'?r[vid]:r[photo];if(price!=='')records.push({title:`Social Organic · ${pub} · ${media}`,detail:'Tarifa base por pieza',price})})})}const paid=a.findIndex(r=>norm(r[0])==='tarifa estandar');if(paid>=0){const standard=a[paid][1],budget=a[paid+1]?.[1],minimum=a[paid+2]?.[1];records.push({title:'Social Paid · Tarifa estándar',detail:'Tarifa indicada en la hoja Social',price:standard});records.push({title:'Social Paid · Presupuesto estándar',detail:'',price:budget});records.push({title:'Social Paid · Presupuesto mínimo',detail:'',price:minimum})}}
+  const p=read('Social Organic (tipo post)');if(p.length){const flat=typePostFormats(p);if(flat){flat.forEach(t=>{formats.push(t);records.push({title:`Social Organic · Formato · ${t.name}`,detail:`${t.group}${t.pub?' · '+t.pub:''}`,price:null})})}else{const H=p[0];for(let c=0;c<H.length;c++){const group=String(H[c]||'').trim();if(!group)continue;for(let r=1;r<p.length;r++){const name=String(p[r][c+1]||p[r][c]||'').trim();if(!name)continue;const pub=String(p[r][c]||'').trim();formats.push({name,group,pub:pub&&pub!==name?pub:''});records.push({title:`Social Organic · Formato · ${name}`,detail:`${group}${pub&&pub!==name?' · '+pub:''}`,price:null})}}}}
+  const pr=read('Social Organic (producción)');if(pr.length){let inExtras=false;pr.slice(1).forEach(r=>{const typ=String(r[0]||'').trim(),kind=String(r[1]||'').trim(),video=String(r[2]||'').trim(),price=r[3],group=String(r[4]||'').trim();if(norm(typ)==='gastos extra'){inExtras=true;return}if(inExtras){if(typ&&r[1]!==''&&r[1]!=null){extras.push({name:typ,price:r[1]});records.push({title:`Social Organic · Extra · ${typ}`,detail:'Opcional',price:r[1]})}return}if(group&&price!==''){production.push({typ,kind,video,price,group});records.push({title:`Social Organic · Producción · ${video||kind}`,detail:`${typ}${group?' · '+group:''}`,price})}})}
+  return {records,pubs:[...new Set(pubs)],formats,production,extras};
+}
+function money(v){return typeof v==='number'?eur(v):str(v)}
+function renderFinder(){
+  const host=document.getElementById('finder');if(!host)return;
+  if(workbook===renderFinder.lastWorkbook&&host.children.length)return;
+  const d=finderData();
+  const pubs=[...new Set(d.pubs)].sort((a,b)=>a.localeCompare(b,'es'));
+  host.innerHTML=`<div class="fsearch"><h3>BUSCAR UNA TARIFA</h3><div class="frow"><input id="fquery" type="search" placeholder="Ej.: branded content Elle · Diez Minutos · Sneak Into" aria-label="Buscar tarifa"></div><div id="fresults" class="fresults"><div class="fempty">Escribe qué tarifa necesitas. Para Social Organic, busca el formato y completa los datos que falten.</div></div></div>`;
+  const result=document.getElementById('fresults');
+  const renderOrganic=(formatName)=>{
+    const format=d.formats.find(x=>norm(x.name)===norm(formatName));if(!format){result.innerHTML='<div class="fempty">No encuentro este formato en la hoja de tarifas. Vuelve a los resultados y prueba otra vez.</div>';return}
+    const mediaDefault=norm(format.group)==='grupo i'?'Foto':'Vídeo';
+    const fixedPub=format.pub?(pubs.find(x=>norm(x)===norm(canonicalPub(format.pub)))||canonicalPub(format.pub)):'';
+    const relevant=d.production.map((x,i)=>({x,i})).filter(o=>norm(o.x.group)===norm(format.group));
+    const extraList=d.extras;
+    const pubControl=fixedPub?`<select id="forgpub" disabled><option>${esc(fixedPub)}</option></select>`:`<select id="forgpub"><option value="">Elige publicación</option>${pubs.map(x=>`<option>${esc(x)}</option>`).join('')}</select>`;
+    const passoAPasso=format.name.toLocaleLowerCase('es').trim()==='paso a paso';
+    const defaultExtra=passoAPasso?extraList.findIndex(x=>norm(x.name).startsWith('paso a paso')):-1;
+    result.innerHTML=`<div class="fcalc"><button class="fback" type="button" id="fback">← Volver a resultados</button><h4>Completa la tarifa Social Organic · ${esc(format.name)}</h4><div class="frow">${pubControl}<select id="forgmedia"><option value="Foto" ${mediaDefault==='Foto'?'selected':''}>Foto</option><option value="Vídeo" ${mediaDefault==='Vídeo'?'selected':''}>Vídeo</option></select></div>${fixedPub?`<div class="fmuted">Este formato está asociado a ${esc(fixedPub)} en el Excel.</div>`:''}<div class="frow" style="margin-top:8px"><select id="forgprod"><option value="">Producción (si aplica)</option>${relevant.map(o=>`<option value="${o.i}">${esc([o.x.typ,o.x.kind,o.x.video].filter(Boolean).join(' · '))} — ${esc(money(o.x.price))}</option>`).join('')}</select></div><details class="fextras" ${defaultExtra>=0?'open':''}><summary>Añadir extras opcionales</summary><div class="fopts">${extraList.map((x,i)=>`<label class="fopt"><input type="checkbox" data-extra="${i}" ${i===defaultExtra?'checked':''}><span>${esc(x.name)}<br><b>${esc(money(x.price))}</b></span></label>`).join('')}</div></details><div id="fcalcresult" class="fmuted">${fixedPub?'Se calculará la tarifa de '+esc(fixedPub)+'.':'Elige publicación para ver la tarifa base.'} La producción se propone según el grupo del formato.</div></div>`;
+    const calc=()=>{
+      const pub=document.getElementById('forgpub').value,media=document.getElementById('forgmedia').value,prodVal=document.getElementById('forgprod').value,box=document.getElementById('fcalcresult');
+      if(!pub){box.textContent='Elige publicación para ver la tarifa base. La producción se propone según el grupo del formato.';return}
+      const rows=workbook&&workbook.Sheets['Social']?XLSX.utils.sheet_to_json(workbook.Sheets['Social'],{header:1,defval:''}):[];
+      const head=rows.findIndex(r=>norm(r[0])==='grupo'&&norm(r[1])==='publicacion');let base=null;
+      if(head>=0){const H=rows[head].map(norm),pi=H.findIndex(x=>x==='publicacion'),ti=H.findIndex(x=>x.includes('tarifa')&&x.includes(media==='Vídeo'?'video':'foto')),row=rows.slice(head+1).find(r=>norm(canonicalPub(r[pi]))===norm(canonicalPub(pub)));if(row&&ti>=0)base=row[ti]}
+      const pieces=[];let total=0,closed=true;
+      if(typeof base==='number'){pieces.push(`Tarifa Social Organic (${media}): ${money(base)}`);total+=base}else{pieces.push('Tarifa base: no encontrada');closed=false}
+      if(prodVal!==''){const pr=d.production[+prodVal];if(pr){pieces.push(`Producción · ${pr.video||pr.kind}: ${money(pr.price)}`);if(typeof pr.price==='number')total+=pr.price;else closed=false}}
+      result.querySelectorAll('[data-extra]').forEach(c=>{if(c.checked){const ex=extraList[+c.dataset.extra];pieces.push(`Extra · ${ex.name}: ${money(ex.price)}`);if(typeof ex.price==='number')total+=ex.price;else closed=false}});
+      box.innerHTML=`<b>Desglose</b><br>${pieces.map(esc).join('<br>')}<div class="ftotal"><span>Total${closed?'':' · tarifa pendiente'}</span><b>${closed?money(total):'A consultar'}</b></div>`;
+    };
+    const prod=document.getElementById('forgprod');if(relevant.length===1)prod.value=String(relevant[0].i);
+    document.getElementById('fback').addEventListener('click',()=>drawResults(document.getElementById('fquery').value));
+    ['forgpub','forgmedia','forgprod'].forEach(id=>document.getElementById(id).addEventListener('change',calc));result.querySelectorAll('[data-extra]').forEach(c=>c.addEventListener('change',calc));calc();
+  };
+  const drawResults=value=>{
+    const tokens=norm(value).split(/\s+/).filter(Boolean);if(!tokens.length){result.innerHTML='<div class="fempty">Escribe qué tarifa necesitas. Para Social Organic, busca el formato y completa los datos que falten.</div>';return}
+    const hits=d.records.filter(x=>tokens.every(t=>norm(x.title+' '+x.detail).includes(t)));
+    if(!hits.length){result.innerHTML='<div class="fempty">No encuentro coincidencias. Prueba con la publicación, el canal o parte del nombre del formato.</div>';return}
+    result.innerHTML=hits.slice(0,40).map((x,i)=>{const fm=x.title.startsWith('Social Organic · Formato · '),name=fm?x.title.slice('Social Organic · Formato · '.length):'';return `<article class="fresult"><b>${esc(x.title.replace('Social Organic · Formato · ','Social Organic · '))}</b>${x.detail?`<span>${esc(x.detail)}</span>`:''}${x.price!==null?`<strong>${esc(money(x.price))}${x.unit?' '+esc(x.unit):''}</strong>`:fm?`<button class="fchoose" type="button" data-format="${esc(name)}">Completar precio de este formato</button>`:'<span>Busca el formato para calcular el total con producción y extras.</span>'}</article>`}).join('');
+  };
+  result.addEventListener('click',e=>{const b=e.target.closest('[data-format]');if(b){e.preventDefault();e.stopPropagation();renderOrganic(b.dataset.format)}});
+  document.getElementById('fquery').addEventListener('input',e=>drawResults(e.target.value));
+  renderFinder.lastWorkbook=workbook;
+}
 function render(){
   document.getElementById('year').textContent=state.year||'';
   const v=state.views[cur];
-  document.getElementById('ttl').textContent=(!msg&&v&&v.h2)||'Tarifas';
-  document.getElementById('tbar').innerHTML=state.views.map((v,i)=>`<button class="tog ${i===cur?'on':''}" type="button" style="--k:${HUES[i%HUES.length]}" data-v="${i}">${esc(v.name)}</button>`).join('');
+  document.getElementById('ttl').textContent=searchActive?'Buscador de tarifas':((!msg&&v&&v.h2)||'Tarifas');
+  document.getElementById('tbar').innerHTML=state.views.map((v,i)=>`<button class="tog ${!searchActive&&i===cur?'on':''}" type="button" style="--k:${HUES[i%HUES.length]}" data-v="${i}">${esc(v.name)}</button>`).join('')+`<button class="tog search ${searchActive?'on':''}" type="button" data-search>Buscador</button>`;
   document.getElementById('skipnote').innerHTML=(state.skipped||[]).filter(x=>!/^(config|instruc)/.test(norm(x.n))).map(x=>`⚠ La hoja «${esc(x.n)}» no genera toggle: ${esc(x.why)}.`).join('<br>');
+  renderFinder();
   const el=document.getElementById('groups');
+  document.getElementById('finder').style.display=searchActive?'block':'none';
+  el.style.display=searchActive?'none':'block';
   el.classList.toggle('pol',!!(v&&v.pol&&!msg));
+  if(searchActive)return;
   if(msg||!state.views.length){el.innerHTML=`<div class="msg">${esc(msg||'No hay datos')}</div>`;return}
-  el.innerHTML=v.sections.map(s=>`<div class="sec${s.air?' air':''}${s.mid?' mid':''}">${s.title?`<h3 class="stitle"><span>${titleHTML(s.title)}</span></h3>`:''}${s.type==='table'?tableHTML(s):s.type==='kv'?kvHTML(s):s.type==='lines'?linesHTML(s):s.type==='tipos'?tiposHTML(s):groupsHTML(s)}</div>`).join('');
+  el.innerHTML=v.sections.map(s=>`<div class="sec${s.air?' air':''}${s.mid?' mid':''}${s.type==='blk'?' tblk'+(s.first?'':' nf'):''}">${s.type==='blk'?`<h2 class="blk" style="--k:${HUES[cur%HUES.length]}"><span>${esc(s.title)}</span></h2>`:s.title?`<h3 class="stitle"><span>${titleHTML(s.title)}</span></h3>`:''}${s.type==='blk'?'':s.type==='pbtns'?pbtnsHTML(s):s.type==='table'?tableHTML(s):s.type==='kv'?kvHTML(s):s.type==='lines'?linesHTML(s):s.type==='tipos'?tiposHTML(s):groupsHTML(s)}</div>`).join('');
 }
 function setStatus(t,c){const e=document.getElementById('hstat');e.textContent=t;e.className='hstat '+(c||'')}
 function apply(wb,label){
   try{
+    workbook=wb;
     const prev=state.views[cur]&&state.views[cur].name;
-    state=build(wb);const ni=state.views.findIndex(v=>v.name===prev);cur=ni>=0?ni:0;msg='';
+    state=build(wb);let ni=state.views.findIndex(v=>v.name===prev);if(ni<0)ni=state.views.findIndex(v=>norm(v.key||v.name).includes('politica'));cur=ni>=0?ni:0;msg='';
     if(!state.views.length)throw new Error('No hay hojas con datos (columnas Grupo, Tarifa, Unidad, Publicación)');
     const t=new Date();setStatus((label||'Excel cargado')+' · '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'),'ok');
   }catch(e){state={year:'',views:[]};msg=String(e.message||e);setStatus('No se pudo leer el Excel','err')}
@@ -504,7 +635,8 @@ async function loadExcel(silent){
 document.addEventListener('click',e=>{
   const i=e.target.closest('[data-info]');if(i){openInfo(i);return}
   if(e.target.closest('[data-close]')||e.target.id==='imod'){closeInfo();return}
-  const b=e.target.closest('[data-v]');if(b){cur=+b.dataset.v;render()}
+  if(e.target.closest('[data-search]')){searchActive=true;render();return}
+  const b=e.target.closest('[data-v]');if(b){cur=+b.dataset.v;searchActive=false;render()}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeInfo()});
 document.getElementById('refresh').addEventListener('click',()=>loadExcel());
