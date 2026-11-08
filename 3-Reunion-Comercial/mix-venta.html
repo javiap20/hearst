@@ -1207,6 +1207,7 @@ th.th-yoy {
         </div>
       </div>
       <div class="main-filters-divider"></div>
+      <div id="zone-warning" style="display:none;margin:0 0 10px;padding:10px 12px;border:1px solid #e0b252;background:#fff6e0;color:#6b4a00;border-radius:8px;font-size:12px;line-height:1.45"></div>
       <div class="compact-filters-row" id="compact-main-filters">
         <div class="compact-filter" data-filter-key="globalarea"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'globalarea')"><span class="compact-filter-title">ÁREA GLOBAL</span><span class="compact-filter-summary" id="m-summary-globalarea">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-globalarea"></div></div></div>
         <div class="compact-filter" data-filter-key="area"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'area')"><span class="compact-filter-title">ÁREA COMERCIAL</span><span class="compact-filter-summary" id="m-summary-area">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-area"></div></div></div>
@@ -1325,10 +1326,72 @@ function cleanPubName(raw,canal){
   }
   return s.charAt(0).toUpperCase()+s.slice(1).toLowerCase();
 }
+/* ÁREA GLOBAL · Opción B (Oficina de venta): el centro de coste decide la zona; ÁREAS solo cuenta si es INTERNACIONAL
+   (-> Internacional (Local)) o, con centro Internacional en Digital, PROGRAMÁTICA (-> Internacional (Programática)). */
+const COL_CENTRO_NAMES=['Oficina de venta / Centro de coste de la orden','Oficina de venta / Centro de coste'];
+let MISSING_CENTRO=[];
+function findCol(rows,names){
+  if(!rows.length)return null;
+  const wanted=names.map(normKey);
+  return Object.keys(rows[0]).find(k=>wanted.includes(normKey(k)))||null;
+}
+const ZONA_SIN_CENTRO='Sin asignar · centro vacío',ZONA_CENTRO_DESC='Sin asignar · centro desconocido',ZONA_AREAS_INESP='Sin asignar · ÁREAS inesperada';
+const ZONAS_SIN_ASIGNAR=[ZONA_SIN_CENTRO,ZONA_CENTRO_DESC,ZONA_AREAS_INESP];
+/* Orden fijo de ÁREA GLOBAL en todos los sitios: Madrid, Barcelona, Internacional (Local), Internacional (Programática); «Sin asignar» al final. */
+const ZONAS_ORDEN=['Madrid','Barcelona','Internacional (Local)','Internacional (Programática)',...ZONAS_SIN_ASIGNAR];
+function zoneCompare(a,b){
+  const ia=ZONAS_ORDEN.indexOf(a),ib=ZONAS_ORDEN.indexOf(b);
+  return (ia<0?99:ia)-(ib<0?99:ib)||String(a).localeCompare(String(b),'es');
+}
+/* Alcance del aviso: solo el año seleccionado y el anterior (el que se compara). Con "todos los años", todos. */
+function zoneScopeYears(){
+  const y=document.getElementById('m-f-year')?.value||'all';
+  if(!y||y==='all')return null;
+  return new Set([y,String((parseInt(y,10)||0)-1)]);
+}
+function normKey(s){return String(s??'').replace(/\s+/g,' ').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function mapOfficeZone(centroRaw,areaRaw,canal){
+  const c=normKey(centroRaw),a=normKey(areaRaw);
+  if(!c)return ZONA_SIN_CENTRO;
+  if(c==='MADRID'||c==='BARCELONA'){
+    if(a==='INTERNACIONAL')return 'Internacional (Local)';
+    return c==='MADRID'?'Madrid':'Barcelona';
+  }
+  if(c==='INTERNACIONAL'){
+    if(a==='INTERNACIONAL')return 'Internacional (Local)';
+    if(a==='PROGRAMATICA'&&canal==='DIGITAL')return 'Internacional (Programática)';
+    return ZONA_AREAS_INESP;
+  }
+  return ZONA_CENTRO_DESC;
+}
+function renderZoneWarning(){
+  const el=document.getElementById('zone-warning');if(!el)return;
+  const groups={};
+  const nom={DIGITAL:'Digital',PRINT:'Print',EVENTOS:'Eventos'};
+  const faltaMsg=MISSING_CENTRO.length?'<b>Aviso de datos (ÁREA GLOBAL):</b> no encuentro la columna «Oficina de venta / Centro de coste de la orden» en el Excel de '+MISSING_CENTRO.map(c=>nom[c]||esc(c)).join(', ')+'. Sin ella no se pueden asignar zonas en ese Excel. Revisa el nombre exacto de la cabecera.':'';
+  const scope=zoneScopeYears();
+  const scTxt=scope?' · '+[...scope].sort().reverse().join(' y '):'';
+  DATA.forEach(r=>{
+    if(MISSING_CENTRO.includes(r._canal))return;
+    if(scope&&!scope.has(r._year))return;
+    if(![ZONA_SIN_CENTRO,ZONA_CENTRO_DESC,ZONA_AREAS_INESP].includes(r._areaGlobal))return;
+    const k=[r._canal,r._areaGlobal,r._centroRaw,r._area].join('|');
+    (groups[k]=groups[k]||{canal:r._canal,motivo:r._areaGlobal,centro:r._centroRaw,area:r._area,n:0,ing:0});
+    groups[k].n++;groups[k].ing+=r._ingreso;
+  });
+  const list=Object.values(groups);
+  if(!list.length&&!faltaMsg){el.style.display='none';el.innerHTML='';return}
+  if(!list.length){el.innerHTML=faltaMsg;el.style.display='block';return}
+  el.innerHTML=(faltaMsg?faltaMsg+'<br><br>':'')+'<b>Aviso de datos (ÁREA GLOBAL'+scTxt+'):</b> hay filas que no se asignan a ninguna zona. No se reparten por intuición; aparecen en el filtro como «Sin asignar» para que el total siga cuadrando. Revisa el Excel.<ul style="margin:6px 0 0 18px;padding:0">'+
+    list.map(g=>`<li>Excel de ${nom[g.canal]||esc(g.canal)}: ${numberThousands(g.n)} filas (${money(g.ing)}) con centro de coste «${esc(g.centro||'vacío')}» y ÁREAS «${esc(g.area||'vacía')}» · ${esc(g.motivo)}</li>`).join('')+'</ul>';
+  el.style.display='block';
+}
 function parseRows(wb,canal){
   const sn=wb.SheetNames.includes(SHEET_NAME)?SHEET_NAME:wb.SheetNames[0];
   const raw=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
-  return raw.map(r=>({...r,_canal:canal,_year:String(r[COL_YEAR]??'').trim(),_mes:String(r[COL_MES]??'').trim(),_fam:String(r[COL_FAM]??'').trim(),_prod:String(r[COL_PROD]??'').trim(),_pub:String(r[COL_PUB]??'').trim(),_pubClean:cleanPubName(r[COL_PUB],canal),_pubNorm:norm(String(r[COL_PUB]??'')),_ingreso:parseNum(r[COL_ING]),_area:String(r[COL_AREA]??'').trim(),_areaGlobal:String(r[COL_AREA_GLOBAL]??'').trim(),_sectorClean:cleanSector(r[COL_SECTOR]),_comercial:String(r[COL_COMERCIAL]??'').trim(),_sit:String(r[COL_SIT]??'').trim()})).filter(r=>r._year||r._fam);
+  const colCentro=findCol(raw,COL_CENTRO_NAMES);
+  if(!colCentro&&raw.length)MISSING_CENTRO.push(canal);
+  return raw.map(r=>({...r,_canal:canal,_year:String(r[COL_YEAR]??'').trim(),_mes:String(r[COL_MES]??'').trim(),_fam:String(r[COL_FAM]??'').trim(),_prod:String(r[COL_PROD]??'').trim(),_pub:String(r[COL_PUB]??'').trim(),_pubClean:cleanPubName(r[COL_PUB],canal),_pubNorm:norm(String(r[COL_PUB]??'')),_ingreso:parseNum(r[COL_ING]),_area:String(r[COL_AREA]??'').trim(),_areaGlobal:mapOfficeZone(colCentro?r[colCentro]:'',r[COL_AREA],canal),_centroRaw:colCentro?String(r[colCentro]??'').trim():'',_sectorClean:cleanSector(r[COL_SECTOR]),_comercial:String(r[COL_COMERCIAL]??'').trim(),_sit:String(r[COL_SIT]??'').trim()})).filter(r=>r._year||r._fam);
 }
 function selected(key){const s=chipState[key];if(s.has('__NONE__'))return [];return s.size?[...s]:['all']}
 function channelRows(rows){return mActiveChannel==='GLOBAL'?rows:rows.filter(r=>r._canal===mActiveChannel)}
@@ -1411,7 +1474,7 @@ function buildChips(key,vals,labelFn){
   } else {
     h+=`<span class="chip-main chip-all${all?' active':''}" onclick="toggleChip('${key}','all')">Todos</span>`;
   }
-  [...vals].sort((a,b)=>String(a).localeCompare(String(b),'es')).forEach(v=>{
+  [...vals].sort(key==='globalarea'?zoneCompare:(a,b)=>String(a).localeCompare(String(b),'es')).forEach(v=>{
     const active=!none&&s.has(v),lab=labelFn?labelFn(v):v;
     h+=`<span class="chip-main${active?' active':''}" data-val="${encodeURIComponent(v)}" onclick="toggleChip('${key}',decodeURIComponent(this.dataset.val))">${esc(lab)}</span>`;
   });
@@ -1455,7 +1518,7 @@ function updateSummary(key){
 }
 function currentValues(key){
   const src=channelRows(DATA);let vals=[];
-  if(key==='globalarea')vals=src.map(r=>r._areaGlobal);if(key==='area')vals=src.map(r=>r._area);if(key==='sector')vals=src.map(r=>r._sectorClean);if(key==='familia')vals=src.map(r=>r._fam);if(key==='pub')vals=src.map(r=>r._pubNorm);if(key==='com')vals=src.map(r=>r._comercial);
+  if(key==='globalarea'){const sc=zoneScopeYears();vals=src.filter(r=>!ZONAS_SIN_ASIGNAR.includes(r._areaGlobal)||!sc||sc.has(r._year)).map(r=>r._areaGlobal)}if(key==='area')vals=src.map(r=>r._area);if(key==='sector')vals=src.map(r=>r._sectorClean);if(key==='familia')vals=src.map(r=>r._fam);if(key==='pub')vals=src.map(r=>r._pubNorm);if(key==='com')vals=src.map(r=>r._comercial);
   return [...new Set(vals.filter(Boolean))];
 }
 function refreshFilters(){
@@ -1936,8 +1999,8 @@ function renderFamilies(){
   h+='</tbody></table>'; el.innerHTML=h; renderFamilyDetail();
   if(!document.getElementById('strategy-tooltip')){const tt=document.createElement('div');tt.id='strategy-tooltip';tt.className='strategy-tooltip';document.body.appendChild(tt);}
 }
-function onYearChange(){document.getElementById('m-year-display').textContent=document.getElementById('m-f-year').value==='all'?'todos los años':document.getElementById('m-f-year').value;refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}
-function resetFilters(){document.getElementById('m-f-year').value='all';document.getElementById('m-f-sit').value='all';document.getElementById('m-f-estado-anun').value='all';Object.keys(chipState).forEach(k=>chipState[k].clear());refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}
+function onYearChange(){renderZoneWarning();document.getElementById('m-year-display').textContent=document.getElementById('m-f-year').value==='all'?'todos los años':document.getElementById('m-f-year').value;refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}
+function resetFilters(){document.getElementById('m-f-year').value='all';document.getElementById('m-f-sit').value='all';document.getElementById('m-f-estado-anun').value='all';Object.keys(chipState).forEach(k=>chipState[k].clear());renderZoneWarning();refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}
 async function autoLoad(){
   const required=['DIGITAL','PRINT','EVENTOS'];
   await Promise.all(required.map(async canal=>{try{const res=await fetch(EXCEL_URLS[canal],{cache:'no-cache'});if(!res.ok)throw new Error(canal+' '+res.status);WORKBOOKS[canal]=XLSX.read(await res.arrayBuffer(),{type:'array'});FILENAMES[canal]='PRODUCCION '+canal+'.xlsx';markLoaded(canal)}catch(e){markPending(canal)}}));
@@ -1949,7 +2012,7 @@ async function autoLoad(){
 function markLoaded(c){const card=document.getElementById('up-card-'+c),st=document.getElementById('up-status-'+c);if(card)card.classList.add('loaded');if(st)st.textContent='✓ '+FILENAMES[c]}
 function markPending(c){const st=document.getElementById('up-status-'+c);if(st)st.textContent='No disponible · pulsa para subirlo'}
 function onFileInput(inp,canal){if(!inp.files[0])return;const f=inp.files[0],reader=new FileReader(),st=document.getElementById('up-status-'+canal);if(st)st.textContent='Leyendo '+f.name+'…';reader.onload=e=>{try{WORKBOOKS[canal]=XLSX.read(e.target.result,{type:'array'});FILENAMES[canal]=f.name;markLoaded(canal);if(['DIGITAL','PRINT','EVENTOS'].every(c=>WORKBOOKS[c]))processAll()}catch(err){if(st)st.textContent='Error: '+err.message}};reader.readAsArrayBuffer(f)}
-function processAll(){try{DATA=[];['DIGITAL','PRINT','EVENTOS'].forEach(c=>{if(WORKBOOKS[c])DATA.push(...parseRows(WORKBOOKS[c],c))});document.getElementById('top-badge').style.display='';document.getElementById('top-badge').textContent=numberThousands(DATA.length)+' registros · '+['DIGITAL','PRINT','EVENTOS'].map(c=>FILENAMES[c]).join(' · ');document.getElementById('upload-screen').style.display='none';document.getElementById('app-shell').style.display='block';populateYear();initClosedMonths();document.getElementById('m-year-display').textContent=document.getElementById('m-f-year').value==='all'?'todos los años':document.getElementById('m-f-year').value;refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}catch(e){document.getElementById('up-msg').textContent='Error al procesar los archivos: '+e.message;console.error(e)}}
+function processAll(){try{DATA=[];MISSING_CENTRO=[];['DIGITAL','PRINT','EVENTOS'].forEach(c=>{if(WORKBOOKS[c])DATA.push(...parseRows(WORKBOOKS[c],c))});document.getElementById('top-badge').style.display='';document.getElementById('top-badge').textContent=numberThousands(DATA.length)+' registros · '+['DIGITAL','PRINT','EVENTOS'].map(c=>FILENAMES[c]).join(' · ');document.getElementById('upload-screen').style.display='none';document.getElementById('app-shell').style.display='block';populateYear();initClosedMonths();document.getElementById('m-year-display').textContent=document.getElementById('m-f-year').value==='all'?'todos los años':document.getElementById('m-f-year').value;renderZoneWarning();refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts()}catch(e){document.getElementById('up-msg').textContent='Error al procesar los archivos: '+e.message;console.error(e)}}
 document.addEventListener('DOMContentLoaded',autoLoad);
 </script>
 <script>
