@@ -580,8 +580,8 @@ table.main-table td.num{text-align:right;font-family:Arial,Helvetica,sans-serif;
 .chip-main.chip-all.active{background:var(--bg4);border-color:var(--border2);color:var(--text2);font-style:normal;}
 /* Compact dropdown filters */
 .compact-filters-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:start;position:relative;}
-.compact-filters-row{grid-template-columns:repeat(4,minmax(0,1fr));max-width:1480px;margin:0 auto;width:100%;justify-content:center}
-.compact-filter{position:relative;min-width:0;}
+.compact-filters-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:8px;max-width:1480px;margin:0 auto;width:100%}
+.compact-filter{position:relative;min-width:0;flex:1 1 190px;max-width:270px;}
 .compact-filter-btn{width:100%;height:34px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:0 10px;cursor:pointer;color:var(--text2);font-family:'Inter',sans-serif;}
 .compact-filter-btn:hover{border-color:var(--blue);background:#fff;}
 .compact-filter.open .compact-filter-btn{border-color:#8fade0;background:#edf3fc;box-shadow:0 0 0 2px rgba(74,116,181,.10);}
@@ -591,7 +591,7 @@ table.main-table td.num{text-align:right;font-family:Arial,Helvetica,sans-serif;
 .compact-filter.open .compact-filter-arrow{transform:rotate(180deg);}
 .compact-filter-panel{display:none;position:fixed;z-index:500;padding:12px 13px;background:#e8effa;border:2px solid #8fade0;border-radius:10px;box-shadow:0 14px 32px rgba(55,88,140,.20);}
 .compact-filter.open .compact-filter-panel{display:block;}
-.compact-filter-panel .chip-box{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px;width:100%;max-width:none;max-height:none!important;height:auto;overflow:visible!important;background:transparent;border:0;padding:0;}
+.compact-filter-panel .chip-box{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:4px;width:100%;max-width:none;max-height:none!important;height:auto;overflow:visible!important;background:transparent;border:0;padding:0;}
 .compact-filter-panel .chip-main{flex:0 0 auto;background:#fff;border-color:#b8c9e5;box-shadow:0 1px 2px rgba(55,88,140,.06);}
 .compact-filter-panel .chip-main:hover{background:#f4f7fc;border-color:#6f96cf;}
 .compact-filter-panel .chip-main.active{background:var(--blue);border-color:var(--blue);color:#fff;}
@@ -1350,8 +1350,7 @@ th.th-yoy {
       </div>
       <div class="main-filters-divider"></div>
       <div class="compact-filters-row" id="compact-main-filters">
-        <div class="compact-filter" data-filter-key="globalarea"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'globalarea')"><span class="compact-filter-title">ÁREA GLOBAL</span><span class="compact-filter-summary" id="m-summary-globalarea">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-globalarea"></div></div></div>
-        <div class="compact-filter" data-filter-key="area"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'area')"><span class="compact-filter-title">ÁREA COMERCIAL</span><span class="compact-filter-summary" id="m-summary-area">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-area"></div></div></div>
+        <div class="compact-filter" data-filter-key="globalarea"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'globalarea')"><span class="compact-filter-title">ÁREA GLOBAL</span><span class="compact-filter-summary" id="m-summary-globalarea">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-globalarea"></div><div id="m-aviso-globalarea" style="display:none"></div></div></div>
         <div class="compact-filter" data-filter-key="sector"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'sector')"><span class="compact-filter-title">SECTOR</span><span class="compact-filter-summary" id="m-summary-sector">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-sector"></div></div></div>
         <div class="compact-filter" data-filter-key="familia"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'familia')"><span class="compact-filter-title">FAMILIA</span><span class="compact-filter-summary" id="m-summary-familia">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-familia"></div></div></div>
         <div class="compact-filter" data-filter-key="pub"><button class="compact-filter-btn" type="button" onclick="toggleCompactFilter(event,'pub')"><span class="compact-filter-title">PUBLICACIÓN</span><span class="compact-filter-summary" id="m-summary-pub">Todos</span><span class="compact-filter-arrow">▼</span></button><div class="compact-filter-panel"><div class="chip-box" id="m-chips-pub"></div></div></div>
@@ -2422,7 +2421,7 @@ function parseRowsFromWorkbook(wb,canalFijo){
       _sector:String(r[COL_SECTOR]||'').trim(),
       _sectorClean:sectorClean,
       _detalle:detalleRaw,
-      _claseOrden:String(r[COL_CLASE_ORDEN]||'').trim(),
+      _claseOrden:String(r[COL_CLASE_ORDEN]||'').trim(),_zonaB:mapOfficeZone(r[COL_AREA_GLOBAL],r[COL_AREA],canal),
       _impresiones:impresionesKey?parseFicheCPMNumber(r[impresionesKey]):0,
       _accionComercial:accionComercialKey?String(r[accionComercialKey]||'').trim():'',
       _orden:orderKey?String(r[orderKey]||'').trim():'',
@@ -2707,6 +2706,56 @@ const AREA_MAP={'BRAND EXPERIENCE':'Madrid','CLIENT EXPERIENCE LIFESTYLE':'Madri
 // - BRAND EXPERIENCE / CLIENT EXPERIENCE LIFESTYLE / CLIENT EXPERIENCE LUJO (las 3 "de Madrid"):
 //   K - PAGO LOCAL DIRECTO, cualquier otro valor, o vacío -> Madrid (por defecto)
 //   J - PAGO INTERNACIONAL DIRECTO -> Internacional
+// ── ÁREA GLOBAL · Opción B (OFICINA DE VENTA): centro de coste + ÁREAS ──
+// Madrid/Barcelona -> manda el centro; solo ÁREAS=INTERNACIONAL lo pasa a Internacional (Local).
+// Centro Internacional: ÁREAS INTERNACIONAL -> Internacional (Local); PROGRAMÁTICA (solo Digital) -> Internacional (Programática).
+// Cualquier otro caso -> 'Sin asignar' con aviso. Clase de orden no interviene.
+const ZONAS_B=['Madrid','Barcelona','Internacional (Local)','Internacional (Programática)'];
+const ZONA_B_SIN='Sin asignar';
+function zonaBKey(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();}
+function officeZoneInfo(centroRaw,areaRaw,canal){
+  const c=zonaBKey(centroRaw),a=zonaBKey(areaRaw);
+  if(!c) return {zone:ZONA_B_SIN,motivo:'centro de coste vacío'};
+  if(c==='MADRID'||c==='BARCELONA'){
+    if(a==='INTERNACIONAL') return {zone:'Internacional (Local)',movidaPorArea:true};
+    return {zone:c==='MADRID'?'Madrid':'Barcelona'};
+  }
+  if(c==='INTERNACIONAL'){
+    if(a==='INTERNACIONAL') return {zone:'Internacional (Local)'};
+    if(a==='PROGRAMATICA'&&canal==='DIGITAL') return {zone:'Internacional (Programática)'};
+    return {zone:ZONA_B_SIN,motivo:'centro Internacional con ÁREAS inesperada'};
+  }
+  return {zone:ZONA_B_SIN,motivo:'centro de coste desconocido'};
+}
+function mapOfficeZone(centroRaw,areaRaw,canal){return officeZoneInfo(centroRaw,areaRaw,canal).zone;}
+function sortZonasB(vals){const rank=v=>{const i=ZONAS_B.indexOf(v);return i>=0?i:(v===ZONA_B_SIN?99:50);};return vals.sort((x,y)=>rank(x)-rank(y)||String(x).localeCompare(String(y),'es'));}
+// Años que se están analizando: el seleccionado y el anterior; null = todos los años cargados.
+function mYearsAnalizados(yr){return (yr&&yr!=='all'&&!isNaN(parseInt(yr)))?new Set([String(yr),String(parseInt(yr)-1)]):null;}
+// Aviso visible en el filtro ÁREA GLOBAL con las filas sin asignar (canal, valor, nº filas e ingreso).
+function mRenderAvisoZonaB(rows,yr){
+  const box=document.getElementById('m-aviso-globalarea');
+  const title=document.querySelector('.compact-filter[data-filter-key="globalarea"] .compact-filter-title');
+  if(!box) return;
+  // Solo cuentan los años que se están analizando: el año seleccionado y el anterior.
+  // Con 'Todos' se analizan todos los años cargados. Un aviso de otro año no se muestra.
+  const yrs=mYearsAnalizados(yr);
+  const g=new Map();
+  (rows||[]).forEach(r=>{
+    if(r._zonaB!==ZONA_B_SIN) return;
+    if(yrs&&!yrs.has(String(r._yearRaw))) return;
+    const info=officeZoneInfo(r[COL_AREA_GLOBAL],r[COL_AREA],r._canal);
+    const k=[r._canal,info.motivo,String(r[COL_AREA_GLOBAL]||'').trim()||'(vacío)',String(r[COL_AREA]||'').trim()||'(vacío)'].join('|||');
+    const it=g.get(k)||{canal:r._canal,motivo:info.motivo,centro:String(r[COL_AREA_GLOBAL]||'').trim()||'(vacío)',area:String(r[COL_AREA]||'').trim()||'(vacío)',n:0,ing:0};
+    it.n++;it.ing+=r._ingreso||0;g.set(k,it);
+  });
+  if(!g.size){box.style.display='none';box.innerHTML='';if(title)title.textContent='ÁREA GLOBAL';return;}
+  const fmt=n=>Math.round(n).toLocaleString('es-ES')+' €';
+  const li=[...g.values()].map(it=>`<div style="margin-top:4px">• <b>${it.canal}</b>: ${it.n} filas (${fmt(it.ing)}) — ${it.motivo}; centro «${it.centro}», ÁREAS «${it.area}».</div>`).join('');
+  box.style.cssText='display:block;text-align:center;margin-top:8px;padding:8px;border:1px solid #e0b34a;background:#fff8e6;border-radius:6px;font-size:11px;line-height:1.35;color:#7a5a00';
+  box.innerHTML='<b>⚠ Aviso de datos'+(yrs?' ('+[...yrs].sort().join(' y ')+')':'')+':</b> hay filas que no se han asignado a ninguna zona (están en «Sin asignar», no se ocultan). Revisa el Excel.'+li;
+  if(title)title.textContent='ÁREA GLOBAL ⚠';
+  console.warn('ÁREA GLOBAL: filas sin asignar',[...g.values()]);
+}
 const AREAS_MADRID_BASE=['BRAND EXPERIENCE','CLIENT EXPERIENCE LIFESTYLE','CLIENT EXPERIENCE LUJO'];
 function mapArea(raw,claseOrden){
   const a=(raw||'').trim().toUpperCase();
@@ -3033,7 +3082,7 @@ function toggleVerMasAnunciantes(){
   renderDetalleInsercionesBlock();
 }
 
-const mChipState={mes:new Set(),globalarea:new Set(),area:new Set(),sector:new Set(),familia:new Set(),pub:new Set(),com:new Set()};
+const mChipState={mes:new Set(),globalarea:new Set(),sector:new Set(),familia:new Set(),pub:new Set(),com:new Set()};
 let mMonthsAutoInitDone=false;
 
 // Meses ya finalizados según el año seleccionado en el filtro de Año (m-f-year).
@@ -3076,8 +3125,8 @@ function populateMainFilters(){
   }
   const baseForFilters=selectedYr&&selectedYr!=='all'?base.filter(r=>r._yearRaw===selectedYr):base;
   const meses=new Set(base.map(r=>r._mesRaw).filter(Boolean));
-  const globalareas=new Set(base.map(r=>(r[COL_AREA_GLOBAL]||'').trim()).filter(Boolean));
-  const areas=new Set(base.map(r=>(r[COL_AREA]||'').trim()).filter(Boolean));
+  const yrsZonaB=mYearsAnalizados(selectedYr);
+  const globalareas=new Set(base.filter(r=>r._zonaB!==ZONA_B_SIN||!yrsZonaB||yrsZonaB.has(String(r._yearRaw))).map(r=>r._zonaB).filter(Boolean));
   const sects=new Set(base.map(r=>r._sectorClean).filter(Boolean));
   const fams=new Set(base.map(r=>r._famLabel).filter(Boolean));
   const pubs=new Set(base.map(r=>r._pubNorm).filter(Boolean));
@@ -3085,8 +3134,7 @@ function populateMainFilters(){
   const sits=new Set(base.map(r=>(r[COL_SIT]||'').trim()).filter(Boolean));
   const mesOrdenados=MESES_ORDER.filter(m=>meses.has(m));
   mBuildChips('mes',mesOrdenados,v=>MESES_SHORT[v]||v);
-  mBuildChips('globalarea',globalareas,null);
-  mBuildChips('area',areas,null);
+  mBuildChips('globalarea',globalareas,null);mRenderAvisoZonaB(base,selectedYr);
   mBuildChips('sector',sects,null);
   mBuildChips('familia',fams,null);
   mBuildChips('pub',pubs,null);
@@ -3117,7 +3165,7 @@ function mBuildChips(key,vals,labelFn){
   }else{
     html+=`<span class="chip-main chip-all${allSelected?' active':''}" data-key="${key}" data-val="all" onclick="mToggleChip('${key}','all')">Todos</span>`;
   }
-  [...vals].sort().forEach(v=>{const label=labelFn?labelFn(v):v;const active=!isNone&&s.has(v);html+=`<span class="chip-main${active?' active':''}" data-key="${key}" data-val="${encodeURIComponent(v)}" onclick="mToggleChip('${key}',decodeURIComponent(this.dataset.val))">${label}</span>`;});
+  (key==='globalarea'?sortZonasB([...vals]):[...vals].sort()).forEach(v=>{const label=labelFn?labelFn(v):v;const active=!isNone&&s.has(v);html+=`<span class="chip-main${active?' active':''}" data-key="${key}" data-val="${encodeURIComponent(v)}" onclick="mToggleChip('${key}',decodeURIComponent(this.dataset.val))">${label}</span>`;});
   if(key==='mes')html+='</div>';
   container.innerHTML=html;
   updateCompactFilterSummary(key);
@@ -3193,12 +3241,11 @@ function mGetSelected(key){const s=mChipState[key];if(!s) return['all'];if(s.has
 function mGetChannelData(){return mActiveChannel==='GLOBAL'?DATA:DATA.filter(r=>r._canal===mActiveChannel);}
 
 function mApplyFilters(rows){
-  const meses=mGetSelected('mes'),globalareas=mGetSelected('globalarea'),areas=mGetSelected('area'),sects=mGetSelected('sector'),fams=mGetSelected('familia'),pubs=mGetSelected('pub'),coms=mGetSelected('com');
+  const meses=mGetSelected('mes'),globalareas=mGetSelected('globalarea'),sects=mGetSelected('sector'),fams=mGetSelected('familia'),pubs=mGetSelected('pub'),coms=mGetSelected('com');
   const sit=document.getElementById('m-f-sit').value;
   return rows.filter(r=>{
     if(!meses.includes('all')&&!meses.includes(r._mesRaw)) return false;
-    if(!globalareas.includes('all')&&!globalareas.includes((r[COL_AREA_GLOBAL]||'').trim())) return false;
-    if(!areas.includes('all')&&!areas.includes((r[COL_AREA]||'').trim())) return false;
+    if(!globalareas.includes('all')&&!globalareas.includes(r._zonaB)) return false;
     if(!sects.includes('all')&&!sects.includes(r._sectorClean)) return false;
     if(!fams.includes('all')&&!fams.includes(r._famLabel)) return false;
     if(!pubs.includes('all')&&!pubs.includes(r._pubNorm)) return false;
@@ -3253,7 +3300,7 @@ function resetMainFilters(){
   document.getElementById('m-f-year').value='all';
   ['m-f-anun','m-f-com','m-f-sit','m-f-estado-anun'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='all';});
   Object.keys(mChipState).forEach(k=>mChipState[k].clear());
-  ['mes','area','sector','familia','pub'].forEach(k=>mRenderChips(k));
+  ['mes','sector','familia','pub'].forEach(k=>mRenderChips(k));
   renderMain();
   if(document.getElementById('view-sectores')&&document.getElementById('view-sectores').classList.contains('active')) renderSectoresTab();
 }
@@ -3262,12 +3309,11 @@ function resetMainFilters(){
 // DASHBOARD GENERAL — RENDER
 // ══════════════════════════════════════════════════════════════════════════════
 function fichaRowsForYear(year){
-  const meses=mGetSelected('mes'),globalareas=mGetSelected('globalarea'),areas=mGetSelected('area'),sects=mGetSelected('sector'),coms=mGetSelected('com'),sit=document.getElementById('m-f-sit')?.value||'all';
+  const meses=mGetSelected('mes'),globalareas=mGetSelected('globalarea'),sects=mGetSelected('sector'),coms=mGetSelected('com'),sit=document.getElementById('m-f-sit')?.value||'all';
   return DATA.filter(r=>{
     if(r._canal!=='DIGITAL'||r._yearRaw!==String(year))return false;
     if(!meses.includes('all')&&!meses.includes(r._mesRaw))return false;
-    if(!globalareas.includes('all')&&!globalareas.includes((r[COL_AREA_GLOBAL]||'').trim()))return false;
-    if(!areas.includes('all')&&!areas.includes((r[COL_AREA]||'').trim()))return false;
+    if(!globalareas.includes('all')&&!globalareas.includes(r._zonaB))return false;
     if(!sects.includes('all')&&!sects.includes(r._sectorClean))return false;
     if(!coms.includes('all')&&!coms.includes((r[COL_COMERCIAL]||'').trim()))return false;
     if(sit!=='all'&&(r[COL_SIT]||'').trim()!==sit)return false;
@@ -3694,12 +3740,11 @@ function ficheSiteSort(key){
   });
 }
 function ficheRowsForChannelAndYear(year,channel){
-  const meses=mGetSelected('mes'),globalareas=mGetSelected('globalarea'),areas=mGetSelected('area'),sects=mGetSelected('sector'),coms=mGetSelected('com'),sit=document.getElementById('m-f-sit')?.value||'all';
+  const meses=mGetSelected('mes'),globalareas=mGetSelected('globalarea'),sects=mGetSelected('sector'),coms=mGetSelected('com'),sit=document.getElementById('m-f-sit')?.value||'all';
   return DATA.filter(r=>{
     if(r._canal!==channel||r._yearRaw!==String(year))return false;
     if(!meses.includes('all')&&!meses.includes(r._mesRaw))return false;
-    if(!globalareas.includes('all')&&!globalareas.includes((r[COL_AREA_GLOBAL]||'').trim()))return false;
-    if(!areas.includes('all')&&!areas.includes((r[COL_AREA]||'').trim()))return false;
+    if(!globalareas.includes('all')&&!globalareas.includes(r._zonaB))return false;
     if(!sects.includes('all')&&!sects.includes(r._sectorClean))return false;
     if(!coms.includes('all')&&!coms.includes((r[COL_COMERCIAL]||'').trim()))return false;
     if(sit!=='all'&&(r[COL_SIT]||'').trim()!==sit)return false;
@@ -11536,14 +11581,12 @@ async function exportarPPT() {
         const prevYearRows = allData.filter(r => r._yearRaw === yrAnterior);
         let prevFiltered = prevYearRows.filter(r => {
           const globalareas = mGetSelected('globalarea');
-          const areas = mGetSelected('area');
           const sects = mGetSelected('sector');
           const fams = mGetSelected('familia');
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
-          if (!globalareas.includes('all') && !globalareas.includes((r[COL_AREA_GLOBAL] || '').trim())) return false;
-          if (!areas.includes('all') && !areas.includes((r[COL_AREA] || '').trim())) return false;
+          if (!globalareas.includes('all') && !globalareas.includes(r._zonaB)) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
           if (!pubs.includes('all') && !pubs.includes(r._pubNorm)) return false;
@@ -12642,14 +12685,12 @@ async function exportarPPT() {
         // Aplicar filtros manualmente incluyendo meses con _mesRaw
         let prevFiltered = prevYearRows.filter(r => {
           const globalareas = mGetSelected('globalarea');
-          const areas = mGetSelected('area');
           const sects = mGetSelected('sector');
           const fams = mGetSelected('familia');
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
-          if (!globalareas.includes('all') && !globalareas.includes((r[COL_AREA_GLOBAL] || '').trim())) return false;
-          if (!areas.includes('all') && !areas.includes((r[COL_AREA] || '').trim())) return false;
+          if (!globalareas.includes('all') && !globalareas.includes(r._zonaB)) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
           if (!pubs.includes('all') && !pubs.includes(r._pubNorm)) return false;
@@ -12735,14 +12776,12 @@ async function exportarPPT() {
         // Aplicar filtros manualmente incluyendo meses con _mesRaw
         let prevFiltered = prevYearRows.filter(r => {
           const globalareas = mGetSelected('globalarea');
-          const areas = mGetSelected('area');
           const sects = mGetSelected('sector');
           const fams = mGetSelected('familia');
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
-          if (!globalareas.includes('all') && !globalareas.includes((r[COL_AREA_GLOBAL] || '').trim())) return false;
-          if (!areas.includes('all') && !areas.includes((r[COL_AREA] || '').trim())) return false;
+          if (!globalareas.includes('all') && !globalareas.includes(r._zonaB)) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
           if (!pubs.includes('all') && !pubs.includes(r._pubNorm)) return false;
@@ -13309,7 +13348,7 @@ parseRowsFromWorkbook=function(wb,canalFijo){
       _sector:String(r[COL_SECTOR]||'').trim(),
       _sectorClean:sectorClean,
       _detalle:detalleRaw,
-      _claseOrden:String(r[COL_CLASE_ORDEN]||'').trim(),
+      _claseOrden:String(r[COL_CLASE_ORDEN]||'').trim(),_zonaB:mapOfficeZone(r[COL_AREA_GLOBAL],r[COL_AREA],canal),
       _impresiones:impresionesKey?parseFicheCPMNumber(r[impresionesKey]):0,
       _accionComercial:accionComercialKey?String(r[accionComercialKey]||'').trim():'',
       _orden:orderKey?String(r[orderKey]||'').trim():'',
