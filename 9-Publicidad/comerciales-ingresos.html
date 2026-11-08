@@ -266,7 +266,7 @@
     <div class="empty-state">
       <p>&#128202; <b>Sin datos</b></p>
       <p>Sube el Excel de ventas (mismo formato de siempre) usando el botón <b>"Cargar Excel"</b>.<br>
-      Se detectan automáticamente las columnas <b>Comercial</b>, <b>Áreas</b>, <b>Año inserción</b>, <b>Mes inserción</b>, <b>Clase de orden</b> e <b>Imp.Neto a Comisionar</b>.</p>
+      Se detectan automáticamente las columnas <b>Comercial</b>, <b>Oficina de venta / Centro de coste de la orden</b>, <b>Áreas</b>, <b>Año inserción</b>, <b>Mes inserción</b> e <b>Imp.Neto a Comisionar</b>.</p>
     </div>
   </div>
 </main>
@@ -279,13 +279,16 @@ let selectedMonths = new Set();
 let activeMainTab = 'ingresos'; // 'ingresos' | 'nuevos'
 const ANUNCIANTE_COL_MISSING = new Set(); // canales donde no se detectó la columna Anunciantes
 
-const TEAMS_ORDER = ['Madrid', 'Barcelona', 'Internacional', 'Programática', 'Sin Asignar'];
+const ZONA_MADRID = 'Madrid', ZONA_BCN = 'Barcelona',
+      ZONA_INTL_LOCAL = 'Internacional (Local)', ZONA_INTL_PROG = 'Internacional (Programática)';
+// Orden fijo en todo el dashboard (spec 21.1). "Sin Asignar" siempre al final.
+const TEAMS_ORDER = [ZONA_MADRID, ZONA_BCN, ZONA_INTL_LOCAL, ZONA_INTL_PROG, 'Sin Asignar'];
 
 const TEAM_COLORS = {
   'Madrid':        '#c0392b',
   'Barcelona':     '#2980b9',
-  'Internacional': '#27ae60',
-  'Programática':  '#8e44ad',
+  'Internacional (Local)':       '#27ae60',
+  'Internacional (Programática)': '#8e44ad',
   'Sin Asignar':   '#7f8c8d'
 };
 
@@ -305,17 +308,8 @@ function nuevosYearStyle(anio, visibleYearsDesc){
   return NUEVOS_ANUN_YEAR_PALETTE[idx % NUEVOS_ANUN_YEAR_PALETTE.length];
 }
 
-// Comerciales forzados siempre en Sin Asignar
-const FORCED_SIN_ASIGNAR = ['MARCOS MARTIN MOYANO SERRANO'];
-
-// Comerciales forzados a Madrid en clase K
-const FORCED_MADRID_LOCAL = ['MARIA MORUNO'];
-
-// Comerciales forzados siempre a Barcelona (al final)
-const FORCED_BARCELONA = ['LUZ ROCA'];
-
-// Comerciales forzados siempre a Madrid (al final)
-const FORCED_MADRID_PINNED = ['ANA BELÉN CRUZ DE DIEGO'];
+// Comerciales de Madrid que bajan al último bloque (Sin Asignar)
+const MADRID_A_ULTIMO_BLOQUE = ['MARCOS MARTIN MOYANO SERRANO'];
 
 // Comerciales que siempre van al FINAL de su grupo (en el orden que aparecen aquí)
 const PINNED_BOTTOM = ['AMPARO BASTIT', 'NORA RECIO LOPEZ TRIVIÑO', 'LUZ ROCA', 'ANA BELÉN CRUZ DE DIEGO'];
@@ -326,6 +320,7 @@ const MES_NOMBRES = ['enero','febrero','marzo','abril','mayo','junio','julio','a
 const HEADER_ALIASES = {
   comercial:  ['comercial'],
   area:       ['áreas','areas','área','area','equipo','team'],
+  centro:     ['oficina de venta / centro de coste de la orden','oficina de venta / centro de coste','oficina de venta','centro de coste'],
   claseOrden: ['clase de orden','clase orden','claseorden','clase_orden','order class','order type'],
   anio:       ['año inserción','ano insercion','año insercion','ano inserción','año'],
   mes:        ['mes inserción','mes insercion','mes'],
@@ -382,16 +377,29 @@ function formatPct(p){
   return neg + sign + abs.toLocaleString('es-ES', {minimumFractionDigits:1, maximumFractionDigits:1, useGrouping:true}) + '%';
 }
 
-function getLocalTeam(rawArea, comercialName){
-  if(FORCED_SIN_ASIGNAR.some(f => normalize(f) === normalize(comercialName || ''))) return 'Sin Asignar';
-  const n = normalize(rawArea || '');
-  if(n.includes('brand experience'))            return 'Madrid';
-  if(n.includes('client experience lifestyle')) return 'Madrid';
-  if(n.includes('client experience lujo'))      return 'Madrid';
-  if(n.includes('barcelona'))                   return 'Barcelona';
-  if(n.includes('internacional') || n.includes('international')) return 'Internacional';
-  if(n.includes('programat'))                   return 'Programática';
-  return 'Sin Asignar';
+// OFICINA DE VENTA (oficina_de_venta.txt). Una sola fuente de verdad para la zona.
+// El centro de coste decide Madrid / Barcelona / Internacional. ÁREAS saca filas hacia Internacional:
+//   - ÁREAS = INTERNACIONAL -> Internacional (Local), también si el centro es Madrid o Barcelona.
+//   - ÁREAS = PROGRAMÁTICA  -> Internacional (Programática), también si el centro es Madrid o Barcelona.
+// Clase de orden NO interviene. Nunca se infiere por el nombre del comercial.
+function zoneKey(v){
+  return normalize(v).replace(/\s+/g,' ');
+}
+function mapOfficeZone(centroRaw, areaRaw, canal){
+  const centro = zoneKey(centroRaw);
+  const area   = zoneKey(areaRaw);
+  if(centro === '') return {zone:'Sin Asignar', status:'SIN_CENTRO'};
+  if(centro === 'madrid' || centro === 'barcelona'){
+    if(area === 'internacional') return {zone:ZONA_INTL_LOCAL, status:'OK', movidaPorArea:true};
+    if(area === 'programatica')  return {zone:ZONA_INTL_PROG,  status:'OK', movidaPorArea:true};
+    return {zone: centro === 'madrid' ? ZONA_MADRID : ZONA_BCN, status:'OK'};
+  }
+  if(centro === 'internacional'){
+    if(area === 'internacional') return {zone:ZONA_INTL_LOCAL, status:'OK'};
+    if(area === 'programatica')  return {zone:ZONA_INTL_PROG,  status:'OK'};
+    return {zone:'Sin Asignar', status:'AREA_INESPERADA'};
+  }
+  return {zone:'Sin Asignar', status:'CENTRO_DESCONOCIDO'};
 }
 
 function computeDefaultMonths(){
@@ -529,7 +537,7 @@ function processWorkbook(data, canal, filename){
   const headerRow    = rows[0];
   const colComercial = findColIndex(headerRow, HEADER_ALIASES.comercial);
   const colArea      = findColIndex(headerRow, HEADER_ALIASES.area);
-  const colClase     = findColIndex(headerRow, HEADER_ALIASES.claseOrden);
+  const colCentro    = findColIndex(headerRow, HEADER_ALIASES.centro);
   const colAnio      = findColIndex(headerRow, HEADER_ALIASES.anio);
   const colMes       = findColIndex(headerRow, HEADER_ALIASES.mes);
   const colImporte   = findColIndex(headerRow, HEADER_ALIASES.importe);
@@ -542,6 +550,13 @@ function processWorkbook(data, canal, filename){
   if(colComercial === -1 || colAnio === -1 || colImporte === -1){
     markCanalPending(canal); return;
   }
+  if(colCentro === -1){
+    // Sin la columna del centro de coste no se puede asignar zona: mejor avisar que asignar mal.
+    markCanalPending(canal);
+    const st = document.getElementById('up-status-' + canal);
+    if(st) st.textContent = 'Falta la columna «Oficina de venta / Centro de coste de la orden» en este Excel';
+    return;
+  }
   if(colAnunciante === -1) ANUNCIANTE_COL_MISSING.add(canal); else ANUNCIANTE_COL_MISSING.delete(canal);
 
   const canalRows = [];
@@ -549,7 +564,7 @@ function processWorkbook(data, canal, filename){
     const row       = rows[i];
     const comercial = String(row[colComercial]||'').trim();
     const rawArea   = colArea  !== -1 ? String(row[colArea]||'').trim()  : '';
-    const rawClase  = colClase !== -1 ? String(row[colClase]||'').trim() : '';
+    const rawCentro = String(row[colCentro]||'').trim();
     const anio      = parseInt(row[colAnio], 10);
     const mes       = colMes !== -1 ? parseMonth(row[colMes]) : null;
     const importe   = parseFloat(String(row[colImporte]).replace(',','.')) || 0;
@@ -563,18 +578,12 @@ function processWorkbook(data, canal, filename){
 
     if(!comercial || isNaN(anio) || anio < 2000 || anio > 2100) continue;
 
-    const claseNorm = normalize(rawClase);
-    const esIntl    = claseNorm.includes('j - pago internacional') || claseNorm.includes('pago internacional directo');
-
-    const isForcedMadrid = FORCED_MADRID_LOCAL.some(f => normalize(f) === normalize(comercial));
-    let localTeam = getLocalTeam(rawArea, comercial);
-    if(isForcedMadrid && !esIntl) localTeam = 'Madrid';
-
-    if(esIntl){
-      canalRows.push({comercial, comercialKey: comercial + '__INTL', area: rawArea, team: 'Internacional', anio, mes, importe, canal, sector, anunciante: rawAnunciante, anuncianteNorm, marca, publicacion, producto});
-    } else {
-      canalRows.push({comercial, comercialKey: comercial, area: rawArea, team: localTeam, anio, mes, importe, canal, sector, anunciante: rawAnunciante, anuncianteNorm, marca, publicacion, producto});
-    }
+    const z = mapOfficeZone(rawCentro, rawArea, canal);
+    // Clave = comercial + zona: un comercial con ingreso en varias zonas aparece en cada tabla
+    // con SOLO el ingreso de esa zona (así Madrid + Barcelona + Intl + Prog + Sin asignar = total).
+    canalRows.push({comercial, comercialKey: comercial + '||' + z.zone, area: rawArea, centro: rawCentro,
+      zoneStatus: z.status, movidaPorArea: !!z.movidaPorArea,
+      team: z.zone, anio, mes, importe, canal, sector, anunciante: rawAnunciante, anuncianteNorm, marca, publicacion, producto});
   }
 
   CANAL_DATA[canal] = canalRows;
@@ -885,22 +894,7 @@ function buildTableHTML(keys, agg, monthlyAgg, canalAgg, canalMonthlyAgg, sector
     });
   });
 
-  // Team total row
-  html += `<tr class="team-total-row"><td>📊 Total ${teamName}</td>`;
-  YEARS.forEach((y, idx) => {
-    const isLast = idx === lastIdx;
-    if(isLast && showComparable) html += `<td class="col-divider comparable">${formatEUR(teamComparableTotal)}</td>`;
-    html += `<td class="col-divider">${formatEUR(teamYearTotals[y])}</td>`;
-    if(idx > 0){
-      const prevY   = YEARS[idx-1];
-      const prevVal = (isLast && showComparable) ? teamComparableTotal : teamYearTotals[prevY];
-      const val     = teamYearTotals[y];
-      const pct     = calcPct(val, prevVal);
-      const cls     = pct === null ? 'flat' : (pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'flat'));
-      html += `<td class="pct ${cls}">${formatPct(pct)}</td>`;
-    }
-  });
-  html += '</tr></tbody></table>';
+  html += '</tbody></table>';
 
   // Footnote si hay comerciales duales
   if(hasDual){
@@ -918,11 +912,23 @@ function assignTeamsForKeys(allKeys, agg){
   const teamMap = {};
   TEAMS_ORDER.forEach(t => teamMap[t] = []);
 
+  // Filas con datos inesperados (Sin Asignar por centro/ÁREAS): solo se muestran si están en un
+  // año activo (último y anterior). Si solo están en otro año, no se ofrece el bloque ni la fila;
+  // siguen contando en el total general.
+  const activeYears = new Set(YEARS.slice(-2));
+  const keyActive = {};
+  DATA.forEach(d => {
+    if(d.zoneStatus === 'OK') return;
+    if(activeYears.has(d.anio)) keyActive[d.comercialKey] = true;
+    else if(!(d.comercialKey in keyActive)) keyActive[d.comercialKey] = false;
+  });
+
   allKeys.forEach(k => {
+    if(keyActive[k] === false) return;
     const ingresoUltimoAnio = YEARS.length > 0 ? (agg[k][YEARS[YEARS.length-1]] || 0) : 1;
     let team = (agg[k] && agg[k].team) ? agg[k].team : 'Sin Asignar';
     if(ingresoUltimoAnio === 0) {
-      if(team === 'Internacional') {
+      if(team === ZONA_INTL_LOCAL || team === ZONA_INTL_PROG) {
         const _lastY = YEARS[YEARS.length - 1];
         const _prevY = YEARS.length > 1 ? YEARS[YEARS.length - 2] : null;
         const _ingLast = (agg[k][_lastY] || 0);
@@ -932,9 +938,7 @@ function assignTeamsForKeys(allKeys, agg){
         team = 'Sin Asignar';
       }
     }
-    // Forzar equipo independientemente de ingresos
-    if(FORCED_BARCELONA.some(f => normalize(f) === normalize(agg[k].label || ''))) team = 'Barcelona';
-    if(FORCED_MADRID_PINNED.some(f => normalize(f) === normalize(agg[k].label || ''))) team = 'Madrid';
+    if(team === ZONA_MADRID && MADRID_A_ULTIMO_BLOQUE.some(f => normalize(f) === normalize(agg[k].label || ''))) team = 'Sin Asignar';
 
     if(teamMap[team]) teamMap[team].push(k);
     else teamMap['Sin Asignar'].push(k);
@@ -1123,13 +1127,13 @@ function render(){
     });
   }
 
-  let outputHTML = '';
+  let outputHTML = buildDataWarningHTML();
 
   TEAMS_ORDER.forEach(teamName => {
     const members = teamMap[teamName];
     if(members.length === 0) return;
     const color = TEAM_COLORS[teamName] || '#0d2340';
-    const tid   = 'team-' + teamName.replace(/\s/g,'_');
+    const tid   = 'team-' + teamName.replace(/[^a-zA-Z0-9]/g,'_');
     const teamDualKeys = teamName === 'Madrid' ? dualKeys : null;
     outputHTML += `
       <div class="team-block" id="${tid}">
@@ -1186,6 +1190,35 @@ function render(){
   document.getElementById('output').innerHTML = outputHTML;
 }
 
+// Avisos de datos (spec 21.6). Solo cuentan los años analizados: el último y el anterior (15.6).
+// Las filas inesperadas no se esconden: van a "Sin Asignar" y siguen en el total general.
+function buildDataWarningHTML(){
+  if(YEARS.length === 0) return '';
+  const lastY = YEARS[YEARS.length-1];
+  const prevY = YEARS.length > 1 ? YEARS[YEARS.length-2] : null;
+  const groups = {};
+  DATA.forEach(d => {
+    if(d.zoneStatus === 'OK') return;
+    if(d.anio !== lastY && d.anio !== prevY) return;
+    const motivo = d.zoneStatus === 'SIN_CENTRO'
+      ? 'centro de coste vacío'
+      : d.zoneStatus === 'CENTRO_DESCONOCIDO'
+        ? `centro de coste «${d.centro}» (se esperaba Madrid, Barcelona o Internacional)`
+        : `centro de coste Internacional y ÁREAS «${d.area || 'vacía'}» (se esperaba INTERNACIONAL o PROGRAMÁTICA)`;
+    const k = d.canal + '||' + motivo;
+    if(!groups[k]) groups[k] = {canal:d.canal, motivo, filas:0, importe:0};
+    groups[k].filas++; groups[k].importe += d.importe;
+  });
+  const items = Object.values(groups);
+  if(items.length === 0) return '';
+  const yrs = prevY ? `${prevY} y ${lastY}` : `${lastY}`;
+  const lis = items.map(g => `<li>Excel de ${g.canal}: ${g.filas} fila${g.filas!==1?'s':''} (${formatEUR(g.importe)}) con ${g.motivo}.</li>`).join('');
+  return `<div style="background:#fff4e5;border:1px solid #e0821f;border-left:5px solid #e0821f;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#7a4a0c;">
+    <b>⚠ Aviso de datos (${yrs})</b>
+    <ul style="margin:6px 0 6px 18px;padding:0;">${lis}</ul>
+    Estas filas no están asignadas a ninguna zona y aparecen en «Sin Asignar»; siguen contando en el total general. Revisa el Excel.</div>`;
+}
+
 function renderNuevosAnunciantes(){
   const agg      = buildAggregates(); // misma fuente que Ingresos: mismos comerciales, mismos equipos
   const { agg: newAgg, detail: detailAgg, shared: sharedMap } = buildNewAdvertisersData();
@@ -1217,7 +1250,7 @@ function renderNuevosAnunciantes(){
     const members = teamMap[teamName];
     if(members.length === 0) return;
     const color = TEAM_COLORS[teamName] || '#0d2340';
-    const tid   = 'teamn-' + teamName.replace(/\s/g,'_');
+    const tid   = 'teamn-' + teamName.replace(/[^a-zA-Z0-9]/g,'_');
     outputHTML += `
       <div class="team-block" id="${tid}">
         <div class="team-header" onclick="toggleTeam('${tid}')">
@@ -1342,11 +1375,7 @@ function buildNuevosTableHTML(keys, agg, newAgg, detailAgg, yearSets, teamName, 
     }
   });
 
-  html += `<tr class="team-total-row"><td>📊 Total ${teamName}</td>`;
-  visibleYears.forEach(y => {
-    html += `<td class="col-divider">${teamCountTotals[y]}${teamCountTotals[y]>0 ? `<span class="new-adv-income">(${formatEUR(teamIncomeTotals[y])})</span>` : ''}</td>`;
-  });
-  html += '</tr></tbody></table>';
+  html += '</tbody></table>';
   return html;
 }
 
@@ -1427,7 +1456,7 @@ async function exportComercialesXLSX(){
   // Orden dentro de cada sección: primero por equipo (Madrid, Barcelona, Programática
   // y el resto al final) y, dentro de cada equipo, de más a menos por el % de variación
   // del último año.
-  const TEAM_ORDER_EXPORT = ['Madrid','Barcelona','Programática'];
+  const TEAM_ORDER_EXPORT = [ZONA_MADRID, ZONA_BCN, ZONA_INTL_LOCAL, ZONA_INTL_PROG];
   const teamRank = team => {
     const idx = TEAM_ORDER_EXPORT.indexOf(team);
     return idx === -1 ? TEAM_ORDER_EXPORT.length : idx;
@@ -1725,11 +1754,6 @@ async function exportNuevosAnunciantesXLSX(){
       rowMeta.push({rowIdx: aoa.length});
       aoa.push(['', agg[k].label || k, ...rowVals]);
     });
-
-    const teamTotalVals = [];
-    visibleYears.forEach(y => { teamTotalVals.push(teamCountTotals[y]); teamTotalVals.push(Math.round(teamIncomeTotals[y])); });
-    teamTotalRowIdxs.push(aoa.length);
-    aoa.push(['', `Total ${teamName}`, ...teamTotalVals]);
 
     aoa.push([]);
   });
