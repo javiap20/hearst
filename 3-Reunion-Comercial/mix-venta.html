@@ -1326,8 +1326,7 @@ function cleanPubName(raw,canal){
   }
   return s.charAt(0).toUpperCase()+s.slice(1).toLowerCase();
 }
-/* ÁREA GLOBAL · Opción B (Oficina de venta): el centro de coste decide la zona; ÁREAS solo cuenta si es INTERNACIONAL
-   (-> Internacional (Local)) o, con centro Internacional en Digital, PROGRAMÁTICA (-> Internacional (Programática)). */
+/* ÁREA GLOBAL · Asignación según las reglas de Oficina de venta / Centro de coste. */
 const COL_CENTRO_NAMES=['Oficina de venta / Centro de coste de la orden','Oficina de venta / Centro de coste'];
 let MISSING_CENTRO=[];
 function findCol(rows,names){
@@ -1337,8 +1336,8 @@ function findCol(rows,names){
 }
 const ZONA_SIN_CENTRO='Sin asignar · centro vacío',ZONA_CENTRO_DESC='Sin asignar · centro desconocido',ZONA_AREAS_INESP='Sin asignar · ÁREAS inesperada';
 const ZONAS_SIN_ASIGNAR=[ZONA_SIN_CENTRO,ZONA_CENTRO_DESC,ZONA_AREAS_INESP];
-/* Orden fijo de ÁREA GLOBAL en todos los sitios: Madrid, Barcelona, Internacional (Local), Internacional (Programática); «Sin asignar» al final. */
-const ZONAS_ORDEN=['Madrid','Barcelona','Internacional (Local)','Internacional (Programática)',...ZONAS_SIN_ASIGNAR];
+/* Orden fijo de ÁREA GLOBAL. Madrid (con programática) y Programática (Total) son zonas de filtro calculadas. */
+const ZONAS_ORDEN=['Madrid (sin programática)','Madrid (con programática)','Barcelona','Internacional (Local)','Programática (Total)','Programática (Madrid)','Programática (Internacional)',...ZONAS_SIN_ASIGNAR];
 function zoneCompare(a,b){
   const ia=ZONAS_ORDEN.indexOf(a),ib=ZONAS_ORDEN.indexOf(b);
   return (ia<0?99:ia)-(ib<0?99:ib)||String(a).localeCompare(String(b),'es');
@@ -1355,14 +1354,22 @@ function mapOfficeZone(centroRaw,areaRaw,canal){
   if(!c)return ZONA_SIN_CENTRO;
   if(c==='MADRID'||c==='BARCELONA'){
     if(a==='INTERNACIONAL')return 'Internacional (Local)';
-    return c==='MADRID'?'Madrid':'Barcelona';
+    if(a==='PROGRAMATICA')return c==='MADRID'?'Programática (Madrid)':ZONA_AREAS_INESP;
+    return c==='MADRID'?'Madrid (sin programática)':'Barcelona';
   }
   if(c==='INTERNACIONAL'){
-    if(a==='INTERNACIONAL')return 'Internacional (Local)';
-    if(a==='PROGRAMATICA'&&canal==='DIGITAL')return 'Internacional (Programática)';
-    return ZONA_AREAS_INESP;
+    if(a==='PROGRAMATICA')return 'Programática (Internacional)';
+    return 'Internacional (Local)';
   }
   return ZONA_CENTRO_DESC;
+}
+function globalAreaMatches(row,selectedZones){
+  if(selectedZones.includes('all'))return true;
+  const zone=row._areaGlobal;
+  if(selectedZones.includes(zone))return true;
+  if(selectedZones.includes('Madrid (con programática)')&&['Madrid (sin programática)','Programática (Madrid)'].includes(zone))return true;
+  if(selectedZones.includes('Programática (Total)')&&['Programática (Madrid)','Programática (Internacional)'].includes(zone))return true;
+  return false;
 }
 function renderZoneWarning(){
   const el=document.getElementById('zone-warning');if(!el)return;
@@ -1401,7 +1408,7 @@ function applyRows(rows){
   const estado=document.getElementById('m-f-estado-anun')?.value||'all';
   let out=channelRows(rows).filter(r=>{
     if(!meses.includes('all')&&!meses.includes(r._mes))return false;
-    if(!ga.includes('all')&&!ga.includes(r._areaGlobal))return false;
+    if(!globalAreaMatches(r,ga))return false;
     if(!a.includes('all')&&!a.includes(r._area))return false;
     if(!sec.includes('all')&&!sec.includes(r._sectorClean))return false;
     if(!fam.includes('all')&&!fam.includes(r._fam))return false;
@@ -1518,7 +1525,7 @@ function updateSummary(key){
 }
 function currentValues(key){
   const src=channelRows(DATA);let vals=[];
-  if(key==='globalarea'){const sc=zoneScopeYears();vals=src.filter(r=>!ZONAS_SIN_ASIGNAR.includes(r._areaGlobal)||!sc||sc.has(r._year)).map(r=>r._areaGlobal)}if(key==='area')vals=src.map(r=>r._area);if(key==='sector')vals=src.map(r=>r._sectorClean);if(key==='familia')vals=src.map(r=>r._fam);if(key==='pub')vals=src.map(r=>r._pubNorm);if(key==='com')vals=src.map(r=>r._comercial);
+  if(key==='globalarea'){const sc=zoneScopeYears();vals=[...ZONAS_ORDEN.slice(0,7),...src.filter(r=>ZONAS_SIN_ASIGNAR.includes(r._areaGlobal)&&(!sc||sc.has(r._year))).map(r=>r._areaGlobal)]}if(key==='area')vals=src.map(r=>r._area);if(key==='sector')vals=src.map(r=>r._sectorClean);if(key==='familia')vals=src.map(r=>r._fam);if(key==='pub')vals=src.map(r=>r._pubNorm);if(key==='com')vals=src.map(r=>r._comercial);
   return [...new Set(vals.filter(Boolean))];
 }
 function refreshFilters(){
@@ -1530,12 +1537,17 @@ function refreshFilters(){
   buildChips('com',[...new Set(rowsForYear.map(r=>r._comercial).filter(Boolean))]);
 }
 function toggleChip(key,val){
+  const openFilterKey=document.querySelector('.compact-filter.open')?.dataset.filterKey||'';
   const s=chipState[key];if(val==='all')s.clear();else if(val==='none'){s.clear();s.add('__NONE__')}else if(val==='closed'){s.clear();closedMonths().forEach(m=>s.add(m))}else if(val==='current'){s.clear();s.add(MONTHS[new Date().getMonth()])}else{s.delete('__NONE__');s.has(val)?s.delete(val):s.add(val)}
   refreshFilters();renderFamilies();renderIncomeSummary();updateTabCounts();
+  if(openFilterKey){const w=document.querySelector('.compact-filter[data-filter-key="'+openFilterKey+'"]');if(w){w.classList.add('open');positionPanel(w)}}
 }
 function toggleCompactFilter(e,key){e.stopPropagation();const w=document.querySelector('.compact-filter[data-filter-key="'+key+'"]');const was=w&&w.classList.contains('open');document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'));if(w&&!was){w.classList.add('open');positionPanel(w)}}
 function positionPanel(w){const p=w.querySelector('.compact-filter-panel'),row=document.getElementById('compact-main-filters'),b=w.querySelector('.compact-filter-btn');if(!p||!row||!b)return;const rr=row.getBoundingClientRect(),br=b.getBoundingClientRect();p.style.left=Math.max(8,rr.left)+'px';p.style.top=(br.bottom+5)+'px';p.style.width=Math.max(280,rr.width)+'px';p.style.maxWidth='calc(100vw - 16px)'}
-document.addEventListener('click',e=>{if(!e.target.closest('.compact-filter'))document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'))});
+document.addEventListener('pointerdown',e=>{
+  const target=e.target instanceof Element?e.target:null;
+  if(!target?.closest('.compact-filter'))document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'));
+},true);
 window.addEventListener('resize',()=>{const w=document.querySelector('.compact-filter.open');if(w)positionPanel(w)});
 window.addEventListener('scroll',()=>{const w=document.querySelector('.compact-filter.open');if(w)positionPanel(w)},true);
 
@@ -1558,7 +1570,7 @@ function summaryRowsForCards(yearOverride, stateReferenceYear){
     if(!validChannels.has(r._canal)) return false;
     if(includeYear&&effectiveYear!=='all'&&r._year!==effectiveYear) return false;
     if(!meses.includes('all')&&!meses.includes(r._mes)) return false;
-    if(!ga.includes('all')&&!ga.includes(r._areaGlobal)) return false;
+    if(!globalAreaMatches(r,ga)) return false;
     if(!a.includes('all')&&!a.includes(r._area)) return false;
     if(!sec.includes('all')&&!sec.includes(r._sectorClean)) return false;
     if(!fam.includes('all')&&!fam.includes(r._fam)) return false;
@@ -1676,7 +1688,7 @@ function applyDigitalStrategyFilters(rows){
   return rows.filter(r=>{
     if(r._canal!=='DIGITAL') return false;
     if(!meses.includes('all')&&!meses.includes(r._mes)) return false;
-    if(!ga.includes('all')&&!ga.includes(r._areaGlobal)) return false;
+    if(!globalAreaMatches(r,ga)) return false;
     if(!a.includes('all')&&!a.includes(r._area)) return false;
     if(!sec.includes('all')&&!sec.includes(r._sectorClean)) return false;
     if(!fam.includes('all')&&!fam.includes(r._fam)) return false;
@@ -1736,7 +1748,7 @@ function strategyBaseFilter(rows, includeMonths){
   return rows.filter(r=>{
     if(r._canal!=='DIGITAL') return false;
     if(includeMonths && !meses.includes('all')&&!meses.includes(r._mes)) return false;
-    if(!ga.includes('all')&&!ga.includes(r._areaGlobal)) return false;
+    if(!globalAreaMatches(r,ga)) return false;
     if(!a.includes('all')&&!a.includes(r._area)) return false;
     if(!sec.includes('all')&&!sec.includes(r._sectorClean)) return false;
     if(!fam.includes('all')&&!fam.includes(r._fam)) return false;
