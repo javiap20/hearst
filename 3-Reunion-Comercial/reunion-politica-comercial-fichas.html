@@ -2706,11 +2706,10 @@ const AREA_MAP={'BRAND EXPERIENCE':'Madrid','CLIENT EXPERIENCE LIFESTYLE':'Madri
 // - BRAND EXPERIENCE / CLIENT EXPERIENCE LIFESTYLE / CLIENT EXPERIENCE LUJO (las 3 "de Madrid"):
 //   K - PAGO LOCAL DIRECTO, cualquier otro valor, o vacío -> Madrid (por defecto)
 //   J - PAGO INTERNACIONAL DIRECTO -> Internacional
-// ── ÁREA GLOBAL · Opción B (OFICINA DE VENTA): centro de coste + ÁREAS ──
-// Madrid/Barcelona -> manda el centro; solo ÁREAS=INTERNACIONAL lo pasa a Internacional (Local).
-// Centro Internacional: ÁREAS INTERNACIONAL -> Internacional (Local); PROGRAMÁTICA (solo Digital) -> Internacional (Programática).
-// Cualquier otro caso -> 'Sin asignar' con aviso. Clase de orden no interviene.
-const ZONAS_B=['Madrid','Barcelona','Internacional (Local)','Internacional (Programática)'];
+// ── ÁREA GLOBAL · Reglas de Oficina de venta / Centro de coste ──
+// Madrid (sin programática), Barcelona e Internacional (Local) son zonas directas.
+// Madrid (con programática) y Programática (Total) son subtotales para filtrar.
+const ZONAS_B=['Madrid (sin programática)','Madrid (con programática)','Barcelona','Internacional (Local)','Programática (Total)','Programática (Madrid)','Programática (Internacional)'];
 const ZONA_B_SIN='Sin asignar';
 function zonaBKey(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();}
 function officeZoneInfo(centroRaw,areaRaw,canal){
@@ -2718,16 +2717,24 @@ function officeZoneInfo(centroRaw,areaRaw,canal){
   if(!c) return {zone:ZONA_B_SIN,motivo:'centro de coste vacío'};
   if(c==='MADRID'||c==='BARCELONA'){
     if(a==='INTERNACIONAL') return {zone:'Internacional (Local)',movidaPorArea:true};
-    return {zone:c==='MADRID'?'Madrid':'Barcelona'};
+    if(a==='PROGRAMATICA') return c==='MADRID'?{zone:'Programática (Madrid)'}:{zone:ZONA_B_SIN,motivo:'ÁREAS Programática con centro Barcelona sin zona definida'};
+    return {zone:c==='MADRID'?'Madrid (sin programática)':'Barcelona'};
   }
   if(c==='INTERNACIONAL'){
-    if(a==='INTERNACIONAL') return {zone:'Internacional (Local)'};
-    if(a==='PROGRAMATICA'&&canal==='DIGITAL') return {zone:'Internacional (Programática)'};
-    return {zone:ZONA_B_SIN,motivo:'centro Internacional con ÁREAS inesperada'};
+    if(a==='PROGRAMATICA') return {zone:'Programática (Internacional)'};
+    return {zone:'Internacional (Local)'};
   }
   return {zone:ZONA_B_SIN,motivo:'centro de coste desconocido'};
 }
 function mapOfficeZone(centroRaw,areaRaw,canal){return officeZoneInfo(centroRaw,areaRaw,canal).zone;}
+function zonaBMatches(row,selectedZones){
+  if(selectedZones.includes('all')) return true;
+  const zone=row._zonaB;
+  if(selectedZones.includes(zone)) return true;
+  if(selectedZones.includes('Madrid (con programática)')&&['Madrid (sin programática)','Programática (Madrid)'].includes(zone)) return true;
+  if(selectedZones.includes('Programática (Total)')&&['Programática (Madrid)','Programática (Internacional)'].includes(zone)) return true;
+  return false;
+}
 function sortZonasB(vals){const rank=v=>{const i=ZONAS_B.indexOf(v);return i>=0?i:(v===ZONA_B_SIN?99:50);};return vals.sort((x,y)=>rank(x)-rank(y)||String(x).localeCompare(String(y),'es'));}
 // Años que se están analizando: el seleccionado y el anterior; null = todos los años cargados.
 function mYearsAnalizados(yr){return (yr&&yr!=='all'&&!isNaN(parseInt(yr)))?new Set([String(yr),String(parseInt(yr)-1)]):null;}
@@ -3126,7 +3133,7 @@ function populateMainFilters(){
   const baseForFilters=selectedYr&&selectedYr!=='all'?base.filter(r=>r._yearRaw===selectedYr):base;
   const meses=new Set(base.map(r=>r._mesRaw).filter(Boolean));
   const yrsZonaB=mYearsAnalizados(selectedYr);
-  const globalareas=new Set(base.filter(r=>r._zonaB!==ZONA_B_SIN||!yrsZonaB||yrsZonaB.has(String(r._yearRaw))).map(r=>r._zonaB).filter(Boolean));
+  const globalareas=new Set([...ZONAS_B,...base.filter(r=>r._zonaB===ZONA_B_SIN&&(!yrsZonaB||yrsZonaB.has(String(r._yearRaw)))).map(r=>r._zonaB).filter(Boolean)]);
   const sects=new Set(base.map(r=>r._sectorClean).filter(Boolean));
   const fams=new Set(base.map(r=>r._famLabel).filter(Boolean));
   const pubs=new Set(base.map(r=>r._pubNorm).filter(Boolean));
@@ -3204,11 +3211,14 @@ function toggleCompactFilter(e,key){
 }
 // La multiselección no cierra el filtro: solo se cierra al pulsar de nuevo su cabecera,
 // al abrir otro filtro o al hacer clic fuera.
-document.querySelectorAll('.compact-filter-panel').forEach(p=>p.addEventListener('click',e=>e.stopPropagation()));
-document.addEventListener('click',e=>{if(!e.target.closest('.compact-filter'))document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'));});
+document.addEventListener('pointerdown',e=>{
+  const target=e.target instanceof Element?e.target:null;
+  if(!target?.closest('.compact-filter'))document.querySelectorAll('.compact-filter.open').forEach(x=>x.classList.remove('open'));
+},true);
 window.addEventListener('resize',()=>{const w=document.querySelector('.compact-filter.open');if(w)positionCompactPanel(w);});
 window.addEventListener('scroll',()=>{const w=document.querySelector('.compact-filter.open');if(w)positionCompactPanel(w);},true);
 function mToggleChip(key,val){
+  const openFilterKey=document.querySelector('.compact-filter.open')?.dataset.filterKey||'';
   const s=mChipState[key];
   if(val==='all'){s.clear();}
   else if(val==='closed'){s.clear();mGetClosedMonths().forEach(m=>s.add(m));}
@@ -3217,6 +3227,7 @@ function mToggleChip(key,val){
   mRenderChips(key);renderMain();
   if(document.getElementById('view-proyecciones')&&document.getElementById('view-proyecciones').classList.contains('active')) renderProyecciones();
   if(document.getElementById('view-sectores')&&document.getElementById('view-sectores').classList.contains('active')) renderSectoresTab();
+  if(openFilterKey){const w=document.querySelector('.compact-filter[data-filter-key="'+openFilterKey+'"]');if(w){w.classList.add('open');positionCompactPanel(w)}}
 }
 function mRenderChips(key){
   const container=document.getElementById('m-chips-'+key);if(!container) return;
@@ -3245,7 +3256,7 @@ function mApplyFilters(rows){
   const sit=document.getElementById('m-f-sit').value;
   return rows.filter(r=>{
     if(!meses.includes('all')&&!meses.includes(r._mesRaw)) return false;
-    if(!globalareas.includes('all')&&!globalareas.includes(r._zonaB)) return false;
+    if(!zonaBMatches(r,globalareas)) return false;
     if(!sects.includes('all')&&!sects.includes(r._sectorClean)) return false;
     if(!fams.includes('all')&&!fams.includes(r._famLabel)) return false;
     if(!pubs.includes('all')&&!pubs.includes(r._pubNorm)) return false;
@@ -3313,7 +3324,7 @@ function fichaRowsForYear(year){
   return DATA.filter(r=>{
     if(r._canal!=='DIGITAL'||r._yearRaw!==String(year))return false;
     if(!meses.includes('all')&&!meses.includes(r._mesRaw))return false;
-    if(!globalareas.includes('all')&&!globalareas.includes(r._zonaB))return false;
+    if(!zonaBMatches(r,globalareas))return false;
     if(!sects.includes('all')&&!sects.includes(r._sectorClean))return false;
     if(!coms.includes('all')&&!coms.includes((r[COL_COMERCIAL]||'').trim()))return false;
     if(sit!=='all'&&(r[COL_SIT]||'').trim()!==sit)return false;
@@ -3744,7 +3755,7 @@ function ficheRowsForChannelAndYear(year,channel){
   return DATA.filter(r=>{
     if(r._canal!==channel||r._yearRaw!==String(year))return false;
     if(!meses.includes('all')&&!meses.includes(r._mesRaw))return false;
-    if(!globalareas.includes('all')&&!globalareas.includes(r._zonaB))return false;
+    if(!zonaBMatches(r,globalareas))return false;
     if(!sects.includes('all')&&!sects.includes(r._sectorClean))return false;
     if(!coms.includes('all')&&!coms.includes((r[COL_COMERCIAL]||'').trim()))return false;
     if(sit!=='all'&&(r[COL_SIT]||'').trim()!==sit)return false;
@@ -11586,7 +11597,7 @@ async function exportarPPT() {
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
-          if (!globalareas.includes('all') && !globalareas.includes(r._zonaB)) return false;
+          if (!zonaBMatches(r,globalareas)) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
           if (!pubs.includes('all') && !pubs.includes(r._pubNorm)) return false;
@@ -12690,7 +12701,7 @@ async function exportarPPT() {
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
-          if (!globalareas.includes('all') && !globalareas.includes(r._zonaB)) return false;
+          if (!zonaBMatches(r,globalareas)) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
           if (!pubs.includes('all') && !pubs.includes(r._pubNorm)) return false;
@@ -12781,7 +12792,7 @@ async function exportarPPT() {
           const pubs = mGetSelected('pub');
           const sit = document.getElementById('m-f-sit').value;
           
-          if (!globalareas.includes('all') && !globalareas.includes(r._zonaB)) return false;
+          if (!zonaBMatches(r,globalareas)) return false;
           if (!sects.includes('all') && !sects.includes(r._sectorClean)) return false;
           if (!fams.includes('all') && !fams.includes(r._famLabel)) return false;
           if (!pubs.includes('all') && !pubs.includes(r._pubNorm)) return false;
